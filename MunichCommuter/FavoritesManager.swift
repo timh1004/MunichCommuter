@@ -4,7 +4,7 @@ import SwiftUI
 class FavoritesManager: ObservableObject {
     static let shared = FavoritesManager()
     
-    @Published var favorites: [Location] = []
+    @Published var favorites: [FilteredFavorite] = []
     
     private let cloudStore = NSUbiquitousKeyValueStore.default
     private let favoritesKey = "MunichCommuterFavorites"
@@ -33,28 +33,41 @@ class FavoritesManager: ObservableObject {
         }
     }
     
-    func addFavorite(_ location: Location) {
-        // Check if already exists
-        if !favorites.contains(where: { $0.id == location.id }) {
-            favorites.append(location)
-            saveFavorites()
-        }
+    func addFavorite(_ location: Location, destinationFilter: String? = nil) {
+        let newFavorite = FilteredFavorite(location: location, destinationFilter: destinationFilter)
+        favorites.append(newFavorite)
+        saveFavorites()
+    }
+    
+    func removeFavorite(_ favorite: FilteredFavorite) {
+        favorites.removeAll { $0.id == favorite.id }
+        saveFavorites()
     }
     
     func removeFavorite(_ location: Location) {
-        favorites.removeAll { $0.id == location.id }
+        // Remove all favorites for this location
+        favorites.removeAll { $0.location.id == location.id }
         saveFavorites()
     }
     
     func isFavorite(_ location: Location) -> Bool {
-        return favorites.contains { $0.id == location.id }
+        return favorites.contains { $0.location.id == location.id }
     }
     
-    func toggleFavorite(_ location: Location) {
-        if isFavorite(location) {
-            removeFavorite(location)
+    func getFavorites(for location: Location) -> [FilteredFavorite] {
+        return favorites.filter { $0.location.id == location.id }
+    }
+    
+    func toggleFavorite(_ location: Location, destinationFilter: String? = nil) {
+        // Check if this specific combination already exists
+        let existingFavorite = favorites.first { 
+            $0.location.id == location.id && $0.destinationFilter == destinationFilter 
+        }
+        
+        if let existing = existingFavorite {
+            removeFavorite(existing)
         } else {
-            addFavorite(location)
+            addFavorite(location, destinationFilter: destinationFilter)
         }
     }
     
@@ -76,7 +89,7 @@ class FavoritesManager: ObservableObject {
         }
         
         do {
-            let loadedFavorites = try JSONDecoder().decode([Location].self, from: data)
+            let loadedFavorites = try JSONDecoder().decode([FilteredFavorite].self, from: data)
             
             // Only update if different to avoid unnecessary UI updates
             if loadedFavorites.map(\.id) != favorites.map(\.id) {
@@ -85,7 +98,15 @@ class FavoritesManager: ObservableObject {
             }
         } catch {
             print("❌ Failed to load favorites from iCloud: \(error)")
-            favorites = []
+            // Try to migrate old favorites
+            if let legacyData = cloudStore.data(forKey: "MunichCommuterFavorites"),
+               let legacyFavorites = try? JSONDecoder().decode([Location].self, from: legacyData) {
+                favorites = legacyFavorites.map { FilteredFavorite(location: $0) }
+                saveFavorites() // Migrate to new format
+                print("📦 Migrated \(legacyFavorites.count) legacy favorites")
+            } else {
+                favorites = []
+            }
         }
     }
     

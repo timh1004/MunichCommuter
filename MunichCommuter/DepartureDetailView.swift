@@ -9,8 +9,19 @@ import SwiftUI
 
 struct DepartureDetailView: View {
     let location: Location
+    let initialFilter: String?
+    
     @StateObject private var mvvService = MVVService()
     @StateObject private var favoritesManager = FavoritesManager.shared
+    
+    @State private var destinationFilter = ""
+    @State private var showFilterBar = false
+    @State private var showDestinationPicker = false
+    
+    init(location: Location, initialFilter: String? = nil) {
+        self.location = location
+        self.initialFilter = initialFilter
+    }
     
     // Use the proper disassembled name from API, just like in ContentView
     private var cleanLocationName: String {
@@ -18,7 +29,72 @@ struct DepartureDetailView: View {
     }
     
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
+            // Smart Filter Bar
+            if showFilterBar {
+                VStack(spacing: 8) {
+                    HStack {
+                        Image(systemName: "line.horizontal.3.decrease.circle")
+                            .foregroundColor(.blue)
+                            .font(.system(size: 16))
+                        
+                        HStack {
+                            TextField("Nach Zielort filtern...", text: $destinationFilter)
+                            
+                            Button(action: {
+                                showDestinationPicker = true
+                            }) {
+                                Image(systemName: "list.bullet.circle")
+                                    .foregroundColor(.blue)
+                                    .font(.system(size: 18))
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        
+                        if !destinationFilter.isEmpty {
+                            Button(action: {
+                                destinationFilter = ""
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(.secondary)
+                                    .font(.system(size: 16))
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                        
+                        Button("Schließen") {
+                            showFilterBar = false
+                            destinationFilter = ""
+                        }
+                        .font(.caption)
+                        .foregroundColor(.blue)
+                    }
+                    .padding(.horizontal, 16)
+                    
+                    if !destinationFilter.isEmpty && filteredDepartures.isEmpty && !mvvService.departures.isEmpty {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.orange)
+                                .font(.caption)
+                            Text("Keine Verbindungen nach '\(destinationFilter)' gefunden")
+                                .font(.caption)
+                                .foregroundColor(.orange)
+                        }
+                        .padding(.horizontal, 16)
+                    }
+                }
+                .padding(.vertical, 12)
+                .background(Color(.systemGroupedBackground))
+                .overlay(
+                    Rectangle()
+                        .frame(height: 1)
+                        .foregroundColor(Color(.systemGray4)),
+                    alignment: .bottom
+                )
+            }
+            
+            // Main Content
             if mvvService.isDeparturesLoading {
                 Spacer()
                 ProgressView("Lade Abfahrten...")
@@ -40,21 +116,22 @@ struct DepartureDetailView: View {
                     .buttonStyle(.borderedProminent)
                 }
                 Spacer()
-            } else if mvvService.departures.isEmpty {
+            } else if displayedDepartures.isEmpty {
                 Spacer()
                 VStack {
-                    Image(systemName: "tram")
+                    Image(systemName: showFilterBar && !destinationFilter.isEmpty ? "line.horizontal.3.decrease.circle" : "tram")
                         .font(.largeTitle)
                         .foregroundColor(.gray)
-                    Text("Keine Abfahrten")
+                    Text(showFilterBar && !destinationFilter.isEmpty ? "Keine gefilterten Abfahrten" : "Keine Abfahrten")
                         .font(.headline)
-                    Text("Aktuell sind keine Abfahrten verfügbar")
+                    Text(showFilterBar && !destinationFilter.isEmpty ? "Kein Zug/Bus fährt nach '\(destinationFilter)'" : "Aktuell sind keine Abfahrten verfügbar")
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
                 }
                 Spacer()
             } else {
-                List(mvvService.departures) { departure in
+                List(displayedDepartures) { departure in
                     NavigationLink(destination: TripDetailView(departure: departure, currentStopName: location.name ?? "Unbekannte Haltestelle")) {
                         DepartureRowView(departure: departure)
                     }
@@ -67,20 +144,71 @@ struct DepartureDetailView: View {
                 }
             }
         }
-        .navigationTitle(cleanLocationName)
+        .navigationTitle(filterActiveTitle)
         .navigationBarTitleDisplayMode(.large)
         .onAppear {
             mvvService.loadDepartures(for: location)
+            
+            // Apply initial filter if provided
+            if let filter = initialFilter, !filter.isEmpty {
+                destinationFilter = filter
+                showFilterBar = true
+            }
+        }
+        .sheet(isPresented: $showDestinationPicker) {
+            DestinationPickerView(
+                destinations: availableDestinations,
+                selectedDestination: $destinationFilter,
+                isPresented: $showDestinationPicker
+            )
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 HStack {
-                    // Favorite Button
-                    Button {
-                        favoritesManager.toggleFavorite(location)
+                    // Favorite Button with Filter Support
+                    Menu {
+                        Button("Als Favorit speichern") {
+                            favoritesManager.addFavorite(location)
+                        }
+                        
+                        if showFilterBar && !destinationFilter.isEmpty {
+                            Button("Als gefilterten Favorit speichern") {
+                                favoritesManager.addFavorite(location, destinationFilter: destinationFilter)
+                            }
+                        }
+                        
+                        if favoritesManager.isFavorite(location) {
+                            Divider()
+                            ForEach(favoritesManager.getFavorites(for: location)) { favorite in
+                                Button("Entfernen: \(favorite.displayName)") {
+                                    favoritesManager.removeFavorite(favorite)
+                                }
+                            }
+                        }
                     } label: {
                         Image(systemName: favoritesManager.isFavorite(location) ? "star.fill" : "star")
                             .foregroundColor(favoritesManager.isFavorite(location) ? .orange : .primary)
+                    }
+                    
+                    // Filter Button with Active Indicator
+                    Button {
+                        showFilterBar.toggle()
+                        if !showFilterBar {
+                            destinationFilter = ""
+                        }
+                    } label: {
+                        ZStack {
+                            Image(systemName: showFilterBar ? "line.horizontal.3.decrease.circle.fill" : "line.horizontal.3.decrease.circle")
+                                .foregroundColor(showFilterBar ? .blue : .primary)
+                            
+                            // Active filter indicator
+                            if !destinationFilter.isEmpty {
+                                Circle()
+                                    .fill(.red)
+                                    .frame(width: 8, height: 8)
+                                    .offset(x: 8, y: -8)
+                            }
+                        }
                     }
                     
                     // Refresh Button
@@ -92,6 +220,70 @@ struct DepartureDetailView: View {
                 }
             }
         }
+    }
+    
+    // MARK: - Filtering Logic
+    private var filteredDepartures: [StopEvent] {
+        guard !destinationFilter.isEmpty else { return mvvService.departures }
+        
+        return mvvService.departures.filter { departure in
+            hasDestinationInRoute(departure: departure, destination: destinationFilter)
+        }
+    }
+    
+    private var displayedDepartures: [StopEvent] {
+        return showFilterBar && !destinationFilter.isEmpty ? filteredDepartures : mvvService.departures
+    }
+    
+    private func hasDestinationInRoute(departure: StopEvent, destination: String) -> Bool {
+        let searchTerm = destination.lowercased()
+        
+        // Check if destination matches the final destination
+        if let finalDestination = departure.transportation?.destination?.name?.lowercased(),
+           finalDestination.contains(searchTerm) {
+            return true
+        }
+        
+        // Check if destination is in onward locations (stops along the route)
+        if let onwardLocations = departure.onwardLocations {
+            return onwardLocations.contains { platform in
+                guard let name = platform.name?.lowercased() else { return false }
+                return name.contains(searchTerm)
+            }
+        }
+        
+        return false
+    }
+    
+    // MARK: - Computed Properties
+    private var filterActiveTitle: String {
+        if !destinationFilter.isEmpty {
+            return "\(cleanLocationName) → \(destinationFilter)"
+        }
+        return cleanLocationName
+    }
+    
+    // MARK: - Available Destinations
+    private var availableDestinations: [String] {
+        var destinations = Set<String>()
+        
+        for departure in mvvService.departures {
+            // Add final destination
+            if let finalDestination = departure.transportation?.destination?.name {
+                destinations.insert(finalDestination)
+            }
+            
+            // Add all stops along the route
+            if let onwardLocations = departure.onwardLocations {
+                for platform in onwardLocations {
+                    if let name = platform.name {
+                        destinations.insert(name)
+                    }
+                }
+            }
+        }
+        
+        return Array(destinations).sorted()
     }
 }
 

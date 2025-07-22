@@ -34,8 +34,11 @@ struct FavoritesView: View {
                 // Favorites List
                 List {
                     ForEach(favoritesManager.favorites) { favorite in
-                        NavigationLink(destination: DepartureDetailView(location: favorite)) {
-                            FavoriteRowView(location: favorite)
+                        NavigationLink(destination: DepartureDetailView(
+                            location: favorite.location, 
+                            initialFilter: favorite.destinationFilter
+                        )) {
+                            FilteredFavoriteRowView(favorite: favorite)
                         }
                         .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                     }
@@ -50,31 +53,44 @@ struct FavoritesView: View {
     
     private func deleteFavorites(offsets: IndexSet) {
         for index in offsets {
-            let location = favoritesManager.favorites[index]
-            favoritesManager.removeFavorite(location)
+            let favorite = favoritesManager.favorites[index]
+            favoritesManager.removeFavorite(favorite)
         }
     }
 }
 
-struct FavoriteRowView: View {
-    let location: Location
+struct FilteredFavoriteRowView: View {
+    let favorite: FilteredFavorite
     
     var body: some View {
         HStack {
             // Star Icon
-            Image(systemName: "star.fill")
+            Image(systemName: favorite.destinationFilter != nil ? "star.circle.fill" : "star.fill")
                 .frame(width: 24, height: 24)
                 .foregroundColor(.orange)
             
             VStack(alignment: .leading, spacing: 2) {
-                Text(location.disassembledName ?? location.name ?? "Unbekannte Haltestelle")
+                Text(favorite.location.disassembledName ?? favorite.location.name ?? "Unbekannte Haltestelle")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.primary)
                 
-                if let parent = location.parent?.name {
-                    Text(parent)
-                        .font(.system(size: 14))
-                        .foregroundColor(.secondary)
+                HStack {
+                    if let parent = favorite.location.parent?.name {
+                        Text(parent)
+                            .font(.system(size: 14))
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    if let filterText = favorite.filterDisplayText {
+                        if favorite.location.parent?.name != nil {
+                            Text("•")
+                                .font(.system(size: 12))
+                                .foregroundColor(.secondary)
+                        }
+                        Text(filterText)
+                            .font(.system(size: 14))
+                            .foregroundColor(.blue)
+                    }
                 }
             }
             
