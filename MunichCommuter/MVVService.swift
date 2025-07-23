@@ -101,6 +101,78 @@ class MVVService: ObservableObject {
         isLoading = true
         errorMessage = nil
         
+        // Step 1: Convert GPS coordinates to MVV coordinate system
+        convertCoordinateToMVV(coordinate: coordinate) { [weak self] mvvCoordinate in
+            guard let mvvCoordinate = mvvCoordinate else {
+                DispatchQueue.main.async {
+                    self?.errorMessage = "Koordinaten konnten nicht konvertiert werden"
+                    self?.isLoading = false
+                }
+                return
+            }
+            
+            // Step 2: Search for nearby stops using MVV coordinates
+            self?.searchStopsNearMVVCoordinate(mvvCoordinate: mvvCoordinate)
+        }
+    }
+    
+    private func convertCoordinateToMVV(coordinate: String, completion: @escaping (String?) -> Void) {
+        var components = URLComponents(string: stopFinderURL)
+        components?.queryItems = [
+            URLQueryItem(name: "excludedMeans", value: "checkbox"),
+            URLQueryItem(name: "coordListOutputFormat", value: "STRING"),
+            URLQueryItem(name: "coordOutputFormat", value: "WGS84[DD.ddddd]"),
+            URLQueryItem(name: "convertCoord2LocationServer", value: "1"),
+            URLQueryItem(name: "locationServerActive", value: "1"),
+            URLQueryItem(name: "stateless", value: "1"),
+            URLQueryItem(name: "serverInfo", value: "1"),
+            URLQueryItem(name: "language", value: "de"),
+            URLQueryItem(name: "outputFormat", value: "rapidJSON"),
+            URLQueryItem(name: "version", value: "10.6.20.22"),
+            URLQueryItem(name: "macro_sf", value: "gullivr"),
+            URLQueryItem(name: "name_sf", value: coordinate),
+            URLQueryItem(name: "type_sf", value: "coord"),
+            URLQueryItem(name: "doNotSearchForStops_sf", value: "1")
+        ]
+        
+        guard let url = components?.url else {
+            completion(nil)
+            return
+        }
+        
+        print("🗺️ Step 1 - Convert GPS to MVV coordinates")
+        print("🌐 Coordinate Conversion URL: \(url.absoluteString)")
+        
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error {
+                print("❌ Coordinate conversion error: \(error)")
+                completion(nil)
+                return
+            }
+            
+            guard let data = data else {
+                print("❌ No data received for coordinate conversion")
+                completion(nil)
+                return
+            }
+            
+            do {
+                let mvvResponse = try JSONDecoder().decode(MVVResponse.self, from: data)
+                if let location = mvvResponse.locations?.first {
+                    print("✅ Converted to MVV coordinate: \(location.id)")
+                    completion(location.id)
+                } else {
+                    print("❌ No location returned from coordinate conversion")
+                    completion(nil)
+                }
+            } catch {
+                print("❌ Failed to decode coordinate conversion response: \(error)")
+                completion(nil)
+            }
+        }.resume()
+    }
+    
+    private func searchStopsNearMVVCoordinate(mvvCoordinate: String) {
         var components = URLComponents(string: stopFinderURL)
         components?.queryItems = [
             URLQueryItem(name: "excludedMeans", value: "checkbox"),
@@ -115,27 +187,22 @@ class MVVService: ObservableObject {
             URLQueryItem(name: "outputFormat", value: "rapidJSON"),
             URLQueryItem(name: "version", value: "10.6.20.22"),
             URLQueryItem(name: "macro_sf", value: "gullivr"),
-            URLQueryItem(name: "name_sf", value: coordinate),
-            URLQueryItem(name: "type_sf", value: "coord"),
-            URLQueryItem(name: "doNotSearchForStops_sf", value: "1")
+            URLQueryItem(name: "name_sf", value: mvvCoordinate),
+            URLQueryItem(name: "type_sf", value: "any")
         ]
         
         guard let url = components?.url else {
             DispatchQueue.main.async {
-                self.errorMessage = "Ungültige URL"
+                self.errorMessage = "Ungültige URL für Haltestellensuche"
                 self.isLoading = false
             }
             return
         }
         
-        print("🌐 Nearby Stops API URL: \(url.absoluteString)")
-        print("   Coordinate: '\(coordinate)'")
+        print("🗺️ Step 2 - Search for nearby stops")
+        print("🌐 Nearby Stops URL: \(url.absoluteString)")
         
         URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
-            // Debug the HTTP response
-            if let httpResponse = response as? HTTPURLResponse {
-                print("📡 HTTP Status Code: \(httpResponse.statusCode)")
-            }
             DispatchQueue.main.async {
                 self?.isLoading = false
                 
@@ -151,14 +218,16 @@ class MVVService: ObservableObject {
                 
                 do {
                     let mvvResponse = try JSONDecoder().decode(MVVResponse.self, from: data)
-                    self?.locations = mvvResponse.locations ?? []
+                    let locations = mvvResponse.locations ?? []
+                    print("✅ Found \(locations.count) nearby locations")
+                    self?.locations = locations
                 } catch {
                     self?.errorMessage = "Fehler beim Verarbeiten der Daten: \(error.localizedDescription)"
-                    print("JSON Decoding Error: \(error)")
+                    print("❌ JSON Decoding Error: \(error)")
                     
                     // Debug: Print raw response
                     if let jsonString = String(data: data, encoding: .utf8) {
-                        print("Raw JSON Response: \(jsonString)")
+                        print("🔍 Raw JSON Response: \(String(jsonString.prefix(1000)))")
                     }
                 }
             }
