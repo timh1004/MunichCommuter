@@ -116,7 +116,8 @@ class MVVService: ObservableObject {
             URLQueryItem(name: "version", value: "10.6.20.22"),
             URLQueryItem(name: "macro_sf", value: "gullivr"),
             URLQueryItem(name: "name_sf", value: coordinate),
-            URLQueryItem(name: "type_sf", value: "any")
+            URLQueryItem(name: "type_sf", value: "coord"),
+            URLQueryItem(name: "doNotSearchForStops_sf", value: "1")
         ]
         
         guard let url = components?.url else {

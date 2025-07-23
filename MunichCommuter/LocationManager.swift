@@ -72,31 +72,16 @@ class LocationManager: NSObject, ObservableObject {
     func coordStringForAPI() -> String? {
         guard let location = location else { return nil }
         
-        // Convert to the format expected by MVV API: coord:longitude:latitude:MRCV:description:0
-        // The MVV API uses a specific coordinate system
-        // Example from the API: coord:1288907:5872136:MRCV:Au-Haidhausen, Ohlmüllerstraße 4:0
-        // Let's try multiple scaling approaches to match this format
+        // Convert to the WGS84 format expected by MVV API
+        // Format: longitude:latitude:WGS84[DD.ddddd]
+        // Example: 11.578433335815134:48.12611861375449:WGS84[DD.ddddd]
         
         let lat = location.coordinate.latitude
         let lon = location.coordinate.longitude
         
-        // Try approach based on direct scaling of decimal degrees
-        // Convert to integer coordinates with appropriate scaling
-        // Based on reverse engineering the example: 1288907 and 5872136
+        print("🗺️ User Location: \(lat), \(lon)")
         
-        // Based on the example: coord:1288907:5872136 for Au-Haidhausen (~11.589, 48.132)
-        // Let's calculate the scaling factor:
-        // 1288907 / 11.589 ≈ 111,250 for longitude
-        // 5872136 / 48.132 ≈ 122,000 for latitude
-        
-        // Try with these scaling factors
-        let longitude = Int(lon * 111250)
-        let latitude = Int(lat * 122000)
-        
-        print("🗺️ Location: \(lat), \(lon)")
-        print("🗺️ Scaled coordinates: \(longitude), \(latitude)")
-        
-        return "coord:\(longitude):\(latitude):MRCV:Aktuelle Position:0"
+        return "\(lon):\(lat):WGS84[DD.ddddd]"
     }
 }
 
