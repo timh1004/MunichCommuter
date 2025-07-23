@@ -21,5 +21,7 @@
 		<array>
 			<string>remote-notification</string>
 		</array>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>Diese App verwendet Ihren Standort, um nahegelegene Haltestellen zu finden und Ihre Favoriten nach Entfernung zu sortieren.</string>
 	</dict>
 </plist>
