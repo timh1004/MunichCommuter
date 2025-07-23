@@ -1,25 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict>
-	<key>NSAppTransportSecurity</key>
 	<dict>
-		<key>NSExceptionDomains</key>
+		<key>ITSAppUsesNonExemptEncryption</key>
+		<false/>
+		<key>NSAppTransportSecurity</key>
 		<dict>
-			<key>def-efa-mvv02.defas-fgi.de</key>
+			<key>NSExceptionDomains</key>
 			<dict>
-				<key>NSExceptionAllowsInsecureHTTPLoads</key>
-				<true/>
-				<key>NSExceptionMinimumTLSVersion</key>
-				<string>TLSv1.0</string>
+				<key>def-efa-mvv02.defas-fgi.de</key>
+				<dict>
+					<key>NSExceptionAllowsInsecureHTTPLoads</key>
+					<true/>
+					<key>NSExceptionMinimumTLSVersion</key>
+					<string>TLSv1.2</string>
+				</dict>
 			</dict>
 		</dict>
+		<key>UIBackgroundModes</key>
+		<array>
+			<string>remote-notification</string>
+		</array>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>Diese App verwendet Ihren Standort, um nahegelegene Haltestellen zu finden und Ihre Favoriten nach Entfernung zu sortieren.</string>
 	</dict>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-	</array>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Diese App verwendet Ihren Standort, um nahegelegene Haltestellen zu finden und Ihre Favoriten nach Entfernung zu sortieren.</string>
-</dict>
 </plist>
