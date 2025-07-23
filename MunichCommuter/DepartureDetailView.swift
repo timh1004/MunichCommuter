@@ -9,7 +9,8 @@ import SwiftUI
 import Foundation
 
 struct DepartureDetailView: View {
-    let location: Location
+    let locationId: String
+    let locationName: String?
     let initialFilter: String?
     
     @StateObject private var mvvService = MVVService()
@@ -18,15 +19,27 @@ struct DepartureDetailView: View {
     @State private var destinationFilter = ""
     @State private var showFilterBar = false
     @State private var showDestinationPicker = false
+    @State private var resolvedLocation: Location?
     
-    init(location: Location, initialFilter: String? = nil) {
-        self.location = location
+    init(locationId: String, locationName: String? = nil, initialFilter: String? = nil) {
+        self.locationId = locationId
+        self.locationName = locationName
         self.initialFilter = initialFilter
     }
     
-    // Use the proper disassembled name from API, just like in ContentView
+    // Convenience initializer for backward compatibility
+    init(location: Location, initialFilter: String? = nil) {
+        self.locationId = location.id
+        self.locationName = location.disassembledName ?? location.name
+        self.initialFilter = initialFilter
+    }
+    
+    // Use the resolved location name from API or fallback to provided name
     private var cleanLocationName: String {
-        return location.disassembledName ?? location.name ?? "Abfahrten"
+        return resolvedLocation?.disassembledName ?? 
+               resolvedLocation?.name ?? 
+               locationName ?? 
+               "Abfahrten"
     }
     
     var body: some View {
@@ -112,7 +125,7 @@ struct DepartureDetailView: View {
                         .multilineTextAlignment(.center)
                         .padding()
                     Button("Erneut versuchen") {
-                        mvvService.loadDepartures(for: location)
+                        mvvService.loadDepartures(locationId: locationId)
                     }
                     .buttonStyle(.borderedProminent)
                 }
@@ -133,7 +146,7 @@ struct DepartureDetailView: View {
                 Spacer()
             } else {
                 List(displayedDepartures) { departure in
-                    NavigationLink(destination: TripDetailView(departure: departure, currentStopName: location.name ?? "Unbekannte Haltestelle")) {
+                    NavigationLink(destination: TripDetailView(departure: departure, currentStopName: cleanLocationName)) {
                         DepartureRowView(departure: departure)
                     }
                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
@@ -141,19 +154,56 @@ struct DepartureDetailView: View {
                 }
                 .listStyle(PlainListStyle())
                 .refreshable {
-                    mvvService.loadDepartures(for: location)
+                    mvvService.loadDepartures(locationId: locationId)
                 }
             }
         }
         .navigationTitle(filterActiveTitle)
         .navigationBarTitleDisplayMode(.large)
         .onAppear {
-            mvvService.loadDepartures(for: location)
+            mvvService.loadDepartures(locationId: locationId)
             
             // Apply initial filter if provided
             if let filter = initialFilter, !filter.isEmpty {
                 destinationFilter = filter
                 showFilterBar = true
+            }
+        }
+        .onReceive(mvvService.$departures) { _ in
+            // Extract location information from API response
+            if let firstLocation = mvvService.departures.first?.location {
+                // Convert PlatformParent to LocationParent
+                let locationParent: LocationParent?
+                if let platformParent = firstLocation.parent {
+                    locationParent = LocationParent(
+                        name: platformParent.name,
+                        type: platformParent.type
+                    )
+                } else {
+                    locationParent = nil
+                }
+                
+                // Convert PlatformProperties to LocationProperties
+                let locationProperties: LocationProperties?
+                if let platformProperties = firstLocation.properties {
+                    locationProperties = LocationProperties(
+                        stopId: platformProperties.stopId,
+                        area: platformProperties.area
+                    )
+                } else {
+                    locationProperties = nil
+                }
+                
+                resolvedLocation = Location(
+                    id: firstLocation.id ?? locationId,
+                    type: firstLocation.type,
+                    name: firstLocation.name,
+                    disassembledName: firstLocation.name,
+                    coord: firstLocation.coord,
+                    parent: locationParent,
+                    assignedStops: nil,
+                    properties: locationProperties
+                )
             }
         }
         .sheet(isPresented: $showDestinationPicker) {
@@ -169,26 +219,30 @@ struct DepartureDetailView: View {
                     // Favorite Button with Filter Support
                     Menu {
                         Button("Als Favorit speichern") {
-                            favoritesManager.addFavorite(location)
+                            if let resolvedLocation = resolvedLocation {
+                                favoritesManager.addFavorite(resolvedLocation)
+                            }
                         }
                         
                         if showFilterBar && !destinationFilter.isEmpty {
                             Button("Als gefilterten Favorit speichern") {
-                                favoritesManager.addFavorite(location, destinationFilter: destinationFilter)
+                                if let resolvedLocation = resolvedLocation {
+                                    favoritesManager.addFavorite(resolvedLocation, destinationFilter: destinationFilter)
+                                }
                             }
                         }
                         
-                        if favoritesManager.isFavorite(location) {
+                        if let resolvedLocation = resolvedLocation, favoritesManager.isFavorite(resolvedLocation) {
                             Divider()
-                            ForEach(favoritesManager.getFavorites(for: location)) { favorite in
+                            ForEach(favoritesManager.getFavorites(for: resolvedLocation)) { favorite in
                                 Button("Entfernen: \(favorite.displayName)") {
                                     favoritesManager.removeFavorite(favorite)
                                 }
                             }
                         }
                     } label: {
-                        Image(systemName: favoritesManager.isFavorite(location) ? "star.fill" : "star")
-                            .foregroundColor(favoritesManager.isFavorite(location) ? .orange : .primary)
+                        Image(systemName: (resolvedLocation != nil && favoritesManager.isFavorite(resolvedLocation!)) ? "star.fill" : "star")
+                            .foregroundColor((resolvedLocation != nil && favoritesManager.isFavorite(resolvedLocation!)) ? .orange : .primary)
                     }
                     
                     // Filter Button with Active Indicator
@@ -214,7 +268,7 @@ struct DepartureDetailView: View {
                     
                     // Refresh Button
                     Button {
-                        mvvService.loadDepartures(for: location)
+                        mvvService.loadDepartures(locationId: locationId)
                     } label: {
                         Image(systemName: "arrow.clockwise")
                     }
@@ -343,9 +397,9 @@ struct DepartureRowView: View {
             VStack(alignment: .trailing, spacing: 3) {
                 Text(formattedDepartureTime)
                     .font(.system(size: 18, weight: .semibold, design: .monospaced))
-                    .foregroundColor(isDelayed ? .orange : .primary)
+                    .foregroundColor(shouldShowOrange ? .orange : .primary)
                 
-                HStack(spacing: 6) {
+                HStack(spacing: 4) {
                     if isRealtime {
                         HStack(spacing: 3) {
                             Circle()
@@ -359,15 +413,9 @@ struct DepartureRowView: View {
                     
                     if let delayText = delayDisplay {
                         Text(delayText)
-                            .font(.caption)
+                            .font(.caption2)
                             .fontWeight(.medium)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(.orange)
-                            )
+                            .foregroundColor(.orange)
                     }
                 }
             }
@@ -383,11 +431,29 @@ struct DepartureRowView: View {
         }
         
         switch productClass {
-        case 1: return Color(red: 0.0, green: 0.6, blue: 0.0)     // S-Bahn: MVG Grün
+        case 1: return sBahnLineColor                              // S-Bahn: Spezifische Linienfarben
         case 2: return uBahnLineColor                              // U-Bahn: Spezifische Linienfarben
         case 4: return Color(red: 0.8, green: 0.0, blue: 0.0)     // Tram: MVG Rot
         case 5: return Color(red: 0.6, green: 0.0, blue: 0.8)     // Bus: MVG Lila
         default: return Color(red: 0.6, green: 0.6, blue: 0.6)    // Fallback Grau
+        }
+    }
+    
+    private var sBahnLineColor: Color {
+        guard let lineNumber = departure.transportation?.number else {
+            return Color(red: 22/255, green: 192/255, blue: 233/255) // Standard S-Bahn (S1)
+        }
+        
+        switch lineNumber {
+        case "S1": return Color(red: 22/255, green: 192/255, blue: 233/255)     // Hellblau
+        case "S2": return Color(red: 113/255, green: 191/255, blue: 68/255)     // Grün
+        case "S3": return Color(red: 123/255, green: 16/255, blue: 125/255)     // Lila
+        case "S4": return Color(red: 238/255, green: 28/255, blue: 37/255)      // Rot
+        case "S6": return Color(red: 0/255, green: 138/255, blue: 81/255)       // Dunkelgrün
+        case "S7": return Color(red: 150/255, green: 56/255, blue: 51/255)      // Dunkelrot
+        case "S8": return Color(red: 255/255, green: 203/255, blue: 6/255)      // Gelb
+        case "S20": return Color(red: 240/255, green: 90/255, blue: 115/255)    // Pink
+        default: return Color(red: 22/255, green: 192/255, blue: 233/255)       // Standard S-Bahn (S1)
         }
     }
     
@@ -422,7 +488,24 @@ struct DepartureRowView: View {
               let estimated = departure.departureTimeEstimated else {
             return false
         }
-        return planned != estimated
+        // Zeige orange nur bei positiver Verspätung (Zug ist später als geplant)
+        guard let plannedDate = Date.parseISO8601(planned),
+              let estimatedDate = Date.parseISO8601(estimated) else {
+            return false
+        }
+        return estimatedDate > plannedDate
+    }
+    
+    private var shouldShowOrange: Bool {
+        // Zeige orange nur wenn Abfahrt in 1 Minute oder weniger stattfindet
+        // Verwende die geplante Zeit für die Berechnung, nicht die geschätzte Zeit
+        let timeString = departure.departureTimePlanned ?? departure.departureTimeEstimated ?? ""
+        guard let departureDate = Date.parseISO8601(timeString) else {
+            return false
+        }
+        
+        let minutesFromNow = departureDate.minutesFromNow()
+        return minutesFromNow <= 1
     }
     
     private var formattedTimes: (timeDisplay: String, delayDisplay: String?) {
@@ -452,6 +535,26 @@ struct DepartureRowView: View {
         let difference = estimated.timeIntervalSince(planned)
         let minutes = Int(difference / 60)
         return minutes > 0 ? minutes : nil
+    }
+}
+
+#Preview {
+    NavigationView {
+        DepartureDetailView(
+            locationId: "de:09162:10",
+            locationName: "Pasing",
+            initialFilter: nil
+        )
+    }
+}
+
+#Preview("With Filter") {
+    NavigationView {
+        DepartureDetailView(
+            locationId: "de:09162:10",
+            locationName: "Pasing",
+            initialFilter: "Marienplatz"
+        )
     }
 }
 

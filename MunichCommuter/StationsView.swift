@@ -85,7 +85,7 @@ struct StationsView: View {
             } else {
                 // Results List
                 List(mvvService.locations) { location in
-                    NavigationLink(destination: DepartureDetailView(location: location)) {
+                    NavigationLink(destination: DepartureDetailView(locationId: location.id, locationName: location.disassembledName ?? location.name)) {
                         LocationRowView(location: location)
                     }
                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))

@@ -35,7 +35,8 @@ struct FavoritesView: View {
                 List {
                     ForEach(favoritesManager.favorites) { favorite in
                         NavigationLink(destination: DepartureDetailView(
-                            location: favorite.location, 
+                            locationId: favorite.location.id,
+                            locationName: favorite.location.disassembledName ?? favorite.location.name,
                             initialFilter: favorite.destinationFilter
                         )) {
                             FilteredFavoriteRowView(favorite: favorite)

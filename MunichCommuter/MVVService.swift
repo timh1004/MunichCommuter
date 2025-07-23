@@ -46,6 +46,9 @@ class MVVService: ObservableObject {
             return
         }
         
+        print("🌐 Stop Finder API URL: \(url.absoluteString)")
+        print("   Search term: '\(name)'")
+        
         URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
             DispatchQueue.main.async {
                 self?.isLoading = false
@@ -85,6 +88,10 @@ class MVVService: ObservableObject {
             }
             return
         }
+        loadDepartures(locationId: locationId)
+    }
+    
+    func loadDepartures(locationId: String) {
         
         print("🚀 Departure API: Location ID extracted: \(locationId)")
         
@@ -129,6 +136,7 @@ class MVVService: ObservableObject {
         }
         
         print("🌐 Departure API URL: \(url.absoluteString)")
+        print("   Location ID: '\(locationId)'")
         
         URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
             DispatchQueue.main.async { [weak self] in

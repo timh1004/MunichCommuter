@@ -171,33 +171,29 @@ struct TripHeaderView: View {
                     
                     Text(formattedDepartureTime)
                         .font(.system(size: 24, weight: .semibold, design: .monospaced))
-                        .foregroundColor(isDelayed ? .orange : .primary)
+                        .foregroundColor(shouldShowOrange ? .orange : .primary)
                 }
                 
                 Spacer()
                 
                 VStack(alignment: .trailing, spacing: 4) {
-                    if let delayText = delayDisplay {
-                        Text(delayText)
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(.orange)
-                            )
-                    }
-                    
-                    if departure.isRealtimeControlled == true {
-                        HStack(spacing: 4) {
-                            Circle()
-                                .fill(.green)
-                                .frame(width: 8, height: 8)
-                            Text("Live-Daten")
-                                .font(.caption)
-                                .foregroundColor(.green)
+                    HStack(spacing: 4) {
+                        if departure.isRealtimeControlled == true {
+                            HStack(spacing: 3) {
+                                Circle()
+                                    .fill(.green)
+                                    .frame(width: 6, height: 6)
+                                Text("Live")
+                                    .font(.caption2)
+                                    .foregroundColor(.green)
+                            }
+                        }
+                        
+                        if let delayText = delayDisplay {
+                            Text(delayText)
+                                .font(.caption2)
+                                .fontWeight(.medium)
+                                .foregroundColor(.orange)
                         }
                     }
                 }
@@ -214,11 +210,29 @@ struct TripHeaderView: View {
         }
         
         switch productClass {
-        case 1: return Color(red: 0.0, green: 0.6, blue: 0.0)     // S-Bahn
-        case 2: return uBahnLineColor                              // U-Bahn
+        case 1: return sBahnLineColor                              // S-Bahn: Spezifische Linienfarben
+        case 2: return uBahnLineColor                              // U-Bahn: Spezifische Linienfarben
         case 4: return Color(red: 0.8, green: 0.0, blue: 0.0)     // Tram
         case 5: return Color(red: 0.6, green: 0.0, blue: 0.8)     // Bus
         default: return Color(red: 0.6, green: 0.6, blue: 0.6)
+        }
+    }
+    
+    private var sBahnLineColor: Color {
+        guard let lineNumber = departure.transportation?.number else {
+            return Color(red: 22/255, green: 192/255, blue: 233/255) // Standard S-Bahn (S1)
+        }
+        
+        switch lineNumber {
+        case "S1": return Color(red: 22/255, green: 192/255, blue: 233/255)     // Hellblau
+        case "S2": return Color(red: 113/255, green: 191/255, blue: 68/255)     // Grün
+        case "S3": return Color(red: 123/255, green: 16/255, blue: 125/255)     // Lila
+        case "S4": return Color(red: 238/255, green: 28/255, blue: 37/255)      // Rot
+        case "S6": return Color(red: 0/255, green: 138/255, blue: 81/255)       // Dunkelgrün
+        case "S7": return Color(red: 150/255, green: 56/255, blue: 51/255)      // Dunkelrot
+        case "S8": return Color(red: 255/255, green: 203/255, blue: 6/255)      // Gelb
+        case "S20": return Color(red: 240/255, green: 90/255, blue: 115/255)    // Pink
+        default: return Color(red: 22/255, green: 192/255, blue: 233/255)       // Standard S-Bahn (S1)
         }
     }
     
@@ -245,7 +259,24 @@ struct TripHeaderView: View {
               let estimated = departure.departureTimeEstimated else {
             return false
         }
-        return planned != estimated
+        // Zeige orange nur bei positiver Verspätung (Zug ist später als geplant)
+        guard let plannedDate = Date.parseISO8601(planned),
+              let estimatedDate = Date.parseISO8601(estimated) else {
+            return false
+        }
+        return estimatedDate > plannedDate
+    }
+    
+    private var shouldShowOrange: Bool {
+        // Zeige orange nur wenn Abfahrt in 1 Minute oder weniger stattfindet
+        // Verwende die geplante Zeit für die Berechnung, nicht die geschätzte Zeit
+        let timeString = departure.departureTimePlanned ?? departure.departureTimeEstimated ?? ""
+        guard let departureDate = Date.parseISO8601(timeString) else {
+            return false
+        }
+        
+        let minutesFromNow = departureDate.minutesFromNow()
+        return minutesFromNow <= 1
     }
     
     private var formattedTimes: (timeDisplay: String, delayDisplay: String?) {

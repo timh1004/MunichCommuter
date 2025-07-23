@@ -19,13 +19,20 @@ struct DepartureTimeFormatter {
         includeDelay: Bool = true
     ) -> (timeDisplay: String, delayDisplay: String?) {
         
-        let timeString = estimatedTime ?? plannedTime ?? ""
+        // Verwende die geschätzte Zeit für die Anzeige, aber berechne Minuten basierend auf der geplanten Zeit
+        let displayTimeString = estimatedTime ?? plannedTime ?? ""
         
-        guard let departureDate = Date.parseISO8601(timeString) else {
+        guard let displayDate = Date.parseISO8601(displayTimeString) else {
             return ("--:--", nil)
         }
         
-        let minutesFromNow = departureDate.minutesFromNow()
+        // Berechne Minuten basierend auf der geplanten Zeit (ohne Verspätung)
+        let plannedTimeString = plannedTime ?? estimatedTime ?? ""
+        guard let plannedDate = Date.parseISO8601(plannedTimeString) else {
+            return ("--:--", nil)
+        }
+        
+        let minutesFromNow = plannedDate.minutesFromNow()
         
         // Berechne Verspätung falls verfügbar
         var delayMinutes: Int? = nil
@@ -37,6 +44,7 @@ struct DepartureTimeFormatter {
             
             let difference = estimated.timeIntervalSince(planned)
             let delay = Int(difference / 60)
+            // Zeige Verspätung nur wenn sie positiv ist (Zug ist später als geplant)
             if delay > 0 {
                 delayMinutes = delay
             }
@@ -52,15 +60,15 @@ struct DepartureTimeFormatter {
             // Abfahrt ist in den nächsten 20 Minuten
             timeDisplay = "\(minutesFromNow) Min"
         } else {
-            // Abfahrt ist später - zeige Uhrzeit
+            // Abfahrt ist später - zeige Uhrzeit der geschätzten Zeit
             let formatter = DateFormatter()
             formatter.timeStyle = .short
             formatter.dateStyle = .none
-            timeDisplay = formatter.string(from: departureDate)
+            timeDisplay = formatter.string(from: displayDate)
         }
         
         // Formatiere Verspätungsanzeige
-        let delayDisplay = delayMinutes.map { "+\($0) Min" }
+        let delayDisplay = delayMinutes.map { "+\($0)" }
         
         return (timeDisplay, delayDisplay)
     }
