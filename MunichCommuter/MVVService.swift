@@ -131,6 +131,10 @@ class MVVService: ObservableObject {
         print("   Coordinate: '\(coordinate)'")
         
         URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+            // Debug the HTTP response
+            if let httpResponse = response as? HTTPURLResponse {
+                print("📡 HTTP Status Code: \(httpResponse.statusCode)")
+            }
             DispatchQueue.main.async {
                 self?.isLoading = false
                 
