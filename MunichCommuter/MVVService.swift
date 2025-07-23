@@ -218,9 +218,41 @@ class MVVService: ObservableObject {
                 
                 do {
                     let mvvResponse = try JSONDecoder().decode(MVVResponse.self, from: data)
-                    let locations = mvvResponse.locations ?? []
-                    print("✅ Found \(locations.count) nearby locations")
-                    self?.locations = locations
+                    let rawLocations = mvvResponse.locations ?? []
+                    
+                    // Extract assigned stops and convert them to Location objects
+                    var nearbyStops: [Location] = []
+                    
+                    for location in rawLocations {
+                        if let assignedStops = location.assignedStops {
+                            for stop in assignedStops {
+                                // Convert AssignedStop to Location for consistent handling
+                                let stopLocation = Location(
+                                    id: stop.id,
+                                    type: stop.type,
+                                    name: stop.name,
+                                    disassembledName: stop.name, // Use name as disassembledName for stops
+                                    coord: stop.coord,
+                                    parent: stop.parent,
+                                    assignedStops: nil,
+                                    properties: stop.properties,
+                                    distance: stop.distance,
+                                    duration: stop.duration
+                                )
+                                nearbyStops.append(stopLocation)
+                            }
+                        }
+                    }
+                    
+                    print("✅ Extracted \(nearbyStops.count) nearby stops from \(rawLocations.count) locations")
+                    
+                    // Debug: Print the first few stops
+                    for (index, stop) in nearbyStops.prefix(3).enumerated() {
+                        let distanceText = stop.distance != nil ? "\(stop.distance!)m" : "unknown"
+                        print("   Stop \(index + 1): \(stop.name ?? "unknown") (\(distanceText))")
+                    }
+                    
+                    self?.locations = nearbyStops
                 } catch {
                     self?.errorMessage = "Fehler beim Verarbeiten der Daten: \(error.localizedDescription)"
                     print("❌ JSON Decoding Error: \(error)")

@@ -56,6 +56,12 @@ class LocationManager: NSObject, ObservableObject {
         return userLocation.distance(from: targetLocation)
     }
     
+    // Helper to get distance from AssignedStop distance field (in meters)
+    func distanceFromAssignedStop(_ assignedStopDistance: Int?) -> CLLocationDistance? {
+        guard let distance = assignedStopDistance else { return nil }
+        return CLLocationDistance(distance)
+    }
+    
     func formattedDistance(_ distance: CLLocationDistance) -> String {
         if distance < 1000 {
             return "\(Int(distance)) m"

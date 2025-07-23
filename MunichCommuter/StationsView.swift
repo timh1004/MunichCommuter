@@ -9,10 +9,24 @@ struct StationsView: View {
     @State private var isShowingNearbyStations = false
     
     private var sortedLocations: [Location] {
-        if isShowingNearbyStations && locationManager.location != nil {
+        if isShowingNearbyStations {
             return mvvService.locations.sorted { location1, location2 in
-                let distance1 = locationManager.distanceFrom(location1.coord ?? []) ?? Double.infinity
-                let distance2 = locationManager.distanceFrom(location2.coord ?? []) ?? Double.infinity
+                // Use API distance if available, otherwise calculate distance
+                let distance1: Double
+                let distance2: Double
+                
+                if let apiDist1 = location1.distance {
+                    distance1 = Double(apiDist1)
+                } else {
+                    distance1 = locationManager.distanceFrom(location1.coord ?? []) ?? Double.infinity
+                }
+                
+                if let apiDist2 = location2.distance {
+                    distance2 = Double(apiDist2)
+                } else {
+                    distance2 = locationManager.distanceFrom(location2.coord ?? []) ?? Double.infinity
+                }
+                
                 return distance1 < distance2
             }
         } else {
@@ -272,10 +286,18 @@ struct LocationRowView: View {
             Spacer()
             
             // Distance Display
-            if showDistance, let distance = locationManager.distanceFrom(location.coord ?? []) {
-                Text(locationManager.formattedDistance(distance))
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.secondary)
+            if showDistance {
+                // Use API distance if available (for nearby stops), otherwise calculate distance
+                if let apiDistance = location.distance {
+                    let distance = CLLocationDistance(apiDistance)
+                    Text(locationManager.formattedDistance(distance))
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.secondary)
+                } else if let calculatedDistance = locationManager.distanceFrom(location.coord ?? []) {
+                    Text(locationManager.formattedDistance(calculatedDistance))
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
             }
         }
         .padding(.vertical, 12)
