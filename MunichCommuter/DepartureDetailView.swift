@@ -63,6 +63,7 @@ struct DepartureDetailView: View {
     let locationId: String
     let locationName: String?
     let initialFilter: String?
+    let initialTransportTypes: [String]?
     
     @StateObject private var mvvService = MVVService()
     @StateObject private var favoritesManager = FavoritesManager.shared
@@ -72,11 +73,13 @@ struct DepartureDetailView: View {
     @State private var showDestinationPicker = false
     @State private var resolvedLocation: Location?
     @State private var selectedTransportTypes: Set<TransportType> = Set(TransportType.allCases)
+    @State private var hasInitialized = false
     
     init(locationId: String, locationName: String? = nil, initialFilter: String? = nil) {
         self.locationId = locationId
         self.locationName = locationName
         self.initialFilter = initialFilter
+        self.initialTransportTypes = nil
     }
     
     // Convenience initializer for backward compatibility
@@ -84,6 +87,7 @@ struct DepartureDetailView: View {
         self.locationId = location.id
         self.locationName = location.disassembledName ?? location.name
         self.initialFilter = initialFilter
+        self.initialTransportTypes = nil
     }
     
     // Initializer for favorites with transport type filters
@@ -91,21 +95,26 @@ struct DepartureDetailView: View {
         self.locationId = locationId
         self.locationName = locationName
         self.initialFilter = initialFilter
-        
-        // Initialize selectedTransportTypes properly
-        if let transportTypes = initialTransportTypes, !transportTypes.isEmpty {
-            let validTypes = Set(transportTypes.compactMap { TransportType(rawValue: $0) })
-            if !validTypes.isEmpty {
-                self.selectedTransportTypes = validTypes
-                print("🚇 Loaded transport types: \(validTypes.map { $0.shortName })")
-            } else {
-                self.selectedTransportTypes = Set(TransportType.allCases)
-                print("⚠️ No valid transport types found, using all types")
-            }
-        } else {
-            self.selectedTransportTypes = Set(TransportType.allCases)
-            print("📝 No transport types specified, using all types")
-        }
+        self.initialTransportTypes = initialTransportTypes
+    }
+    
+    // Create a fallback location for immediate favorite functionality
+    private var fallbackLocation: Location {
+        return Location(
+            id: locationId,
+            type: "stop",
+            name: locationName,
+            disassembledName: locationName,
+            coord: nil,
+            parent: nil,
+            assignedStops: nil,
+            properties: nil
+        )
+    }
+    
+    // Get the best available location (resolved or fallback)
+    private var bestAvailableLocation: Location {
+        return resolvedLocation ?? fallbackLocation
     }
     
     // Use the resolved location name from API or fallback to provided name
@@ -254,8 +263,28 @@ struct DepartureDetailView: View {
         .navigationTitle(filterActiveTitle)
         .navigationBarTitleDisplayMode(.large)
         .onAppear {
-            // Reset state to prevent conflicts between different instances
-            resetState()
+            // Only initialize once to prevent multiple calls
+            guard !hasInitialized else { return }
+            hasInitialized = true
+            
+            // Reset other state to prevent conflicts between different instances
+            showFilterBar = false
+            showDestinationPicker = false
+            
+            // Handle initial transport types
+            if let transportTypes = initialTransportTypes, !transportTypes.isEmpty {
+                let validTypes = Set(transportTypes.compactMap { TransportType(rawValue: $0) })
+                if !validTypes.isEmpty {
+                    selectedTransportTypes = validTypes
+                } else {
+                    selectedTransportTypes = Set(TransportType.allCases)
+                }
+            }
+            
+            // Only reset destination filter if no initial filter is provided
+            if initialFilter?.isEmpty != false {
+                destinationFilter = ""
+            }
             
             mvvService.loadDepartures(locationId: locationId)
             
@@ -265,19 +294,15 @@ struct DepartureDetailView: View {
             if let filter = initialFilter, !filter.isEmpty {
                 destinationFilter = filter
                 hasInitialFilters = true
-                print("🎯 Applied destination filter: \(filter)")
             }
             
-            // Check if transport types are filtered (don't override if already set by initializer)
+            // Check if transport types are filtered
             if selectedTransportTypes.count < TransportType.allCases.count {
                 hasInitialFilters = true
-                print("🚇 Transport types filtered: \(selectedTransportTypes.map { $0.shortName })")
             }
             
-            if hasInitialFilters {
-                showFilterBar = true
-                print("📋 Filter bar activated")
-            }
+            // Note: Filter bar stays closed even with active filters from favorites
+            // User can manually open it if needed
         }
         .onDisappear {
             // Clean up when view disappears to prevent state pollution
@@ -334,37 +359,33 @@ struct DepartureDetailView: View {
                     // Favorite Button with Filter Support
                     Menu {
                         Button("Als Favorit speichern") {
-                            if let resolvedLocation = resolvedLocation {
-                                favoritesManager.addFavorite(resolvedLocation)
-                            }
+                            favoritesManager.addFavorite(bestAvailableLocation)
                         }
                         
                         if hasActiveFilters {
                             Button("Als gefilterten Favorit speichern") {
-                                if let resolvedLocation = resolvedLocation {
-                                    // Only save transport filters if not all types are selected
-                                    let transportFilters: [String]?
-                                    if selectedTransportTypes.count < TransportType.allCases.count {
-                                        transportFilters = Array(selectedTransportTypes).map { $0.rawValue }
-                                    } else {
-                                        transportFilters = nil
-                                    }
-                                    
-                                    // Only save destination filter if not empty
-                                    let destinationFilterToSave = destinationFilter.isEmpty ? nil : destinationFilter
-                                    
-                                    favoritesManager.addFavorite(
-                                        resolvedLocation, 
-                                        destinationFilter: destinationFilterToSave,
-                                        transportTypeFilters: transportFilters
-                                    )
+                                // Only save transport filters if not all types are selected
+                                let transportFilters: [String]?
+                                if selectedTransportTypes.count < TransportType.allCases.count {
+                                    transportFilters = Array(selectedTransportTypes).map { $0.rawValue }
+                                } else {
+                                    transportFilters = nil
                                 }
+                                
+                                // Only save destination filter if not empty
+                                let destinationFilterToSave = destinationFilter.isEmpty ? nil : destinationFilter
+                                
+                                favoritesManager.addFavorite(
+                                    bestAvailableLocation, 
+                                    destinationFilter: destinationFilterToSave,
+                                    transportTypeFilters: transportFilters
+                                )
                             }
                         }
                         
-                        if let resolvedLocation = resolvedLocation, favoritesManager.isFavorite(resolvedLocation) {
+                        if favoritesManager.isFavorite(bestAvailableLocation) {
                             Divider()
-                            ForEach(favoritesManager.getFavorites(for: resolvedLocation)) { favorite in
+                            ForEach(favoritesManager.getFavorites(for: bestAvailableLocation)) { favorite in
                                 Button("Entfernen: \(favorite.displayName)") {
                                     favoritesManager.removeFavorite(favorite)
                                 }
@@ -379,9 +400,12 @@ struct DepartureDetailView: View {
                     Button {
                         showFilterBar.toggle()
                         if !showFilterBar {
-                            // Reset filters when closing filter bar
-                            destinationFilter = ""
-                            selectedTransportTypes = Set(TransportType.allCases)
+                            // Only reset filters if no initial filters were provided
+                            // This preserves filters from favorites
+                            if initialFilter == nil || initialFilter?.isEmpty == true {
+                                destinationFilter = ""
+                            }
+                            // Don't reset transport types as they might come from a favorite
                         }
                     } label: {
                         ZStack {
@@ -440,8 +464,9 @@ struct DepartureDetailView: View {
     }
     
     private var displayedDepartures: [StopEvent] {
-        // Only show filtered departures if filter bar is open AND there are active filters
-        if showFilterBar && hasActiveFilters {
+        // Show filtered departures if there are active filters (regardless of filter bar state)
+        // This ensures filters from favorites work even when filter bar is closed
+        if hasActiveFilters {
             return filteredDepartures
         } else {
             return mvvService.departures
@@ -537,8 +562,6 @@ struct DepartureDetailView: View {
     }
     
     private var isCurrentFavorite: Bool {
-        guard let resolvedLocation = resolvedLocation else { return false }
-        
         if hasActiveFilters {
             // Check if current filter combination is favorited
             let destinationFilterToCheck = destinationFilter.isEmpty ? nil : destinationFilter
@@ -546,13 +569,13 @@ struct DepartureDetailView: View {
                 Array(selectedTransportTypes).map { $0.rawValue } : nil
             
             return favoritesManager.isFavorite(
-                resolvedLocation,
+                bestAvailableLocation,
                 destinationFilter: destinationFilterToCheck,
                 transportTypeFilters: transportFiltersToCheck
             )
         } else {
             // Check if location is favorited without filters
-            return favoritesManager.isFavorite(resolvedLocation)
+            return favoritesManager.isFavorite(bestAvailableLocation)
         }
     }
     
@@ -565,14 +588,12 @@ struct DepartureDetailView: View {
     
     // MARK: - State Management
     private func resetState() {
-        // Reset all state variables to prevent conflicts between different instances
+        // Reset state variables but preserve filter settings
         destinationFilter = ""
         showFilterBar = false
         showDestinationPicker = false
-        resolvedLocation = nil
-        
-        // Don't reset selectedTransportTypes here - they are set by the initializer
-        // and should not be overridden by state conflicts
+        // Don't reset resolvedLocation - we use bestAvailableLocation for immediate functionality
+        // Don't reset selectedTransportTypes - they are set by the initializer
         
         print("🔄 State reset for location: \(locationId)")
     }
