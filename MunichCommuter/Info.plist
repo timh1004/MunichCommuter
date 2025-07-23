@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
+<dict>
+	<key>NSAppTransportSecurity</key>
 	<dict>
-		<key>UIBackgroundModes</key>
-		<array>
-			<string>remote-notification</string>
-		</array>
-		<key>NSAppTransportSecurity</key>
+		<key>NSExceptionDomains</key>
 		<dict>
-			<key>NSExceptionDomains</key>
+			<key>def-efa-mvv02.defas-fgi.de</key>
 			<dict>
-				<key>def-efa-mvv02.defas-fgi.de</key>
-				<dict>
-					<key>NSExceptionAllowsInsecureHTTPLoads</key>
-					<true/>
-					<key>NSExceptionMinimumTLSVersion</key>
-					<string>TLSv1.0</string>
-				</dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.0</string>
 			</dict>
 		</dict>
 	</dict>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+</dict>
 </plist>
