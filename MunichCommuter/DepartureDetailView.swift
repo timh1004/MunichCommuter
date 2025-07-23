@@ -8,6 +8,57 @@
 import SwiftUI
 import Foundation
 
+// MARK: - Transport Type Enumeration
+enum TransportType: String, CaseIterable {
+    case sBahn = "S-Bahn"
+    case uBahn = "U-Bahn"
+    case tram = "Tram"
+    case stadtBus = "StadtBus"
+    case regionalBus = "RegionalBus"
+    case regionalBahn = "Regionalbahn"
+    case regionalExpress = "Regional-Express"
+    case ice = "ICE/IC/EC"
+    
+    var icon: String {
+        switch self {
+        case .sBahn: return "tram.fill"
+        case .uBahn: return "tram.fill"
+        case .tram: return "tram.fill"
+        case .stadtBus: return "bus.fill"
+        case .regionalBus: return "bus.fill"
+        case .regionalBahn: return "train.side.front.car"
+        case .regionalExpress: return "train.side.front.car"
+        case .ice: return "train.side.front.car"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .sBahn: return Color(red: 0/255, green: 142/255, blue: 78/255)        // MVV S-Bahn #008E4E
+        case .uBahn: return Color(red: 0/255, green: 78/255, blue: 143/255)        // MVV U-Bahn #004E8F
+        case .tram: return Color(red: 217/255, green: 26/255, blue: 26/255)        // MVV Tram #D91A1A
+        case .stadtBus: return Color(red: 0/255, green: 87/255, blue: 106/255)     // MVV Bus #00576A
+        case .regionalBus: return Color(red: 0/255, green: 87/255, blue: 106/255)  // MVV Bus #00576A
+        case .regionalBahn: return Color(red: 50/255, green: 54/255, blue: 127/255) // MVV Regio #32367F
+        case .regionalExpress: return Color(red: 50/255, green: 54/255, blue: 127/255) // MVV Regio #32367F
+        case .ice: return Color(red: 50/255, green: 54/255, blue: 127/255)         // MVV Regio #32367F
+        }
+    }
+    
+    var shortName: String {
+        switch self {
+        case .sBahn: return "S-Bahn"
+        case .uBahn: return "U-Bahn"
+        case .tram: return "Tram"
+        case .stadtBus: return "StadtBus"
+        case .regionalBus: return "RegBus"
+        case .regionalBahn: return "RB"
+        case .regionalExpress: return "RE"
+        case .ice: return "ICE/IC"
+        }
+    }
+}
+
 struct DepartureDetailView: View {
     let locationId: String
     let locationName: String?
@@ -20,6 +71,7 @@ struct DepartureDetailView: View {
     @State private var showFilterBar = false
     @State private var showDestinationPicker = false
     @State private var resolvedLocation: Location?
+    @State private var selectedTransportTypes: Set<TransportType> = Set(TransportType.allCases)
     
     init(locationId: String, locationName: String? = nil, initialFilter: String? = nil) {
         self.locationId = locationId
@@ -32,6 +84,28 @@ struct DepartureDetailView: View {
         self.locationId = location.id
         self.locationName = location.disassembledName ?? location.name
         self.initialFilter = initialFilter
+    }
+    
+    // Initializer for favorites with transport type filters
+    init(locationId: String, locationName: String? = nil, initialFilter: String? = nil, initialTransportTypes: [String]? = nil) {
+        self.locationId = locationId
+        self.locationName = locationName
+        self.initialFilter = initialFilter
+        
+        // Initialize selectedTransportTypes properly
+        if let transportTypes = initialTransportTypes, !transportTypes.isEmpty {
+            let validTypes = Set(transportTypes.compactMap { TransportType(rawValue: $0) })
+            if !validTypes.isEmpty {
+                self.selectedTransportTypes = validTypes
+                print("🚇 Loaded transport types: \(validTypes.map { $0.shortName })")
+            } else {
+                self.selectedTransportTypes = Set(TransportType.allCases)
+                print("⚠️ No valid transport types found, using all types")
+            }
+        } else {
+            self.selectedTransportTypes = Set(TransportType.allCases)
+            print("📝 No transport types specified, using all types")
+        }
     }
     
     // Use the resolved location name from API or fallback to provided name
@@ -47,6 +121,25 @@ struct DepartureDetailView: View {
             // Smart Filter Bar
             if showFilterBar {
                 VStack(spacing: 8) {
+                    // Transport Type Filter Tabs
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(TransportType.allCases, id: \.self) { transportType in
+                                TransportTypeFilterButton(
+                                    transportType: transportType,
+                                    isSelected: selectedTransportTypes.contains(transportType),
+                                    isAllSelected: selectedTransportTypes.count == TransportType.allCases.count,
+                                    action: {
+                                        handleTransportTypeSelection(transportType)
+                                    }
+                                )
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                    }
+                    .padding(.vertical, 8)
+                    
+                    // Destination Filter
                     HStack {
                         Image(systemName: "line.horizontal.3.decrease.circle")
                             .foregroundColor(.blue)
@@ -133,12 +226,12 @@ struct DepartureDetailView: View {
             } else if displayedDepartures.isEmpty {
                 Spacer()
                 VStack {
-                    Image(systemName: showFilterBar && !destinationFilter.isEmpty ? "line.horizontal.3.decrease.circle" : "tram")
+                    Image(systemName: hasActiveFilters ? "line.horizontal.3.decrease.circle" : "tram")
                         .font(.largeTitle)
                         .foregroundColor(.gray)
-                    Text(showFilterBar && !destinationFilter.isEmpty ? "Keine gefilterten Abfahrten" : "Keine Abfahrten")
+                    Text(hasActiveFilters ? "Keine gefilterten Abfahrten" : "Keine Abfahrten")
                         .font(.headline)
-                    Text(showFilterBar && !destinationFilter.isEmpty ? "Kein Zug/Bus fährt nach '\(destinationFilter)'" : "Aktuell sind keine Abfahrten verfügbar")
+                    Text(hasActiveFilters ? getFilterMessage() : "Aktuell sind keine Abfahrten verfügbar")
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
@@ -161,13 +254,34 @@ struct DepartureDetailView: View {
         .navigationTitle(filterActiveTitle)
         .navigationBarTitleDisplayMode(.large)
         .onAppear {
+            // Reset state to prevent conflicts between different instances
+            resetState()
+            
             mvvService.loadDepartures(locationId: locationId)
             
-            // Apply initial filter if provided
+            // Apply initial filters if provided
+            var hasInitialFilters = false
+            
             if let filter = initialFilter, !filter.isEmpty {
                 destinationFilter = filter
-                showFilterBar = true
+                hasInitialFilters = true
+                print("🎯 Applied destination filter: \(filter)")
             }
+            
+            // Check if transport types are filtered (don't override if already set by initializer)
+            if selectedTransportTypes.count < TransportType.allCases.count {
+                hasInitialFilters = true
+                print("🚇 Transport types filtered: \(selectedTransportTypes.map { $0.shortName })")
+            }
+            
+            if hasInitialFilters {
+                showFilterBar = true
+                print("📋 Filter bar activated")
+            }
+        }
+        .onDisappear {
+            // Clean up when view disappears to prevent state pollution
+            print("👋 DepartureDetailView disappeared for location: \(locationId)")
         }
         .onReceive(mvvService.$departures) { _ in
             // Extract location information from API response
@@ -194,8 +308,9 @@ struct DepartureDetailView: View {
                     locationProperties = nil
                 }
                 
+                // Use the original locationId to maintain consistency
                 resolvedLocation = Location(
-                    id: firstLocation.id ?? locationId,
+                    id: locationId,
                     type: firstLocation.type,
                     name: firstLocation.name,
                     disassembledName: firstLocation.name,
@@ -224,10 +339,25 @@ struct DepartureDetailView: View {
                             }
                         }
                         
-                        if showFilterBar && !destinationFilter.isEmpty {
+                        if hasActiveFilters {
                             Button("Als gefilterten Favorit speichern") {
                                 if let resolvedLocation = resolvedLocation {
-                                    favoritesManager.addFavorite(resolvedLocation, destinationFilter: destinationFilter)
+                                    // Only save transport filters if not all types are selected
+                                    let transportFilters: [String]?
+                                    if selectedTransportTypes.count < TransportType.allCases.count {
+                                        transportFilters = Array(selectedTransportTypes).map { $0.rawValue }
+                                    } else {
+                                        transportFilters = nil
+                                    }
+                                    
+                                    // Only save destination filter if not empty
+                                    let destinationFilterToSave = destinationFilter.isEmpty ? nil : destinationFilter
+                                    
+                                    favoritesManager.addFavorite(
+                                        resolvedLocation, 
+                                        destinationFilter: destinationFilterToSave,
+                                        transportTypeFilters: transportFilters
+                                    )
                                 }
                             }
                         }
@@ -241,15 +371,17 @@ struct DepartureDetailView: View {
                             }
                         }
                     } label: {
-                        Image(systemName: (resolvedLocation != nil && favoritesManager.isFavorite(resolvedLocation!)) ? "star.fill" : "star")
-                            .foregroundColor((resolvedLocation != nil && favoritesManager.isFavorite(resolvedLocation!)) ? .orange : .primary)
+                        Image(systemName: isCurrentFavorite ? "star.fill" : "star")
+                            .foregroundColor(isCurrentFavorite ? .orange : .primary)
                     }
                     
                     // Filter Button with Active Indicator
                     Button {
                         showFilterBar.toggle()
                         if !showFilterBar {
+                            // Reset filters when closing filter bar
                             destinationFilter = ""
+                            selectedTransportTypes = Set(TransportType.allCases)
                         }
                     } label: {
                         ZStack {
@@ -257,7 +389,7 @@ struct DepartureDetailView: View {
                                 .foregroundColor(showFilterBar ? .blue : .primary)
                             
                             // Active filter indicator
-                            if !destinationFilter.isEmpty {
+                            if hasActiveFilters {
                                 Circle()
                                     .fill(.red)
                                     .frame(width: 8, height: 8)
@@ -279,15 +411,102 @@ struct DepartureDetailView: View {
     
     // MARK: - Filtering Logic
     private var filteredDepartures: [StopEvent] {
-        guard !destinationFilter.isEmpty else { return mvvService.departures }
+        var filtered = mvvService.departures
         
-        return mvvService.departures.filter { departure in
-            hasDestinationInRoute(departure: departure, destination: destinationFilter)
+        // Filter by transport type
+        if selectedTransportTypes.count < TransportType.allCases.count {
+            let beforeCount = filtered.count
+            filtered = filtered.filter { departure in
+                guard let product = departure.transportation?.product?.name else { return false }
+                return selectedTransportTypes.contains { transportType in
+                    matchesTransportType(product: product, transportType: transportType)
+                }
+            }
+            let afterCount = filtered.count
+            print("🚇 Transport filter: \(beforeCount) → \(afterCount) departures")
         }
+        
+        // Filter by destination
+        if !destinationFilter.isEmpty {
+            let beforeCount = filtered.count
+            filtered = filtered.filter { departure in
+                hasDestinationInRoute(departure: departure, destination: destinationFilter)
+            }
+            let afterCount = filtered.count
+            print("🎯 Destination filter: \(beforeCount) → \(afterCount) departures")
+        }
+        
+        return filtered
     }
     
     private var displayedDepartures: [StopEvent] {
-        return showFilterBar && !destinationFilter.isEmpty ? filteredDepartures : mvvService.departures
+        // Only show filtered departures if filter bar is open AND there are active filters
+        if showFilterBar && hasActiveFilters {
+            return filteredDepartures
+        } else {
+            return mvvService.departures
+        }
+    }
+    
+    private func matchesTransportType(product: String, transportType: TransportType) -> Bool {
+        guard !product.isEmpty else { return false }
+        
+        let productLower = product.lowercased()
+        
+        switch transportType {
+        case .sBahn:
+            return productLower.contains("s-bahn") || productLower.contains("sbahn")
+        case .uBahn:
+            return productLower.contains("u-bahn") || productLower.contains("ubahn")
+        case .tram:
+            return productLower.contains("tram") || productLower.contains("straßenbahn")
+        case .stadtBus:
+            return productLower.contains("stadtbus") || (productLower.contains("bus") && !productLower.contains("regional"))
+        case .regionalBus:
+            return productLower.contains("regionalbus") || productLower.contains("regbus")
+        case .regionalBahn:
+            return productLower.contains("regionalbahn") || productLower.contains("rb")
+        case .regionalExpress:
+            return productLower.contains("regional-express") || productLower.contains("re")
+        case .ice:
+            return productLower.contains("ice") || productLower.contains("ic") || productLower.contains("ec")
+        }
+    }
+    
+    private func getFilterMessage() -> String {
+        var messages: [String] = []
+        
+        if !destinationFilter.isEmpty {
+            messages.append("Kein Verkehrsmittel fährt nach '\(destinationFilter)'")
+        }
+        
+        if selectedTransportTypes.count < TransportType.allCases.count {
+            let selectedTypes = selectedTransportTypes.map { $0.shortName }.joined(separator: ", ")
+            messages.append("Keine \(selectedTypes) verfügbar")
+        }
+        
+        return messages.joined(separator: " und ")
+    }
+    
+    private func handleTransportTypeSelection(_ transportType: TransportType) {
+        let allTypesSelected = selectedTransportTypes.count == TransportType.allCases.count
+        let isCurrentlySelected = selectedTransportTypes.contains(transportType)
+        
+        if allTypesSelected && isCurrentlySelected {
+            // Wenn alle ausgewählt sind und ich auf ein ausgewähltes tippe: Nur dieses aktivieren
+            selectedTransportTypes = [transportType]
+        } else if isCurrentlySelected {
+            // Wenn das Verkehrsmittel bereits ausgewählt ist: Deaktivieren
+            selectedTransportTypes.remove(transportType)
+            
+            // Verhindern, dass alle deaktiviert werden - mindestens eines muss ausgewählt bleiben
+            if selectedTransportTypes.isEmpty {
+                selectedTransportTypes = [transportType]
+            }
+        } else {
+            // Wenn das Verkehrsmittel nicht ausgewählt ist: Aktivieren
+            selectedTransportTypes.insert(transportType)
+        }
     }
     
     private func hasDestinationInRoute(departure: StopEvent, destination: String) -> Bool {
@@ -311,11 +530,51 @@ struct DepartureDetailView: View {
     }
     
     // MARK: - Computed Properties
+    private var hasActiveFilters: Bool {
+        let hasDestinationFilter = !destinationFilter.isEmpty
+        let hasTransportFilter = selectedTransportTypes.count < TransportType.allCases.count
+        return hasDestinationFilter || hasTransportFilter
+    }
+    
+    private var isCurrentFavorite: Bool {
+        guard let resolvedLocation = resolvedLocation else { return false }
+        
+        if hasActiveFilters {
+            // Check if current filter combination is favorited
+            let destinationFilterToCheck = destinationFilter.isEmpty ? nil : destinationFilter
+            let transportFiltersToCheck = selectedTransportTypes.count < TransportType.allCases.count ? 
+                Array(selectedTransportTypes).map { $0.rawValue } : nil
+            
+            return favoritesManager.isFavorite(
+                resolvedLocation,
+                destinationFilter: destinationFilterToCheck,
+                transportTypeFilters: transportFiltersToCheck
+            )
+        } else {
+            // Check if location is favorited without filters
+            return favoritesManager.isFavorite(resolvedLocation)
+        }
+    }
+    
     private var filterActiveTitle: String {
         if !destinationFilter.isEmpty {
             return "\(cleanLocationName) → \(destinationFilter)"
         }
         return cleanLocationName
+    }
+    
+    // MARK: - State Management
+    private func resetState() {
+        // Reset all state variables to prevent conflicts between different instances
+        destinationFilter = ""
+        showFilterBar = false
+        showDestinationPicker = false
+        resolvedLocation = nil
+        
+        // Don't reset selectedTransportTypes here - they are set by the initializer
+        // and should not be overridden by state conflicts
+        
+        print("🔄 State reset for location: \(locationId)")
     }
     
     // MARK: - Available Destinations
@@ -339,6 +598,70 @@ struct DepartureDetailView: View {
         }
         
         return Array(destinations).sorted()
+    }
+}
+
+// MARK: - Transport Type Filter Button
+struct TransportTypeFilterButton: View {
+    let transportType: TransportType
+    let isSelected: Bool
+    let isAllSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: transportType.icon)
+                    .font(.system(size: 12, weight: .medium))
+                
+                Text(transportType.shortName)
+                    .font(.system(size: 12, weight: .medium))
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(buttonBackgroundColor)
+            )
+            .foregroundColor(buttonTextColor)
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(buttonBorderColor, lineWidth: 1)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .scaleEffect(isSelected ? 1.05 : 1.0)
+        .animation(.easeInOut(duration: 0.2), value: isSelected)
+    }
+    
+    private var buttonBackgroundColor: Color {
+        if isSelected {
+            return transportType.color
+        } else if isAllSelected {
+            return Color(.systemGray6) // Leicht hervorgehoben wenn alle ausgewählt
+        } else {
+            return Color(.systemGray5)
+        }
+    }
+    
+    private var buttonTextColor: Color {
+        if isSelected {
+            return .white
+        } else if isAllSelected {
+            return .primary // Normale Textfarbe wenn alle ausgewählt
+        } else {
+            return .primary
+        }
+    }
+    
+    private var buttonBorderColor: Color {
+        if isSelected {
+            return transportType.color
+        } else if isAllSelected {
+            return Color(.systemGray3) // Leicht hervorgehobener Rahmen
+        } else {
+            return Color(.systemGray4)
+        }
     }
 }
 

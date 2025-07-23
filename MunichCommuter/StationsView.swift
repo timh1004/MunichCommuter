@@ -16,6 +16,8 @@ struct StationsView: View {
                         .font(.system(size: 16))
                     
                     TextField("Haltestelle suchen...", text: $searchText)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
                         .onChange(of: searchText) { _, newValue in
                             startDebounceTimer(for: newValue)
                         }
@@ -72,14 +74,35 @@ struct StationsView: View {
                 Spacer()
             } else if mvvService.locations.isEmpty {
                 Spacer()
-                VStack {
-                    Image(systemName: "magnifyingglass")
-                        .font(.largeTitle)
-                        .foregroundColor(.gray)
-                    Text("Keine Haltestellen gefunden")
-                        .font(.headline)
-                    Text("Versuchen Sie eine andere Suche")
-                        .foregroundColor(.secondary)
+                VStack(spacing: 16) {
+                    if searchText.isEmpty {
+                        // Initial state - no search performed yet
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 60))
+                            .foregroundColor(.gray.opacity(0.5))
+                        
+                        Text("Haltestelle suchen")
+                            .font(.title2)
+                            .fontWeight(.medium)
+                            .foregroundColor(.primary)
+                        
+                        Text("Geben Sie den Namen einer Haltestelle ein, um Abfahrten zu finden")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
+                    } else {
+                        // Search performed but no results found
+                        Image(systemName: "magnifyingglass")
+                            .font(.largeTitle)
+                            .foregroundColor(.gray)
+                        
+                        Text("Keine Haltestellen gefunden")
+                            .font(.headline)
+                        
+                        Text("Versuchen Sie eine andere Suche")
+                            .foregroundColor(.secondary)
+                    }
                 }
                 Spacer()
             } else {

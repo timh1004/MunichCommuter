@@ -28,13 +28,15 @@ class FavoritesManager: ObservableObject {
     }
     
     @objc private func cloudStoreDidChange(notification: Notification) {
-        DispatchQueue.main.async {
-            self.loadFavorites()
+        DispatchQueue.main.async { [weak self] in
+            self?.loadFavorites()
         }
     }
     
-    func addFavorite(_ location: Location, destinationFilter: String? = nil) {
-        let newFavorite = FilteredFavorite(location: location, destinationFilter: destinationFilter)
+
+    
+    func addFavorite(_ location: Location, destinationFilter: String? = nil, transportTypeFilters: [String]? = nil) {
+        let newFavorite = FilteredFavorite(location: location, destinationFilter: destinationFilter, transportTypeFilters: transportTypeFilters)
         favorites.append(newFavorite)
         saveFavorites()
     }
@@ -45,29 +47,44 @@ class FavoritesManager: ObservableObject {
     }
     
     func removeFavorite(_ location: Location) {
-        // Remove all favorites for this location
-        favorites.removeAll { $0.location.id == location.id }
+        // Remove all favorites for this location using normalized IDs
+        let normalizedLocationId = location.id.normalizedStationId
+        favorites.removeAll { $0.location.id.normalizedStationId == normalizedLocationId }
         saveFavorites()
     }
     
     func isFavorite(_ location: Location) -> Bool {
-        return favorites.contains { $0.location.id == location.id }
+        let normalizedLocationId = location.id.normalizedStationId
+        return favorites.contains { $0.location.id.normalizedStationId == normalizedLocationId }
+    }
+    
+    func isFavorite(_ location: Location, destinationFilter: String? = nil, transportTypeFilters: [String]? = nil) -> Bool {
+        let normalizedLocationId = location.id.normalizedStationId
+        return favorites.contains { 
+            $0.location.id.normalizedStationId == normalizedLocationId && 
+            $0.destinationFilter == destinationFilter &&
+            $0.transportTypeFilters == transportTypeFilters
+        }
     }
     
     func getFavorites(for location: Location) -> [FilteredFavorite] {
-        return favorites.filter { $0.location.id == location.id }
+        let normalizedLocationId = location.id.normalizedStationId
+        return favorites.filter { $0.location.id.normalizedStationId == normalizedLocationId }
     }
     
-    func toggleFavorite(_ location: Location, destinationFilter: String? = nil) {
-        // Check if this specific combination already exists
+    func toggleFavorite(_ location: Location, destinationFilter: String? = nil, transportTypeFilters: [String]? = nil) {
+        // Check if this specific combination already exists using normalized IDs
+        let normalizedLocationId = location.id.normalizedStationId
         let existingFavorite = favorites.first { 
-            $0.location.id == location.id && $0.destinationFilter == destinationFilter 
+            $0.location.id.normalizedStationId == normalizedLocationId && 
+            $0.destinationFilter == destinationFilter &&
+            $0.transportTypeFilters == transportTypeFilters
         }
         
         if let existing = existingFavorite {
             removeFavorite(existing)
         } else {
-            addFavorite(location, destinationFilter: destinationFilter)
+            addFavorite(location, destinationFilter: destinationFilter, transportTypeFilters: transportTypeFilters)
         }
     }
     
@@ -92,7 +109,9 @@ class FavoritesManager: ObservableObject {
             let loadedFavorites = try JSONDecoder().decode([FilteredFavorite].self, from: data)
             
             // Only update if different to avoid unnecessary UI updates
-            if loadedFavorites.map(\.id) != favorites.map(\.id) {
+            let currentIds = Set(favorites.map(\.id))
+            let loadedIds = Set(loadedFavorites.map(\.id))
+            if currentIds != loadedIds {
                 favorites = loadedFavorites
                 print("☁️ Favorites loaded from iCloud: \(favorites.count) items")
             }

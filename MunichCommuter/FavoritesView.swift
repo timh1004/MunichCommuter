@@ -37,7 +37,8 @@ struct FavoritesView: View {
                         NavigationLink(destination: DepartureDetailView(
                             locationId: favorite.location.id,
                             locationName: favorite.location.disassembledName ?? favorite.location.name,
-                            initialFilter: favorite.destinationFilter
+                            initialFilter: favorite.destinationFilter,
+                            initialTransportTypes: favorite.transportTypeFilters
                         )) {
                             FilteredFavoriteRowView(favorite: favorite)
                         }
@@ -66,7 +67,7 @@ struct FilteredFavoriteRowView: View {
     var body: some View {
         HStack {
             // Star Icon
-            Image(systemName: favorite.destinationFilter != nil ? "star.circle.fill" : "star.fill")
+            Image(systemName: favorite.hasFilters ? "star.circle.fill" : "star.fill")
                 .frame(width: 24, height: 24)
                 .foregroundColor(.orange)
             
@@ -76,14 +77,16 @@ struct FilteredFavoriteRowView: View {
                     .foregroundColor(.primary)
                 
                 HStack {
-                    if let parent = favorite.location.parent?.name {
+                    if let parent = favorite.location.parent?.name,
+                       parent != (favorite.location.disassembledName ?? favorite.location.name) {
                         Text(parent)
                             .font(.system(size: 14))
                             .foregroundColor(.secondary)
                     }
                     
                     if let filterText = favorite.filterDisplayText {
-                        if favorite.location.parent?.name != nil {
+                        if let parent = favorite.location.parent?.name,
+                           parent != (favorite.location.disassembledName ?? favorite.location.name) {
                             Text("•")
                                 .font(.system(size: 12))
                                 .foregroundColor(.secondary)

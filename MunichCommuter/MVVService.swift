@@ -7,6 +7,23 @@
 
 import Foundation
 
+// MARK: - String Extension for Station ID Normalization
+extension String {
+    /// Normalizes MVV station IDs to use the base station ID
+    /// Examples:
+    /// - "de:09162:150:3:3" -> "de:09162:150"
+    /// - "de:09162:150" -> "de:09162:150"
+    /// - "de:09162:150:1:1" -> "de:09162:150"
+    var normalizedStationId: String {
+        // Split by colon and take the first 3 parts (base station ID)
+        let components = self.components(separatedBy: ":")
+        if components.count >= 3 {
+            return "\(components[0]):\(components[1]):\(components[2])"
+        }
+        return self
+    }
+}
+
 class MVVService: ObservableObject {
     @Published var locations: [Location] = []
     @Published var departures: [StopEvent] = []
@@ -196,10 +213,10 @@ class MVVService: ObservableObject {
         print("   Original API ID: \(location.id)")
         print("   Location properties: \(String(describing: location.properties))")
         
-        // Use the original ID from the Stop Finder API directly
-        let locationId = location.id
-        print("   Using original API ID: \(locationId)")
+        // Normalize the location ID to use the base station ID
+        let normalizedId = location.id.normalizedStationId
+        print("   Using normalized ID: \(normalizedId)")
         
-        return locationId.isEmpty ? nil : locationId
+        return normalizedId.isEmpty ? nil : normalizedId
     }
 } 
