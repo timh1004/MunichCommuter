@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import CoreLocation
 
 struct StationsView: View {
     @StateObject private var mvvService = MVVService()
