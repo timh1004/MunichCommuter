@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CoreLocation
 
 // MARK: - String Extension for Station ID Normalization
 extension String {
@@ -65,6 +66,69 @@ class MVVService: ObservableObject {
         
         print("🌐 Stop Finder API URL: \(url.absoluteString)")
         print("   Search term: '\(name)'")
+        
+        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+            DispatchQueue.main.async {
+                self?.isLoading = false
+                
+                if let error = error {
+                    self?.errorMessage = "Netzwerkfehler: \(error.localizedDescription)"
+                    return
+                }
+                
+                guard let data = data else {
+                    self?.errorMessage = "Keine Daten erhalten"
+                    return
+                }
+                
+                do {
+                    let mvvResponse = try JSONDecoder().decode(MVVResponse.self, from: data)
+                    self?.locations = mvvResponse.locations ?? []
+                } catch {
+                    self?.errorMessage = "Fehler beim Verarbeiten der Daten: \(error.localizedDescription)"
+                    print("JSON Decoding Error: \(error)")
+                    
+                    // Debug: Print raw response
+                    if let jsonString = String(data: data, encoding: .utf8) {
+                        print("Raw JSON Response: \(jsonString)")
+                    }
+                }
+            }
+        }.resume()
+    }
+    
+    func searchNearbyStops(coordinate: String) {
+        isLoading = true
+        errorMessage = nil
+        
+        var components = URLComponents(string: stopFinderURL)
+        components?.queryItems = [
+            URLQueryItem(name: "excludedMeans", value: "checkbox"),
+            URLQueryItem(name: "coordListOutputFormat", value: "STRING"),
+            URLQueryItem(name: "coordOutputFormat", value: "WGS84[DD.ddddd]"),
+            URLQueryItem(name: "convertCoord2LocationServer", value: "1"),
+            URLQueryItem(name: "locationServerActive", value: "1"),
+            URLQueryItem(name: "stateless", value: "1"),
+            URLQueryItem(name: "useProxFootSearch", value: "1"),
+            URLQueryItem(name: "serverInfo", value: "1"),
+            URLQueryItem(name: "language", value: "de"),
+            URLQueryItem(name: "outputFormat", value: "rapidJSON"),
+            URLQueryItem(name: "version", value: "10.6.20.22"),
+            URLQueryItem(name: "macro_sf", value: "gullivr"),
+            URLQueryItem(name: "name_sf", value: coordinate),
+            URLQueryItem(name: "type_sf", value: "any")
+        ]
+        
+        guard let url = components?.url else {
+            DispatchQueue.main.async {
+                self.errorMessage = "Ungültige URL"
+                self.isLoading = false
+            }
+            return
+        }
+        
+        print("🌐 Nearby Stops API URL: \(url.absoluteString)")
+        print("   Coordinate: '\(coordinate)'")
         
         URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
             DispatchQueue.main.async {

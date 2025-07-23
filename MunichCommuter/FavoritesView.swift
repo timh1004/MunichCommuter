@@ -2,6 +2,19 @@ import SwiftUI
 
 struct FavoritesView: View {
     @StateObject private var favoritesManager = FavoritesManager.shared
+    @StateObject private var locationManager = LocationManager.shared
+    
+    private var sortedFavorites: [FilteredFavorite] {
+        if locationManager.location != nil {
+            return favoritesManager.favorites.sorted { favorite1, favorite2 in
+                let distance1 = locationManager.distanceFrom(favorite1.location.coord ?? []) ?? Double.infinity
+                let distance2 = locationManager.distanceFrom(favorite2.location.coord ?? []) ?? Double.infinity
+                return distance1 < distance2
+            }
+        } else {
+            return favoritesManager.favorites
+        }
+    }
     
     var body: some View {
         VStack {
@@ -33,7 +46,7 @@ struct FavoritesView: View {
             } else {
                 // Favorites List
                 List {
-                    ForEach(favoritesManager.favorites) { favorite in
+                    ForEach(sortedFavorites) { favorite in
                         NavigationLink(destination: DepartureDetailView(
                             locationId: favorite.location.id,
                             locationName: favorite.location.disassembledName ?? favorite.location.name,
@@ -51,11 +64,14 @@ struct FavoritesView: View {
         }
         .navigationTitle("Favoriten")
         .navigationBarTitleDisplayMode(.large)
+        .onAppear {
+            locationManager.requestLocation()
+        }
     }
     
     private func deleteFavorites(offsets: IndexSet) {
         for index in offsets {
-            let favorite = favoritesManager.favorites[index]
+            let favorite = sortedFavorites[index]
             favoritesManager.removeFavorite(favorite)
         }
     }
@@ -63,6 +79,7 @@ struct FavoritesView: View {
 
 struct FilteredFavoriteRowView: View {
     let favorite: FilteredFavorite
+    @StateObject private var locationManager = LocationManager.shared
     
     var body: some View {
         HStack {
@@ -99,6 +116,13 @@ struct FilteredFavoriteRowView: View {
             }
             
             Spacer()
+            
+            // Distance Display
+            if let distance = locationManager.distanceFrom(favorite.location.coord ?? []) {
+                Text(locationManager.formattedDistance(distance))
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.secondary)
+            }
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 16)
