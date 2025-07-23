@@ -7,6 +7,7 @@
 
 import SwiftUI
 import MapKit
+import Foundation
 
 struct TripDetailView: View {
     let departure: StopEvent
@@ -176,8 +177,8 @@ struct TripHeaderView: View {
                 Spacer()
                 
                 VStack(alignment: .trailing, spacing: 4) {
-                    if let delay = delayMinutes, delay > 0 {
-                        Text("+\(delay) Min")
+                    if let delayText = delayDisplay {
+                        Text(delayText)
                             .font(.caption)
                             .fontWeight(.medium)
                             .foregroundColor(.white)
@@ -247,36 +248,33 @@ struct TripHeaderView: View {
         return planned != estimated
     }
     
+    private var formattedTimes: (timeDisplay: String, delayDisplay: String?) {
+        return DepartureTimeFormatter.formatDepartureTime(
+            plannedTime: departure.departureTimePlanned,
+            estimatedTime: departure.departureTimeEstimated
+        )
+    }
+    
+    private var formattedDepartureTime: String {
+        return formattedTimes.timeDisplay
+    }
+    
+    private var delayDisplay: String? {
+        return formattedTimes.delayDisplay
+    }
+    
+    // Legacy computed property for backwards compatibility
     private var delayMinutes: Int? {
         guard let plannedString = departure.departureTimePlanned,
               let estimatedString = departure.departureTimeEstimated,
-              let planned = parseDate(plannedString),
-              let estimated = parseDate(estimatedString) else {
+              let planned = Date.parseISO8601(plannedString),
+              let estimated = Date.parseISO8601(estimatedString) else {
             return nil
         }
         
         let difference = estimated.timeIntervalSince(planned)
         let minutes = Int(difference / 60)
         return minutes > 0 ? minutes : nil
-    }
-    
-    private var formattedDepartureTime: String {
-        let timeString = departure.departureTimeEstimated ?? departure.departureTimePlanned ?? ""
-        
-        guard let date = parseDate(timeString) else {
-            return "--:--"
-        }
-        
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        formatter.dateStyle = .none
-        
-        return formatter.string(from: date)
-    }
-    
-    private func parseDate(_ dateString: String) -> Date? {
-        let formatter = ISO8601DateFormatter()
-        return formatter.date(from: dateString)
     }
 }
 
@@ -437,7 +435,7 @@ struct RouteStopView: View {
     }
     
     private func formatTime(_ timeString: String) -> String {
-        guard let date = parseDate(timeString) else {
+        guard let date = Date.parseISO8601(timeString) else {
             return "--:--"
         }
         
@@ -446,11 +444,6 @@ struct RouteStopView: View {
         formatter.dateStyle = .none
         
         return formatter.string(from: date)
-    }
-    
-    private func parseDate(_ dateString: String) -> Date? {
-        let formatter = ISO8601DateFormatter()
-        return formatter.date(from: dateString)
     }
 }
 

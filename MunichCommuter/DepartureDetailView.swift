@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Foundation
 
 struct DepartureDetailView: View {
     let location: Location
@@ -356,8 +357,8 @@ struct DepartureRowView: View {
                         }
                     }
                     
-                    if let delay = delayMinutes, delay > 0 {
-                        Text("+\(delay)")
+                    if let delayText = delayDisplay {
+                        Text(delayText)
                             .font(.caption)
                             .fontWeight(.medium)
                             .foregroundColor(.white)
@@ -424,36 +425,33 @@ struct DepartureRowView: View {
         return planned != estimated
     }
     
+    private var formattedTimes: (timeDisplay: String, delayDisplay: String?) {
+        return DepartureTimeFormatter.formatDepartureTime(
+            plannedTime: departure.departureTimePlanned,
+            estimatedTime: departure.departureTimeEstimated
+        )
+    }
+    
+    private var formattedDepartureTime: String {
+        return formattedTimes.timeDisplay
+    }
+    
+    private var delayDisplay: String? {
+        return formattedTimes.delayDisplay
+    }
+    
+    // Legacy computed property for backwards compatibility
     private var delayMinutes: Int? {
         guard let plannedString = departure.departureTimePlanned,
               let estimatedString = departure.departureTimeEstimated,
-              let planned = parseDate(plannedString),
-              let estimated = parseDate(estimatedString) else {
+              let planned = Date.parseISO8601(plannedString),
+              let estimated = Date.parseISO8601(estimatedString) else {
             return nil
         }
         
         let difference = estimated.timeIntervalSince(planned)
         let minutes = Int(difference / 60)
         return minutes > 0 ? minutes : nil
-    }
-    
-    private var formattedDepartureTime: String {
-        let timeString = departure.departureTimeEstimated ?? departure.departureTimePlanned ?? ""
-        
-        guard let date = parseDate(timeString) else {
-            return "--:--"
-        }
-        
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        formatter.dateStyle = .none
-        
-        return formatter.string(from: date)
-    }
-    
-    private func parseDate(_ dateString: String) -> Date? {
-        let formatter = ISO8601DateFormatter()
-        return formatter.date(from: dateString)
     }
 }
 
