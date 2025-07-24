@@ -28,6 +28,7 @@ extension String {
 class MVVService: ObservableObject {
     @Published var locations: [Location] = []
     @Published var departures: [StopEvent] = []
+    @Published var departureLocations: [DepartureLocation] = []  // ✅ ADD THIS!
     @Published var isLoading = false
     @Published var isDeparturesLoading = false
     @Published var errorMessage: String?
@@ -259,7 +260,7 @@ class MVVService: ObservableObject {
                     
                     // Debug: Print raw response
                     if let jsonString = String(data: data, encoding: .utf8) {
-                        print("🔍 Raw JSON Response: \(String(jsonString.prefix(1000)))")
+    
                     }
                 }
             }
@@ -364,13 +365,14 @@ class MVVService: ObservableObject {
                     }
                     
                     self.departures = stopEvents
+                    self.departureLocations = departureResponse.locations ?? []
                 } catch {
                     self.departureErrorMessage = "Fehler beim Verarbeiten der Abfahrtsdaten: \(error.localizedDescription)"
                     print("❌ Departure JSON Decoding Error: \(error)")
                     
                     // Debug: Print raw response
                     if let jsonString = String(data: data, encoding: .utf8) {
-                        print("🔍 Raw Departure JSON Response (first 2000 chars): \(String(jsonString.prefix(2000)))")
+    
                     }
                 }
             }
@@ -378,14 +380,11 @@ class MVVService: ObservableObject {
     }
     
     private func extractLocationId(from location: Location) -> String? {
-        print("🔍 Extracting Location ID from: \(location.name ?? "unknown")")
-        print("   Location type: \(location.type ?? "unknown")")
-        print("   Original API ID: \(location.id)")
-        print("   Location properties: \(String(describing: location.properties))")
+
         
         // Normalize the location ID to use the base station ID
         let normalizedId = location.id.normalizedStationId
-        print("   Using normalized ID: \(normalizedId)")
+
         
         return normalizedId.isEmpty ? nil : normalizedId
     }

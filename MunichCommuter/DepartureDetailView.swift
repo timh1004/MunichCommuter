@@ -62,15 +62,18 @@ enum TransportType: String, CaseIterable {
 struct DepartureDetailView: View {
     let locationId: String
     let locationName: String?
-    let initialFilter: String?
+    let initialFilters: [String]?
+    let initialPlatformFilters: [String]?
     let initialTransportTypes: [String]?
     
     @StateObject private var mvvService = MVVService()
     @StateObject private var favoritesManager = FavoritesManager.shared
     
-    @State private var destinationFilter = ""
+    @State private var destinationFilters: [String] = []
+    @State private var platformFilters: [String] = []
     @State private var showFilterBar = false
     @State private var showDestinationPicker = false
+    @State private var showPlatformPicker = false
     @State private var resolvedLocation: Location?
     @State private var selectedTransportTypes: Set<TransportType> = Set(TransportType.allCases)
     @State private var hasInitialized = false
@@ -78,7 +81,17 @@ struct DepartureDetailView: View {
     init(locationId: String, locationName: String? = nil, initialFilter: String? = nil) {
         self.locationId = locationId
         self.locationName = locationName
-        self.initialFilter = initialFilter
+        self.initialFilters = initialFilter.map { [$0] }
+        self.initialPlatformFilters = nil
+        self.initialTransportTypes = nil
+    }
+    
+    // New init for multiple filters
+    init(locationId: String, locationName: String? = nil, initialFilters: [String]? = nil) {
+        self.locationId = locationId
+        self.locationName = locationName
+        self.initialFilters = initialFilters
+        self.initialPlatformFilters = nil
         self.initialTransportTypes = nil
     }
     
@@ -86,7 +99,8 @@ struct DepartureDetailView: View {
     init(location: Location, initialFilter: String? = nil) {
         self.locationId = location.id
         self.locationName = location.disassembledName ?? location.name
-        self.initialFilter = initialFilter
+        self.initialFilters = initialFilter.map { [$0] }
+        self.initialPlatformFilters = nil
         self.initialTransportTypes = nil
     }
     
@@ -94,7 +108,26 @@ struct DepartureDetailView: View {
     init(locationId: String, locationName: String? = nil, initialFilter: String? = nil, initialTransportTypes: [String]? = nil) {
         self.locationId = locationId
         self.locationName = locationName
-        self.initialFilter = initialFilter
+        self.initialFilters = initialFilter.map { [$0] }
+        self.initialPlatformFilters = nil
+        self.initialTransportTypes = initialTransportTypes
+    }
+    
+    // New initializer for favorites with multiple destination filters
+    init(locationId: String, locationName: String? = nil, initialFilters: [String]? = nil, initialTransportTypes: [String]? = nil) {
+        self.locationId = locationId
+        self.locationName = locationName
+        self.initialFilters = initialFilters
+        self.initialPlatformFilters = nil
+        self.initialTransportTypes = initialTransportTypes
+    }
+    
+    // New initializer for favorites with all filter types
+    init(locationId: String, locationName: String? = nil, initialDestinationFilters: [String]? = nil, initialPlatformFilters: [String]? = nil, initialTransportTypes: [String]? = nil) {
+        self.locationId = locationId
+        self.locationName = locationName
+        self.initialFilters = initialDestinationFilters
+        self.initialPlatformFilters = initialPlatformFilters
         self.initialTransportTypes = initialTransportTypes
     }
     
@@ -149,51 +182,169 @@ struct DepartureDetailView: View {
                     .padding(.vertical, 8)
                     
                     // Destination Filter
-                    HStack {
-                        Image(systemName: "line.horizontal.3.decrease.circle")
-                            .foregroundColor(.blue)
-                            .font(.system(size: 16))
-                        
+                    VStack(spacing: 8) {
                         HStack {
-                            TextField("Nach Zielort filtern...", text: $destinationFilter)
+                            Image(systemName: "line.horizontal.3.decrease.circle")
+                                .foregroundColor(.blue)
+                                .font(.system(size: 16))
+                            
+                            Text("Zielhaltestellen (\(destinationFilters.count))")
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                            
+                            Spacer()
                             
                             Button(action: {
                                 showDestinationPicker = true
                             }) {
-                                Image(systemName: "list.bullet.circle")
-                                    .foregroundColor(.blue)
-                                    .font(.system(size: 18))
+                                HStack(spacing: 4) {
+                                    Image(systemName: "plus.circle.fill")
+                                        .foregroundColor(.blue)
+                                    Text("Hinzufügen")
+                                        .font(.caption)
+                                        .foregroundColor(.blue)
+                                }
                             }
                             .buttonStyle(PlainButtonStyle())
+                            
+                            if !destinationFilters.isEmpty {
+                                Button(action: {
+                                    destinationFilters.removeAll()
+                                }) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "trash.fill")
+                                            .foregroundColor(.red)
+                                        Text("Alle löschen")
+                                            .font(.caption)
+                                            .foregroundColor(.red)
+                                    }
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
                         }
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .padding(.horizontal, 16)
                         
-                        if !destinationFilter.isEmpty {
+                        // Selected destinations display
+                        if !destinationFilters.isEmpty {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    ForEach(destinationFilters, id: \.self) { destination in
+                                        HStack(spacing: 4) {
+                                            Text(destination)
+                                                .font(.caption)
+                                                .lineLimit(1)
+                                            Button(action: {
+                                                destinationFilters.removeAll { $0 == destination }
+                                            }) {
+                                                Image(systemName: "xmark")
+                                                    .font(.caption2)
+                                                    .foregroundColor(.white)
+                                            }
+                                        }
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Color.blue)
+                                        .foregroundColor(.white)
+                                        .cornerRadius(12)
+                                    }
+                                }
+                                .padding(.horizontal, 16)
+                            }
+                        }
+                    }
+                    
+                    // Platform Filter
+                    VStack(spacing: 8) {
+                        HStack {
+                            Image(systemName: "train.side.front.car")
+                                .foregroundColor(.orange)
+                                .font(.system(size: 16))
+                            
+                            Text("Gleise (\(platformFilters.count))")
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                            
+                            Spacer()
+                            
                             Button(action: {
-                                destinationFilter = ""
+                                showPlatformPicker = true
                             }) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundColor(.secondary)
-                                    .font(.system(size: 16))
+                                HStack(spacing: 4) {
+                                    Image(systemName: "plus.circle.fill")
+                                        .foregroundColor(.orange)
+                                    Text("Hinzufügen")
+                                        .font(.caption)
+                                        .foregroundColor(.orange)
+                                }
                             }
                             .buttonStyle(PlainButtonStyle())
+                            
+                            if !platformFilters.isEmpty {
+                                Button(action: {
+                                    platformFilters.removeAll()
+                                }) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "trash.fill")
+                                            .foregroundColor(.red)
+                                        Text("Alle löschen")
+                                            .font(.caption)
+                                            .foregroundColor(.red)
+                                    }
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
                         }
+                        .padding(.horizontal, 16)
                         
-                        Button("Schließen") {
+                        // Selected platforms display
+                        if !platformFilters.isEmpty {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    ForEach(platformFilters, id: \.self) { platform in
+                                        HStack(spacing: 4) {
+                                            Text("Gl. \(platform)")
+                                                .font(.caption)
+                                                .lineLimit(1)
+                                            Button(action: {
+                                                platformFilters.removeAll { $0 == platform }
+                                            }) {
+                                                Image(systemName: "xmark")
+                                                    .font(.caption2)
+                                                    .foregroundColor(.white)
+                                            }
+                                        }
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Color.orange)
+                                        .foregroundColor(.white)
+                                        .cornerRadius(12)
+                                    }
+                                }
+                                .padding(.horizontal, 16)
+                            }
+                        }
+                    }
+                    
+                    // Close Button
+                    HStack {
+                        Spacer()
+                        Button("Filter schließen") {
                             showFilterBar = false
-                            destinationFilter = ""
+                            destinationFilters.removeAll()
+                            platformFilters.removeAll()
                         }
                         .font(.caption)
                         .foregroundColor(.blue)
+                        Spacer()
                     }
                     .padding(.horizontal, 16)
                     
-                    if !destinationFilter.isEmpty && filteredDepartures.isEmpty && !mvvService.departures.isEmpty {
+                    if hasActiveFilters && filteredDepartures.isEmpty && !mvvService.departures.isEmpty {
                         HStack {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .foregroundColor(.orange)
                                 .font(.caption)
-                            Text("Keine Verbindungen nach '\(destinationFilter)' gefunden")
+                            Text(getFilterMessage())
                                 .font(.caption)
                                 .foregroundColor(.orange)
                         }
@@ -251,7 +402,7 @@ struct DepartureDetailView: View {
                     NavigationLink(destination: TripDetailView(departure: departure, currentStopName: cleanLocationName)) {
                         DepartureRowView(departure: departure)
                     }
-                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 16))
                     .listRowSeparator(.hidden)
                 }
                 .listStyle(PlainListStyle())
@@ -281,18 +432,18 @@ struct DepartureDetailView: View {
                 }
             }
             
-            // Only reset destination filter if no initial filter is provided
-            if initialFilter?.isEmpty != false {
-                destinationFilter = ""
-            }
-            
             mvvService.loadDepartures(locationId: locationId)
             
             // Apply initial filters if provided
             var hasInitialFilters = false
             
-            if let filter = initialFilter, !filter.isEmpty {
-                destinationFilter = filter
+            if let filters = initialFilters, !filters.isEmpty {
+                destinationFilters = filters
+                hasInitialFilters = true
+            }
+            
+            if let platforms = initialPlatformFilters, !platforms.isEmpty {
+                platformFilters = platforms
                 hasInitialFilters = true
             }
             
@@ -306,51 +457,38 @@ struct DepartureDetailView: View {
         }
         .onDisappear {
             // Clean up when view disappears to prevent state pollution
-            print("👋 DepartureDetailView disappeared for location: \(locationId)")
         }
-        .onReceive(mvvService.$departures) { _ in
+        .onReceive(mvvService.$departureLocations) { departureLocations in
             // Extract location information from API response
-            if let firstLocation = mvvService.departures.first?.location {
-                // Convert PlatformParent to LocationParent
-                let locationParent: LocationParent?
-                if let platformParent = firstLocation.parent {
-                    locationParent = LocationParent(
-                        name: platformParent.name,
-                        type: platformParent.type
-                    )
-                } else {
-                    locationParent = nil
-                }
-                
-                // Convert PlatformProperties to LocationProperties
-                let locationProperties: LocationProperties?
-                if let platformProperties = firstLocation.properties {
-                    locationProperties = LocationProperties(
-                        stopId: platformProperties.stopId,
-                        area: platformProperties.area
-                    )
-                } else {
-                    locationProperties = nil
-                }
-                
+            if let firstLocation = departureLocations.first {
                 // Use the original locationId to maintain consistency
                 resolvedLocation = Location(
-                    id: locationId,
+                    id: firstLocation.id ?? locationId,
                     type: firstLocation.type,
                     name: firstLocation.name,
-                    disassembledName: firstLocation.name,
+                    disassembledName: locationName, // Use original locationName for disassembledName
                     coord: firstLocation.coord,
-                    parent: locationParent,
+                    parent: nil,  // DepartureLocation doesn't have parent
                     assignedStops: nil,
-                    properties: locationProperties
+                    properties: firstLocation.properties
                 )
+                
+                // Update existing favorites with coordinates
+                updateExistingFavoritesWithCoordinates()
             }
         }
         .sheet(isPresented: $showDestinationPicker) {
             DestinationPickerView(
                 destinations: availableDestinations,
-                selectedDestination: $destinationFilter,
+                selectedDestinations: $destinationFilters,
                 isPresented: $showDestinationPicker
+            )
+        }
+        .sheet(isPresented: $showPlatformPicker) {
+            PlatformPickerView(
+                platforms: availablePlatforms,
+                selectedPlatforms: $platformFilters,
+                isPresented: $showPlatformPicker
             )
         }
         .toolbar {
@@ -359,7 +497,9 @@ struct DepartureDetailView: View {
                     // Favorite Button with Filter Support
                     Menu {
                         Button("Als Favorit speichern") {
-                            favoritesManager.addFavorite(bestAvailableLocation)
+                            // Only use resolvedLocation with coordinates, fallback to bestAvailableLocation
+                            let locationToSave = (resolvedLocation?.coord != nil) ? resolvedLocation! : bestAvailableLocation
+                            favoritesManager.addFavorite(locationToSave, destinationFilters: nil, platformFilters: nil, transportTypeFilters: nil)
                         }
                         
                         if hasActiveFilters {
@@ -372,20 +512,24 @@ struct DepartureDetailView: View {
                                     transportFilters = nil
                                 }
                                 
-                                // Only save destination filter if not empty
-                                let destinationFilterToSave = destinationFilter.isEmpty ? nil : destinationFilter
+                                // Only save filters if not empty
+                                let destinationFiltersToSave = destinationFilters.isEmpty ? nil : destinationFilters
+                                let platformFiltersToSave = platformFilters.isEmpty ? nil : platformFilters
                                 
+                                // Only use resolvedLocation with coordinates, fallback to bestAvailableLocation
+                                let locationToSave = (resolvedLocation?.coord != nil) ? resolvedLocation! : bestAvailableLocation
                                 favoritesManager.addFavorite(
-                                    bestAvailableLocation, 
-                                    destinationFilter: destinationFilterToSave,
+                                    locationToSave, 
+                                    destinationFilters: destinationFiltersToSave,
+                                    platformFilters: platformFiltersToSave,
                                     transportTypeFilters: transportFilters
                                 )
                             }
                         }
                         
-                        if favoritesManager.isFavorite(bestAvailableLocation) {
+                        if favoritesManager.isFavorite(resolvedLocation ?? bestAvailableLocation) {
                             Divider()
-                            ForEach(favoritesManager.getFavorites(for: bestAvailableLocation)) { favorite in
+                            ForEach(favoritesManager.getFavorites(for: resolvedLocation ?? bestAvailableLocation)) { favorite in
                                 Button("Entfernen: \(favorite.displayName)") {
                                     favoritesManager.removeFavorite(favorite)
                                 }
@@ -402,8 +546,9 @@ struct DepartureDetailView: View {
                         if !showFilterBar {
                             // Only reset filters if no initial filters were provided
                             // This preserves filters from favorites
-                            if initialFilter == nil || initialFilter?.isEmpty == true {
-                                destinationFilter = ""
+                            if initialFilters == nil || initialFilters?.isEmpty == true {
+                                destinationFilters.removeAll()
+                                platformFilters.removeAll()
                             }
                             // Don't reset transport types as they might come from a favorite
                         }
@@ -451,13 +596,23 @@ struct DepartureDetailView: View {
         }
         
         // Filter by destination
-        if !destinationFilter.isEmpty {
+        if !destinationFilters.isEmpty {
             let beforeCount = filtered.count
             filtered = filtered.filter { departure in
-                hasDestinationInRoute(departure: departure, destination: destinationFilter)
+                hasDestinationInRoute(departure: departure, destination: destinationFilters)
             }
             let afterCount = filtered.count
             print("🎯 Destination filter: \(beforeCount) → \(afterCount) departures")
+        }
+        
+        // Filter by platform
+        if !platformFilters.isEmpty {
+            let beforeCount = filtered.count
+            filtered = filtered.filter { departure in
+                hasPlatformMatch(departure: departure, platforms: platformFilters)
+            }
+            let afterCount = filtered.count
+            print("🚉 Platform filter: \(beforeCount) → \(afterCount) departures")
         }
         
         return filtered
@@ -474,40 +629,27 @@ struct DepartureDetailView: View {
     }
     
     private func matchesTransportType(product: String, transportType: TransportType) -> Bool {
-        guard !product.isEmpty else { return false }
-        
-        let productLower = product.lowercased()
-        
-        switch transportType {
-        case .sBahn:
-            return productLower.contains("s-bahn") || productLower.contains("sbahn")
-        case .uBahn:
-            return productLower.contains("u-bahn") || productLower.contains("ubahn")
-        case .tram:
-            return productLower.contains("tram") || productLower.contains("straßenbahn")
-        case .stadtBus:
-            return productLower.contains("stadtbus") || (productLower.contains("bus") && !productLower.contains("regional"))
-        case .regionalBus:
-            return productLower.contains("regionalbus") || productLower.contains("regbus")
-        case .regionalBahn:
-            return productLower.contains("regionalbahn") || productLower.contains("rb")
-        case .regionalExpress:
-            return productLower.contains("regional-express") || productLower.contains("re")
-        case .ice:
-            return productLower.contains("ice") || productLower.contains("ic") || productLower.contains("ec")
-        }
+        return FilteringHelper.matchesTransportType(product: product, transportType: transportType)
     }
     
     private func getFilterMessage() -> String {
         var messages: [String] = []
         
-        if !destinationFilter.isEmpty {
-            messages.append("Kein Verkehrsmittel fährt nach '\(destinationFilter)'")
+        if !destinationFilters.isEmpty {
+            messages.append("Kein Verkehrsmittel fährt zu den ausgewählten Zielen")
+        }
+        
+        if !platformFilters.isEmpty {
+            messages.append("Keine Verbindungen von den ausgewählten Gleisen")
         }
         
         if selectedTransportTypes.count < TransportType.allCases.count {
             let selectedTypes = selectedTransportTypes.map { $0.shortName }.joined(separator: ", ")
             messages.append("Keine \(selectedTypes) verfügbar")
+        }
+        
+        if messages.isEmpty {
+            messages.append("Keine Verbindungen mit den aktiven Filtern")
         }
         
         return messages.joined(separator: " und ")
@@ -534,71 +676,109 @@ struct DepartureDetailView: View {
         }
     }
     
-    private func hasDestinationInRoute(departure: StopEvent, destination: String) -> Bool {
-        let searchTerm = destination.lowercased()
-        
-        // Check if destination matches the final destination
-        if let finalDestination = departure.transportation?.destination?.name?.lowercased(),
-           finalDestination.contains(searchTerm) {
-            return true
-        }
-        
-        // Check if destination is in onward locations (stops along the route)
-        if let onwardLocations = departure.onwardLocations {
-            return onwardLocations.contains { platform in
-                guard let name = platform.name?.lowercased() else { return false }
-                return name.contains(searchTerm)
-            }
-        }
-        
-        return false
+    private func hasDestinationInRoute(departure: StopEvent, destination: [String]) -> Bool {
+        return FilteringHelper.hasDestinationInRoute(departure: departure, destinations: destination)
+    }
+    
+    private func hasPlatformMatch(departure: StopEvent, platforms: [String]) -> Bool {
+        return FilteringHelper.hasPlatformMatch(departure: departure, platforms: platforms)
     }
     
     // MARK: - Computed Properties
     private var hasActiveFilters: Bool {
-        let hasDestinationFilter = !destinationFilter.isEmpty
+        let hasDestinationFilter = !destinationFilters.isEmpty
+        let hasPlatformFilter = !platformFilters.isEmpty
         let hasTransportFilter = selectedTransportTypes.count < TransportType.allCases.count
-        return hasDestinationFilter || hasTransportFilter
+        return hasDestinationFilter || hasPlatformFilter || hasTransportFilter
     }
     
     private var isCurrentFavorite: Bool {
+        // Use resolvedLocation if available, otherwise bestAvailableLocation
+        let locationToCheck = resolvedLocation ?? bestAvailableLocation
+        
         if hasActiveFilters {
             // Check if current filter combination is favorited
-            let destinationFilterToCheck = destinationFilter.isEmpty ? nil : destinationFilter
+            let destinationFiltersToCheck = destinationFilters.isEmpty ? nil : destinationFilters
+            let platformFiltersToCheck = platformFilters.isEmpty ? nil : platformFilters
             let transportFiltersToCheck = selectedTransportTypes.count < TransportType.allCases.count ? 
                 Array(selectedTransportTypes).map { $0.rawValue } : nil
             
             return favoritesManager.isFavorite(
-                bestAvailableLocation,
-                destinationFilter: destinationFilterToCheck,
+                locationToCheck,
+                destinationFilters: destinationFiltersToCheck,
+                platformFilters: platformFiltersToCheck,
                 transportTypeFilters: transportFiltersToCheck
             )
         } else {
             // Check if location is favorited without filters
-            return favoritesManager.isFavorite(bestAvailableLocation)
+            return favoritesManager.isFavorite(locationToCheck)
         }
     }
     
     private var filterActiveTitle: String {
-        if !destinationFilter.isEmpty {
-            return "\(cleanLocationName) → \(destinationFilter)"
+        if destinationFilters.isEmpty {
+            return cleanLocationName
+        } else {
+            return "\(cleanLocationName) → \(destinationFilters.joined(separator: ", "))"
         }
-        return cleanLocationName
     }
     
     // MARK: - State Management
     private func resetState() {
         // Reset state variables but preserve filter settings
-        destinationFilter = ""
+        destinationFilters.removeAll()
+        platformFilters.removeAll()
         showFilterBar = false
         showDestinationPicker = false
+        showPlatformPicker = false
         // Don't reset resolvedLocation - we use bestAvailableLocation for immediate functionality
         // Don't reset selectedTransportTypes - they are set by the initializer
         
-        print("🔄 State reset for location: \(locationId)")
+        
     }
     
-    // MARK: - Available Destinations
+    // MARK: - Update Existing Favorites
+    private func updateExistingFavoritesWithCoordinates() {
+        guard let resolved = resolvedLocation,
+              let coords = resolved.coord,
+              coords.count >= 2 else {
+            return
+        }
+        
+        let allFavoritesForLocation = favoritesManager.getFavorites(for: fallbackLocation)
+        
+        // Find favorites for this location that don't have coordinates
+        let favoritesToUpdate = allFavoritesForLocation.filter { favorite in
+            favorite.location.coord == nil || favorite.location.coord?.isEmpty == true
+        }
+        
+        if !favoritesToUpdate.isEmpty {
+            for favorite in favoritesToUpdate {
+                // Create updated location with coordinates
+                let updatedLocation = Location(
+                    id: favorite.location.id,
+                    type: resolved.type,
+                    name: favorite.location.name ?? resolved.name,
+                    disassembledName: favorite.location.disassembledName ?? resolved.disassembledName,
+                    coord: coords,
+                    parent: resolved.parent,
+                    assignedStops: resolved.assignedStops,
+                    properties: resolved.properties
+                )
+                
+                // Remove old and add updated
+                favoritesManager.removeFavorite(favorite)
+                favoritesManager.addFavorite(
+                    updatedLocation,
+                    destinationFilters: favorite.destinationFilters,
+                    platformFilters: favorite.platformFilters,
+                    transportTypeFilters: favorite.transportTypeFilters
+                )
+            }
+        }
+    }
+    
+    // MARK: - Available Destinations and Platforms
     private var availableDestinations: [String] {
         var destinations = Set<String>()
         
@@ -619,6 +799,26 @@ struct DepartureDetailView: View {
         }
         
         return Array(destinations).sorted()
+    }
+    
+    private var availablePlatforms: [String] {
+        var platforms = Set<String>()
+        
+        for departure in mvvService.departures {
+            // Add platform info if available
+            if let platform = departure.location?.properties?.platform {
+                platforms.insert(platform)
+            }
+        }
+        
+        return Array(platforms).sorted { platform1, platform2 in
+            // Sort numerically if both are numbers
+            if let num1 = Int(platform1), let num2 = Int(platform2) {
+                return num1 < num2
+            }
+            // Otherwise sort alphabetically
+            return platform1.localizedCaseInsensitiveCompare(platform2) == .orderedAscending
+        }
     }
 }
 
@@ -690,34 +890,27 @@ struct DepartureRowView: View {
     let departure: StopEvent
     
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            // Transport Line - MVG Style Badge
+        HStack(alignment: .center, spacing: 8) {
+            // Transport Line - MVG Style Badge (Linksbündig)
             VStack(spacing: 4) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(lineColor)
-                        .frame(width: 48, height: 32)
-                    
-                    Text(departure.transportation?.number ?? "?")
-                        .font(.system(size: 16, weight: .bold, design: .default))
-                        .foregroundColor(.white)
-                        .minimumScaleFactor(0.7)
-                        .lineLimit(1)
-                }
+                TransportBadge(departure: departure, size: .normal)
                 
-                Text(transportTypeName)
+                Text(DepartureRowStyling.transportTypeName(for: departure))
                     .font(.caption2)
                     .foregroundColor(.secondary)
                     .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: 64, alignment: .center)
             }
-            .frame(width: 56) // Fixed width for alignment
+            .frame(width: 64, alignment: .leading) // Slightly wider + explicit alignment
             
-            // Destination and Platform
+            // Destination and Platform (Nimmt maximalen verfügbaren Platz ein)
             VStack(alignment: .leading, spacing: 3) {
                 Text(departure.transportation?.destination?.name ?? "Unbekanntes Ziel")
                     .font(.system(size: 16, weight: .medium))
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading) // Explicit maxWidth
                 
                 HStack(spacing: 8) {
                     if let platform = departure.location?.properties?.platform {
@@ -733,18 +926,18 @@ struct DepartureRowView: View {
                             .lineLimit(1)
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading) // Explicit maxWidth
             }
+            .frame(maxWidth: .infinity) // Maximaler verfügbarer Platz
             
-            Spacer()
-            
-            // Departure Time
+            // Departure Time (Rechtsbündig)
             VStack(alignment: .trailing, spacing: 3) {
-                Text(formattedDepartureTime)
+                Text(DepartureRowStyling.formattedDepartureTime(for: departure))
                     .font(.system(size: 18, weight: .semibold, design: .monospaced))
-                    .foregroundColor(shouldShowOrange ? .orange : .primary)
+                    .foregroundColor(DepartureRowStyling.shouldShowOrange(for: departure) ? .orange : .primary)
                 
                 HStack(spacing: 4) {
-                    if isRealtime {
+                    if DepartureRowStyling.isRealtime(for: departure) {
                         HStack(spacing: 3) {
                             Circle()
                                 .fill(.green)
@@ -755,7 +948,7 @@ struct DepartureRowView: View {
                         }
                     }
                     
-                    if let delayText = delayDisplay {
+                    if let delayText = DepartureRowStyling.delayDisplay(for: departure) {
                         Text(delayText)
                             .font(.caption2)
                             .fontWeight(.medium)
@@ -763,123 +956,13 @@ struct DepartureRowView: View {
                     }
                 }
             }
-            .frame(width: 80) // Fixed width for alignment
+            .frame(width: 70, alignment: .trailing) // Kompakter für besseres Layout
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, 16)
         .padding(.vertical, 16)
     }
     
-    private var lineColor: Color {
-        guard let productClass = departure.transportation?.product?.productClass else {
-            return Color(red: 0.6, green: 0.6, blue: 0.6) // Grau
-        }
-        
-        switch productClass {
-        case 1: return sBahnLineColor                              // S-Bahn: Spezifische Linienfarben
-        case 2: return uBahnLineColor                              // U-Bahn: Spezifische Linienfarben
-        case 4: return Color(red: 0.8, green: 0.0, blue: 0.0)     // Tram: MVG Rot
-        case 5: return Color(red: 0.6, green: 0.0, blue: 0.8)     // Bus: MVG Lila
-        default: return Color(red: 0.6, green: 0.6, blue: 0.6)    // Fallback Grau
-        }
-    }
-    
-    private var sBahnLineColor: Color {
-        guard let lineNumber = departure.transportation?.number else {
-            return Color(red: 22/255, green: 192/255, blue: 233/255) // Standard S-Bahn (S1)
-        }
-        
-        switch lineNumber {
-        case "S1": return Color(red: 22/255, green: 192/255, blue: 233/255)     // Hellblau
-        case "S2": return Color(red: 113/255, green: 191/255, blue: 68/255)     // Grün
-        case "S3": return Color(red: 123/255, green: 16/255, blue: 125/255)     // Lila
-        case "S4": return Color(red: 238/255, green: 28/255, blue: 37/255)      // Rot
-        case "S6": return Color(red: 0/255, green: 138/255, blue: 81/255)       // Dunkelgrün
-        case "S7": return Color(red: 150/255, green: 56/255, blue: 51/255)      // Dunkelrot
-        case "S8": return Color(red: 255/255, green: 203/255, blue: 6/255)      // Gelb
-        case "S20": return Color(red: 240/255, green: 90/255, blue: 115/255)    // Pink
-        default: return Color(red: 22/255, green: 192/255, blue: 233/255)       // Standard S-Bahn (S1)
-        }
-    }
-    
-    private var uBahnLineColor: Color {
-        guard let lineNumber = departure.transportation?.number else {
-            return Color(red: 0.0, green: 0.4, blue: 0.8) // Standard U-Bahn Blau
-        }
-        
-        switch lineNumber {
-        case "U1", "1": return Color(red: 0.0, green: 0.7, blue: 0.0)     // Grün
-        case "U2", "2": return Color(red: 0.9, green: 0.0, blue: 0.0)     // Rot
-        case "U3", "3": return Color(red: 1.0, green: 0.6, blue: 0.0)     // Orange
-        case "U4", "4": return Color(red: 0.0, green: 0.8, blue: 0.8)     // Türkis
-        case "U5", "5": return Color(red: 0.6, green: 0.4, blue: 0.2)     // Braun
-        case "U6", "6": return Color(red: 0.0, green: 0.4, blue: 0.8)     // Blau
-        case "U7", "7": return Color(red: 0.0, green: 0.7, blue: 0.0)     // Grün (wie U1)
-        case "U8", "8": return Color(red: 0.9, green: 0.0, blue: 0.0)     // Rot (wie U2)
-        default: return Color(red: 0.0, green: 0.4, blue: 0.8)           // Standard U-Bahn Blau
-        }
-    }
-    
-    private var transportTypeName: String {
-        departure.transportation?.product?.name ?? "Zug"
-    }
-    
-    private var isRealtime: Bool {
-        departure.isRealtimeControlled == true
-    }
-    
-    private var isDelayed: Bool {
-        guard let planned = departure.departureTimePlanned,
-              let estimated = departure.departureTimeEstimated else {
-            return false
-        }
-        // Zeige orange nur bei positiver Verspätung (Zug ist später als geplant)
-        guard let plannedDate = Date.parseISO8601(planned),
-              let estimatedDate = Date.parseISO8601(estimated) else {
-            return false
-        }
-        return estimatedDate > plannedDate
-    }
-    
-    private var shouldShowOrange: Bool {
-        // Zeige orange nur wenn Abfahrt in 1 Minute oder weniger stattfindet
-        // Verwende die geplante Zeit für die Berechnung, nicht die geschätzte Zeit
-        let timeString = departure.departureTimePlanned ?? departure.departureTimeEstimated ?? ""
-        guard let departureDate = Date.parseISO8601(timeString) else {
-            return false
-        }
-        
-        let minutesFromNow = departureDate.minutesFromNow()
-        return minutesFromNow <= 1
-    }
-    
-    private var formattedTimes: (timeDisplay: String, delayDisplay: String?) {
-        return DepartureTimeFormatter.formatDepartureTime(
-            plannedTime: departure.departureTimePlanned,
-            estimatedTime: departure.departureTimeEstimated
-        )
-    }
-    
-    private var formattedDepartureTime: String {
-        return formattedTimes.timeDisplay
-    }
-    
-    private var delayDisplay: String? {
-        return formattedTimes.delayDisplay
-    }
-    
-    // Legacy computed property for backwards compatibility
-    private var delayMinutes: Int? {
-        guard let plannedString = departure.departureTimePlanned,
-              let estimatedString = departure.departureTimeEstimated,
-              let planned = Date.parseISO8601(plannedString),
-              let estimated = Date.parseISO8601(estimatedString) else {
-            return nil
-        }
-        
-        let difference = estimated.timeIntervalSince(planned)
-        let minutes = Int(difference / 60)
-        return minutes > 0 ? minutes : nil
-    }
+    // All styling logic moved to DepartureRowStyling helper
 }
 
 #Preview {

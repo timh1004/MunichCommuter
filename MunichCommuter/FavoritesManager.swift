@@ -33,13 +33,69 @@ class FavoritesManager: ObservableObject {
         }
     }
     
-
+    // MARK: - New Methods for Multiple Destination Filters
     
-    func addFavorite(_ location: Location, destinationFilter: String? = nil, transportTypeFilters: [String]? = nil) {
-        let newFavorite = FilteredFavorite(location: location, destinationFilter: destinationFilter, transportTypeFilters: transportTypeFilters)
+    func addFavorite(_ location: Location, destinationFilters: [String]? = nil, platformFilters: [String]? = nil, transportTypeFilters: [String]? = nil) {
+        let newFavorite = FilteredFavorite(location: location, destinationFilters: destinationFilters, platformFilters: platformFilters, transportTypeFilters: transportTypeFilters)
         favorites.append(newFavorite)
         saveFavorites()
     }
+    
+    func isFavorite(_ location: Location, destinationFilters: [String]? = nil, platformFilters: [String]? = nil, transportTypeFilters: [String]? = nil) -> Bool {
+        let normalizedLocationId = location.id.normalizedStationId
+        
+        // Normalize the filters for comparison
+        let normalizedDestinationFilters = destinationFilters?.isEmpty == true ? nil : destinationFilters?.sorted()
+        let normalizedPlatformFilters = platformFilters?.isEmpty == true ? nil : platformFilters?.sorted()
+        let normalizedTransportFilters = transportTypeFilters?.isEmpty == true ? nil : transportTypeFilters?.sorted()
+        
+        return favorites.contains { 
+            $0.location.id.normalizedStationId == normalizedLocationId && 
+            $0.destinationFilters?.sorted() == normalizedDestinationFilters &&
+            $0.platformFilters?.sorted() == normalizedPlatformFilters &&
+            $0.transportTypeFilters?.sorted() == normalizedTransportFilters
+        }
+    }
+    
+    func toggleFavorite(_ location: Location, destinationFilters: [String]? = nil, platformFilters: [String]? = nil, transportTypeFilters: [String]? = nil) {
+        // Check if this specific combination already exists using normalized IDs
+        let normalizedLocationId = location.id.normalizedStationId
+        let normalizedDestinationFilters = destinationFilters?.isEmpty == true ? nil : destinationFilters?.sorted()
+        let normalizedPlatformFilters = platformFilters?.isEmpty == true ? nil : platformFilters?.sorted()
+        let normalizedTransportFilters = transportTypeFilters?.isEmpty == true ? nil : transportTypeFilters?.sorted()
+        
+        let existingFavorite = favorites.first { 
+            $0.location.id.normalizedStationId == normalizedLocationId && 
+            $0.destinationFilters?.sorted() == normalizedDestinationFilters &&
+            $0.platformFilters?.sorted() == normalizedPlatformFilters &&
+            $0.transportTypeFilters?.sorted() == normalizedTransportFilters
+        }
+        
+        if let existing = existingFavorite {
+            removeFavorite(existing)
+        } else {
+            addFavorite(location, destinationFilters: destinationFilters, platformFilters: platformFilters, transportTypeFilters: transportTypeFilters)
+        }
+    }
+
+    // MARK: - Legacy Methods for Backwards Compatibility
+    
+    func addFavorite(_ location: Location, destinationFilter: String? = nil, transportTypeFilters: [String]? = nil) {
+        let destinationFilters = destinationFilter.map { [$0] }
+        addFavorite(location, destinationFilters: destinationFilters, platformFilters: nil, transportTypeFilters: transportTypeFilters)
+    }
+    
+    func isFavorite(_ location: Location, destinationFilter: String? = nil, transportTypeFilters: [String]? = nil) -> Bool {
+        let destinationFilters = destinationFilter.map { [$0] }
+        return isFavorite(location, destinationFilters: destinationFilters, platformFilters: nil, transportTypeFilters: transportTypeFilters)
+    }
+    
+    func toggleFavorite(_ location: Location, destinationFilter: String? = nil, transportTypeFilters: [String]? = nil) {
+        let destinationFilters = destinationFilter.map { [$0] }
+        toggleFavorite(location, destinationFilters: destinationFilters, platformFilters: nil, transportTypeFilters: transportTypeFilters)
+    }
+    
+    // MARK: - Common Methods
     
     func removeFavorite(_ favorite: FilteredFavorite) {
         favorites.removeAll { $0.id == favorite.id }
@@ -58,34 +114,9 @@ class FavoritesManager: ObservableObject {
         return favorites.contains { $0.location.id.normalizedStationId == normalizedLocationId }
     }
     
-    func isFavorite(_ location: Location, destinationFilter: String? = nil, transportTypeFilters: [String]? = nil) -> Bool {
-        let normalizedLocationId = location.id.normalizedStationId
-        return favorites.contains { 
-            $0.location.id.normalizedStationId == normalizedLocationId && 
-            $0.destinationFilter == destinationFilter &&
-            $0.transportTypeFilters == transportTypeFilters
-        }
-    }
-    
     func getFavorites(for location: Location) -> [FilteredFavorite] {
         let normalizedLocationId = location.id.normalizedStationId
         return favorites.filter { $0.location.id.normalizedStationId == normalizedLocationId }
-    }
-    
-    func toggleFavorite(_ location: Location, destinationFilter: String? = nil, transportTypeFilters: [String]? = nil) {
-        // Check if this specific combination already exists using normalized IDs
-        let normalizedLocationId = location.id.normalizedStationId
-        let existingFavorite = favorites.first { 
-            $0.location.id.normalizedStationId == normalizedLocationId && 
-            $0.destinationFilter == destinationFilter &&
-            $0.transportTypeFilters == transportTypeFilters
-        }
-        
-        if let existing = existingFavorite {
-            removeFavorite(existing)
-        } else {
-            addFavorite(location, destinationFilter: destinationFilter, transportTypeFilters: transportTypeFilters)
-        }
     }
     
     private func saveFavorites() {
@@ -120,7 +151,9 @@ class FavoritesManager: ObservableObject {
             // Try to migrate old favorites
             if let legacyData = cloudStore.data(forKey: "MunichCommuterFavorites"),
                let legacyFavorites = try? JSONDecoder().decode([Location].self, from: legacyData) {
-                favorites = legacyFavorites.map { FilteredFavorite(location: $0) }
+                favorites = legacyFavorites.map { location in
+                    FilteredFavorite(location: location, destinationFilters: nil, platformFilters: nil, transportTypeFilters: nil)
+                }
                 saveFavorites() // Migrate to new format
                 print("📦 Migrated \(legacyFavorites.count) legacy favorites")
             } else {

@@ -22,7 +22,8 @@ class LocationManager: NSObject, ObservableObject {
         locationManager.distanceFilter = 10 // Update every 10 meters
     }
     
-    func requestLocation() {
+    // Request location permission explicitly (called by user action)
+    func requestLocationPermission() {
         guard authorizationStatus != .denied && authorizationStatus != .restricted else {
             locationError = "Standortzugriff wurde verweigert. Bitte aktivieren Sie ihn in den Einstellungen."
             return
@@ -33,6 +34,24 @@ class LocationManager: NSObject, ObservableObject {
         } else if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
             locationManager.requestLocation()
         }
+    }
+    
+    // Get location if permission already granted (no UI prompts)
+    func getLocationIfAuthorized() {
+        guard authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways else {
+            return
+        }
+        locationManager.requestLocation()
+    }
+    
+    // Legacy method - now just calls getLocationIfAuthorized to avoid permission prompts
+    func requestLocation() {
+        getLocationIfAuthorized()
+    }
+    
+    // Check if we have location permission
+    var hasLocationPermission: Bool {
+        return authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways
     }
     
     func startLocationUpdates() {
@@ -47,9 +66,11 @@ class LocationManager: NSObject, ObservableObject {
         locationManager.stopUpdatingLocation()
     }
     
-    func distanceFrom(_ coordinate: [Double]) -> CLLocationDistance? {
+        func distanceFrom(_ coordinate: [Double]) -> CLLocationDistance? {
         guard let userLocation = location,
-              coordinate.count >= 2 else { return nil }
+              coordinate.count >= 2 else {
+            return nil
+        }
         
         // MVV API returns [latitude, longitude] format
         let targetLocation = CLLocation(latitude: coordinate[0], longitude: coordinate[1])

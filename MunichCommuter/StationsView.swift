@@ -12,22 +12,8 @@ struct StationsView: View {
     private var sortedLocations: [Location] {
         if isShowingNearbyStations {
             return mvvService.locations.sorted { location1, location2 in
-                // Use API distance if available, otherwise calculate distance
-                let distance1: Double
-                let distance2: Double
-                
-                if let apiDist1 = location1.distance {
-                    distance1 = Double(apiDist1)
-                } else {
-                    distance1 = locationManager.distanceFrom(location1.coord ?? []) ?? Double.infinity
-                }
-                
-                if let apiDist2 = location2.distance {
-                    distance2 = Double(apiDist2)
-                } else {
-                    distance2 = locationManager.distanceFrom(location2.coord ?? []) ?? Double.infinity
-                }
-                
+                let distance1 = getLocationDistance(location1)
+                let distance2 = getLocationDistance(location2)
                 return distance1 < distance2
             }
         } else {
@@ -35,56 +21,113 @@ struct StationsView: View {
         }
     }
     
+    private func getLocationDistance(_ location: Location) -> Double {
+        if let apiDist = location.distance {
+            return Double(apiDist)
+        } else {
+            return locationManager.distanceFrom(location.coord ?? []) ?? Double.infinity
+        }
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
-            // Enhanced Search Bar with Auto-search and Clear Button
-            HStack {
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.secondary)
-                        .font(.system(size: 16))
-                    
-                    TextField("Haltestelle suchen...", text: $searchText)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
-                        .onChange(of: searchText) { _, newValue in
-                            startDebounceTimer(for: newValue)
-                        }
-                        .onSubmit {
-                            performSearch()
-                        }
-                    
-                    if !searchText.isEmpty {
-                        Button(action: {
-                            searchText = ""
-                            isShowingNearbyStations = false
-                            mvvService.locations = []
-                        }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(.secondary)
-                                .font(.system(size: 16))
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                    }
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(Color(.systemBackground))
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color(.systemGray4), lineWidth: 1)
-                )
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(Color(.systemGroupedBackground))
+            searchBarSection
+            nearbyStationsButtonSection
+            locationErrorSection
+            contentSection
+        }
+        .navigationTitle(isShowingNearbyStations ? "Nahegelegene Stationen" : "Stationen")
+        .navigationBarTitleDisplayMode(.large)
+        .background(Color(.systemGroupedBackground))
+        .onAppear {
+            // Only get location if we already have permission, don't prompt for it
+            locationManager.getLocationIfAuthorized()
             
+            // Auto-load nearby stations if we have permission and location
+            if locationManager.hasLocationPermission && locationManager.location != nil && searchText.isEmpty && mvvService.locations.isEmpty {
+                showNearbyStations()
+            }
+        }
+        .onChange(of: locationManager.location) { _, newLocation in
+            // If user requested nearby stations but location wasn't available before
+            if isShowingNearbyStations && newLocation != nil && mvvService.locations.isEmpty {
+                if let coordString = locationManager.coordStringForAPI() {
+                    mvvService.searchNearbyStops(coordinate: coordString)
+                }
+            }
+            
+            // Auto-load nearby stations if we just got location and no search is active
+            if newLocation != nil && searchText.isEmpty && mvvService.locations.isEmpty && !isShowingNearbyStations {
+                showNearbyStations()
+            }
+        }
+        .onChange(of: locationManager.authorizationStatus) { _, newStatus in
+            // Auto-load nearby stations when permission is granted
+            if (newStatus == .authorizedWhenInUse || newStatus == .authorizedAlways) && searchText.isEmpty && mvvService.locations.isEmpty {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    locationManager.getLocationIfAuthorized()
+                }
+            }
+        }
+    }
+    
+    // MARK: - View Sections
+    
+    private var searchBarSection: some View {
+        // Enhanced Search Bar with Auto-search and Clear Button
+        HStack {
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.secondary)
+                    .font(.system(size: 16))
+                
+                TextField("Haltestelle suchen...", text: $searchText)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                    .onChange(of: searchText) { _, newValue in
+                        startDebounceTimer(for: newValue)
+                    }
+                    .onSubmit {
+                        performSearch()
+                    }
+                
+                if !searchText.isEmpty {
+                    Button(action: {
+                        searchText = ""
+                        isShowingNearbyStations = false
+                        mvvService.locations = []
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.secondary)
+                            .font(.system(size: 16))
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(Color(.systemBackground))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color(.systemGray4), lineWidth: 1)
+            )
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color(.systemGroupedBackground))
+    }
+    
+    private var nearbyStationsButtonSection: some View {
+        Group {
             // Nearby Stations Button
             if !isShowingNearbyStations && searchText.isEmpty {
                 Button(action: showNearbyStations) {
                     HStack {
-                        if locationManager.authorizationStatus == .notDetermined || (locationManager.location == nil && locationManager.authorizationStatus != .denied) {
+                        if locationManager.authorizationStatus == .denied || locationManager.authorizationStatus == .restricted {
+                            Image(systemName: "location.slash")
+                                .foregroundColor(.white)
+                        } else if mvvService.isLoading {
                             ProgressView()
                                 .scaleEffect(0.8)
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
@@ -92,20 +135,45 @@ struct StationsView: View {
                             Image(systemName: "location.circle")
                                 .foregroundColor(.white)
                         }
-                        Text("Haltestellen in der Nähe")
+                        
+                        Text(nearbyButtonText)
                             .fontWeight(.medium)
                             .foregroundColor(.white)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
-                    .background(locationManager.authorizationStatus == .denied ? Color.gray : Color.blue)
+                    .background(nearbyButtonColor)
                     .cornerRadius(12)
                 }
-                .disabled(locationManager.authorizationStatus == .denied)
+                .disabled(locationManager.authorizationStatus == .denied || locationManager.authorizationStatus == .restricted)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 12)
             }
-            
+        }
+    }
+    
+    private var nearbyButtonText: String {
+        switch locationManager.authorizationStatus {
+        case .denied, .restricted:
+            return "Standortzugriff verweigert"
+        case .notDetermined:
+            return "Stationen in der Umgebung anzeigen"
+        default:
+            return "Stationen in der Umgebung"
+        }
+    }
+    
+    private var nearbyButtonColor: Color {
+        switch locationManager.authorizationStatus {
+        case .denied, .restricted:
+            return .gray
+        default:
+            return .blue
+        }
+    }
+    
+    private var locationErrorSection: some View {
+        Group {
             // Location Error Message
             if let locationError = locationManager.locationError {
                 VStack {
@@ -117,100 +185,104 @@ struct StationsView: View {
                         .padding(.bottom, 8)
                 }
             }
-            
-            // Content Area
-            if mvvService.isLoading {
-                Spacer()
-                ProgressView("Suche Haltestellen...")
-                Spacer()
-            } else if let errorMessage = mvvService.errorMessage {
-                Spacer()
-                VStack {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.largeTitle)
-                        .foregroundColor(.orange)
-                    Text("Fehler")
-                        .font(.headline)
-                    Text(errorMessage)
+        }
+    }
+    
+    @ViewBuilder
+    private var contentSection: some View {
+        // Content Area
+        if mvvService.isLoading {
+            Spacer()
+            ProgressView("Suche Haltestellen...")
+            Spacer()
+        } else if let errorMessage = mvvService.errorMessage {
+            Spacer()
+            VStack {
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.largeTitle)
+                    .foregroundColor(.orange)
+                Text("Fehler")
+                    .font(.headline)
+                Text(errorMessage)
+                    .multilineTextAlignment(.center)
+                    .padding()
+                Button("Erneut versuchen") {
+                    mvvService.searchStops(name: searchText)
+                }
+                .buttonStyle(.borderedProminent)
+            }
+            Spacer()
+        } else if mvvService.locations.isEmpty {
+            emptyStateSection
+        } else {
+            resultsListSection
+        }
+    }
+    
+    private var emptyStateSection: some View {
+        VStack(spacing: 16) {
+            Spacer()
+            if searchText.isEmpty && !isShowingNearbyStations {
+                // Initial state - no search performed yet
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 60))
+                    .foregroundColor(.gray.opacity(0.5))
+                
+                Text("Haltestelle suchen")
+                    .font(.title2)
+                    .fontWeight(.medium)
+                    .foregroundColor(.primary)
+                
+                VStack(spacing: 8) {
+                    Text("Geben Sie den Namen einer Haltestelle ein")
+                        .font(.body)
+                        .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
-                        .padding()
-                    Button("Erneut versuchen") {
-                        mvvService.searchStops(name: searchText)
-                    }
-                    .buttonStyle(.borderedProminent)
+                    
+                    Text("oder nutzen Sie den Button unten für Stationen in der Umgebung")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
                 }
-                Spacer()
-            } else if mvvService.locations.isEmpty {
-                Spacer()
-                VStack(spacing: 16) {
-                    if searchText.isEmpty && !isShowingNearbyStations {
-                        // Initial state - no search performed yet
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 60))
-                            .foregroundColor(.gray.opacity(0.5))
-                        
-                        Text("Haltestelle suchen")
-                            .font(.title2)
-                            .fontWeight(.medium)
-                            .foregroundColor(.primary)
-                        
-                        Text("Geben Sie den Namen einer Haltestelle ein, um Abfahrten zu finden")
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 40)
-                    } else if isShowingNearbyStations {
-                        // Showing nearby stations but no results
-                        Image(systemName: "location.circle")
-                            .font(.largeTitle)
-                            .foregroundColor(.blue)
-                        
-                        Text("Keine Haltestellen in der Nähe")
-                            .font(.headline)
-                        
-                        Text("Es wurden keine Haltestellen in Ihrer Umgebung gefunden")
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 40)
-                    } else {
-                        // Search performed but no results found
-                        Image(systemName: "magnifyingglass")
-                            .font(.largeTitle)
-                            .foregroundColor(.gray)
-                        
-                        Text("Keine Haltestellen gefunden")
-                            .font(.headline)
-                        
-                        Text("Versuchen Sie eine andere Suche")
-                            .foregroundColor(.secondary)
-                    }
-                }
-                Spacer()
+                .padding(.horizontal, 40)
+            } else if isShowingNearbyStations {
+                // Showing nearby stations but no results
+                Image(systemName: "location.circle")
+                    .font(.largeTitle)
+                    .foregroundColor(.blue)
+                
+                Text("Keine Haltestellen in der Nähe")
+                    .font(.headline)
+                
+                Text("Es wurden keine Haltestellen in Ihrer Umgebung gefunden")
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
             } else {
-                // Results List
-                List(sortedLocations) { location in
-                    NavigationLink(destination: DepartureDetailView(locationId: location.id, locationName: location.disassembledName ?? location.name)) {
-                        LocationRowView(location: location, showDistance: isShowingNearbyStations)
-                    }
-                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                }
-                .listStyle(PlainListStyle())
+                // Search performed but no results found
+                Image(systemName: "magnifyingglass")
+                    .font(.largeTitle)
+                    .foregroundColor(.gray)
+                
+                Text("Keine Haltestellen gefunden")
+                    .font(.headline)
+                
+                Text("Versuchen Sie eine andere Suche")
+                    .foregroundColor(.secondary)
             }
+            Spacer()
         }
-        .navigationTitle(isShowingNearbyStations ? "Nahegelegene Stationen" : "Stationen")
-        .navigationBarTitleDisplayMode(.large)
-        .background(Color(.systemGroupedBackground))
-        .onAppear {
-            locationManager.requestLocation()
-        }
-        .onChange(of: locationManager.location) { _, newLocation in
-            // If user requested nearby stations but location wasn't available before
-            if isShowingNearbyStations && newLocation != nil && mvvService.locations.isEmpty {
-                if let coordString = locationManager.coordStringForAPI() {
-                    mvvService.searchNearbyStops(coordinate: coordString)
-                }
+    }
+    
+    private var resultsListSection: some View {
+        // Results List
+        List(sortedLocations) { location in
+            NavigationLink(destination: DepartureDetailView(locationId: location.id, locationName: location.disassembledName ?? location.name, initialFilters: nil, initialTransportTypes: nil)) {
+                LocationRowView(location: location, showDistance: isShowingNearbyStations)
             }
+            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 16))
         }
+        .listStyle(PlainListStyle())
     }
     
     // MARK: - Search Functions
@@ -241,11 +313,21 @@ struct StationsView: View {
     }
     
     private func showNearbyStations() {
-        locationManager.requestLocation()
+        // Explicitly request location permission if not granted
+        if !locationManager.hasLocationPermission {
+            locationManager.requestLocationPermission()
+            return
+        }
+        
+        // If we have permission but no location yet, try to get it
+        if locationManager.location == nil {
+            locationManager.getLocationIfAuthorized()
+        }
         
         guard let coordString = locationManager.coordStringForAPI() else {
-            // If location is not available yet, try to get it
-            locationManager.startLocationUpdates()
+            // Location is being fetched, the onChange handler will trigger the search
+            isShowingNearbyStations = true
+            searchText = ""
             return
         }
         

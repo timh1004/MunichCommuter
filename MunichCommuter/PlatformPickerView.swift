@@ -1,8 +1,8 @@
 import SwiftUI
 
-struct DestinationPickerView: View {
-    let destinations: [String]
-    @Binding var selectedDestinations: [String]
+struct PlatformPickerView: View {
+    let platforms: [String]
+    @Binding var selectedPlatforms: [String]
     @Binding var isPresented: Bool
     
     @State private var searchText = ""
@@ -10,13 +10,13 @@ struct DestinationPickerView: View {
     var body: some View {
         NavigationView {
             VStack {
-                if destinations.isEmpty {
+                if platforms.isEmpty {
                     Spacer()
                     VStack {
-                        Image(systemName: "location.slash")
+                        Image(systemName: "train.side.front.car")
                             .font(.largeTitle)
                             .foregroundColor(.gray)
-                        Text("Keine Ziele verfügbar")
+                        Text("Keine Gleise verfügbar")
                             .font(.headline)
                         Text("Laden Sie zuerst Abfahrtsdaten")
                             .font(.caption)
@@ -28,7 +28,7 @@ struct DestinationPickerView: View {
                     HStack {
                         Image(systemName: "magnifyingglass")
                             .foregroundColor(.secondary)
-                        TextField("Ziel suchen...", text: $searchText)
+                        TextField("Gleis suchen...", text: $searchText)
                         if !searchText.isEmpty {
                             Button(action: { searchText = "" }) {
                                 Image(systemName: "xmark.circle.fill")
@@ -43,22 +43,22 @@ struct DestinationPickerView: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
                     
-                    // Selected destinations summary
-                    if !selectedDestinations.isEmpty {
+                    // Selected platforms summary
+                    if !selectedPlatforms.isEmpty {
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Ausgewählte Ziele (\(selectedDestinations.count))")
+                                Text("Ausgewählte Gleise (\(selectedPlatforms.count))")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 8) {
-                                        ForEach(selectedDestinations, id: \.self) { destination in
+                                        ForEach(selectedPlatforms, id: \.self) { platform in
                                             HStack(spacing: 4) {
-                                                Text(destination)
+                                                Text("Gleis \(platform)")
                                                     .font(.caption)
                                                     .lineLimit(1)
                                                 Button(action: {
-                                                    selectedDestinations.removeAll { $0 == destination }
+                                                    selectedPlatforms.removeAll { $0 == platform }
                                                 }) {
                                                     Image(systemName: "xmark")
                                                         .font(.caption2)
@@ -67,7 +67,7 @@ struct DestinationPickerView: View {
                                             }
                                             .padding(.horizontal, 8)
                                             .padding(.vertical, 4)
-                                            .background(Color.blue)
+                                            .background(Color.orange)
                                             .foregroundColor(.white)
                                             .cornerRadius(12)
                                         }
@@ -81,30 +81,30 @@ struct DestinationPickerView: View {
                         .background(Color(.systemGray6))
                     }
                     
-                    // Destinations List
-                    List(filteredDestinations, id: \.self) { destination in
+                    // Platforms List
+                    List(filteredPlatforms, id: \.self) { platform in
                         Button(action: {
-                            toggleDestinationSelection(destination)
+                            togglePlatformSelection(platform)
                         }) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(destination)
+                                    Text("Gleis \(platform)")
                                         .font(.system(size: 16, weight: .medium))
                                         .foregroundColor(.primary)
                                         .multilineTextAlignment(.leading)
                                     
-                                    if selectedDestinations.contains(destination) {
+                                    if selectedPlatforms.contains(platform) {
                                         Text("Ausgewählt")
                                             .font(.caption)
-                                            .foregroundColor(.blue)
+                                            .foregroundColor(.orange)
                                     }
                                 }
                                 
                                 Spacer()
                                 
-                                if selectedDestinations.contains(destination) {
+                                if selectedPlatforms.contains(platform) {
                                     Image(systemName: "checkmark.circle.fill")
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(.orange)
                                 } else {
                                     Image(systemName: "circle")
                                         .foregroundColor(.gray)
@@ -117,7 +117,7 @@ struct DestinationPickerView: View {
                     .listStyle(PlainListStyle())
                 }
             }
-            .navigationTitle("Ziele auswählen")
+            .navigationTitle("Gleise auswählen")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -128,9 +128,9 @@ struct DestinationPickerView: View {
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     HStack {
-                        if !selectedDestinations.isEmpty {
+                        if !selectedPlatforms.isEmpty {
                             Button("Alle löschen") {
-                                selectedDestinations.removeAll()
+                                selectedPlatforms.removeAll()
                             }
                             .foregroundColor(.red)
                         }
@@ -145,21 +145,33 @@ struct DestinationPickerView: View {
         }
     }
     
-    private var filteredDestinations: [String] {
+    private var filteredPlatforms: [String] {
         if searchText.isEmpty {
-            return destinations
+            return platforms.sorted { platform1, platform2 in
+                // Sort numerically if both are numbers
+                if let num1 = Int(platform1), let num2 = Int(platform2) {
+                    return num1 < num2
+                }
+                // Otherwise sort alphabetically
+                return platform1.localizedCaseInsensitiveCompare(platform2) == .orderedAscending
+            }
         } else {
-            return destinations.filter { 
+            return platforms.filter { 
                 $0.localizedCaseInsensitiveContains(searchText) 
+            }.sorted { platform1, platform2 in
+                if let num1 = Int(platform1), let num2 = Int(platform2) {
+                    return num1 < num2
+                }
+                return platform1.localizedCaseInsensitiveCompare(platform2) == .orderedAscending
             }
         }
     }
     
-    private func toggleDestinationSelection(_ destination: String) {
-        if selectedDestinations.contains(destination) {
-            selectedDestinations.removeAll { $0 == destination }
+    private func togglePlatformSelection(_ platform: String) {
+        if selectedPlatforms.contains(platform) {
+            selectedPlatforms.removeAll { $0 == platform }
         } else {
-            selectedDestinations.append(destination)
+            selectedPlatforms.append(platform)
         }
     }
 } 
