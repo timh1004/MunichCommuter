@@ -805,8 +805,12 @@ struct DepartureDetailView: View {
         var platforms = Set<String>()
         
         for departure in mvvService.departures {
-            // Add platform info if available
-            if let platform = departure.location?.properties?.platform {
+            // Add platform info if available, using the same priority as display and filtering
+            let platform = departure.location?.properties?.platformName 
+                         ?? departure.location?.properties?.plannedPlatformName 
+                         ?? departure.location?.properties?.platform
+            
+            if let platform = platform {
                 platforms.insert(platform)
             }
         }
@@ -913,7 +917,15 @@ struct DepartureRowView: View {
                     .frame(maxWidth: .infinity, alignment: .leading) // Explicit maxWidth
                 
                 HStack(spacing: 8) {
-                    if let platform = departure.location?.properties?.platform {
+                    if let platformName = departure.location?.properties?.platformName {
+                        Text("Gleis \(platformName)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    } else if let plannedPlatformName = departure.location?.properties?.plannedPlatformName {
+                        Text("Gleis \(plannedPlatformName)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    } else if let platform = departure.location?.properties?.platform {
                         Text("Gleis \(platform)")
                             .font(.caption)
                             .foregroundColor(.secondary)
