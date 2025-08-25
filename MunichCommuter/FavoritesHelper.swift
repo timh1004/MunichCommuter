@@ -12,7 +12,7 @@ struct FavoritesHelper {
                 return name1.localizedCaseInsensitiveCompare(name2) == .orderedAscending
             }
         case .distance:
-            guard locationManager.location != nil else {
+            guard locationManager.effectiveLocation != nil else {
                 return favorites.sorted { favorite1, favorite2 in
                     let name1 = favorite1.location.disassembledName ?? favorite1.location.name ?? ""
                     let name2 = favorite2.location.disassembledName ?? favorite2.location.name ?? ""

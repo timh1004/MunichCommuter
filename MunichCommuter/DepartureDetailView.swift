@@ -881,6 +881,7 @@ struct TransportTypeFilterButton: View {
 struct DepartureRowView: View {
     let departure: StopEvent
     @AppStorage("timeDisplayMode") private var timeDisplayModeRaw: String = TimeDisplayMode.relative.rawValue
+    @State private var now: Date = Date()
     
     private var timeDisplayMode: TimeDisplayMode {
         TimeDisplayMode(rawValue: timeDisplayModeRaw) ?? .relative
@@ -937,7 +938,7 @@ struct DepartureRowView: View {
             
             // Departure Time (Rechtsbündig)
             VStack(alignment: .trailing, spacing: 3) {
-                Text(DepartureRowStyling.formattedDepartureTime(for: departure, mode: timeDisplayMode))
+                Text(DepartureRowStyling.formattedDepartureTime(for: departure, mode: timeDisplayMode, referenceDate: now))
                     .font(.system(size: 18, weight: .semibold, design: .monospaced))
                     .foregroundColor(DepartureRowStyling.shouldShowOrange(for: departure) ? .orange : .primary)
                     .onTapGesture {
@@ -959,6 +960,9 @@ struct DepartureRowView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
+        .onReceive(Timer.publish(every: 30, on: .main, in: .common).autoconnect()) { current in
+            self.now = current
+        }
     }
     
     // All styling logic moved to DepartureRowStyling helper

@@ -22,7 +22,8 @@ struct DepartureTimeFormatter {
         plannedTime: String?,
         estimatedTime: String?,
         includeDelay: Bool = true,
-        mode: TimeDisplayMode = .relative
+        mode: TimeDisplayMode = .relative,
+        referenceDate: Date = Date()
     ) -> (timeDisplay: String, delayDisplay: String?) {
         
         // Verwende die geschätzte Zeit für die Anzeige, aber berechne Minuten basierend auf der geplanten Zeit
@@ -38,7 +39,7 @@ struct DepartureTimeFormatter {
             return ("--:--", nil)
         }
         
-        let minutesFromNow = timeDateForCalculation.minutesFromNow()
+        let minutesFromNow = Int(timeDateForCalculation.timeIntervalSince(referenceDate) / 60)
         
         // Berechne Verspätung falls verfügbar
         var delayMinutes: Int? = nil
@@ -62,10 +63,14 @@ struct DepartureTimeFormatter {
         let timeDisplay: String
         switch effectiveMode {
         case .relative:
-            if minutesFromNow <= 0 {
-                timeDisplay = "Jetzt"
-            } else {
+            if minutesFromNow >= 1 {
                 timeDisplay = "\(minutesFromNow) Min"
+            } else if minutesFromNow == 0 {
+                timeDisplay = "Jetzt"
+            } else if minutesFromNow == -1 {
+                timeDisplay = "Gerade weg"
+            } else {
+                timeDisplay = "vor \(-minutesFromNow) Min"
             }
         case .absolute:
             let formatter = DateFormatter()

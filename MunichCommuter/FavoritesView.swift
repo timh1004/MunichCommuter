@@ -14,11 +14,26 @@ struct FavoritesView: View {
     @State private var favoriteDepartures: [String: [StopEvent]] = [:] // locationId -> departures
     @State private var loadingFavorites: Set<String> = [] // locationIds being loaded
     @State private var hasInitializedSort = false
+    @State private var initializedDeparturesAfterLocation = false
+    @State private var currentTop3LocationIds: [String] = [] // Track current top 3 for change detection
     
     private var sortedFavorites: [FilteredFavorite] {
         // Don't show favorites until initial sort is determined to avoid jumping
         guard hasInitializedSort else { return [] }
-        return FavoritesHelper.sortFavorites(favoritesManager.favorites, by: sortOption, locationManager: locationManager)
+        let sorted = FavoritesHelper.sortFavorites(favoritesManager.favorites, by: sortOption, locationManager: locationManager)
+        
+        // Check if top 3 changed and trigger departure reload if needed
+        let newTop3LocationIds = Array(sorted.prefix(3).map { $0.location.id })
+        if newTop3LocationIds != currentTop3LocationIds {
+            DispatchQueue.main.async {
+                self.currentTop3LocationIds = newTop3LocationIds
+                Task { @MainActor in
+                    await self.reloadDeparturesForChangedTop3()
+                }
+            }
+        }
+        
+        return sorted
     }
     
     var body: some View {
@@ -120,21 +135,45 @@ struct FavoritesView: View {
         }
         .onAppear {
             setupInitialSortOption()
-            // Only get location if we already have permission, don't prompt for it
-            locationManager.getLocationIfAuthorized()
-            // Load departures for first 3 favorites after a short delay to allow sorting
-            Task {
-                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
-                await loadFirst3FavoritesDepartures()
+            // Start precise updates if we're using distance sorting, otherwise single shot
+            updateLocationTrackingMode()
+            // Gate departures until we have an effective location (live or cached), with a short timeout
+            Task { @MainActor in
+                _ = await locationManager.awaitEffectiveLocation(timeout: 1.0)
+                if !initializedDeparturesAfterLocation {
+                    initializedDeparturesAfterLocation = true
+                    await loadFirst3FavoritesDepartures()
+                }
+            }
+        }
+        .onDisappear {
+            // Stop precise updates when leaving favorites view
+            if locationManager.currentTrackingMode == .precise {
+                locationManager.requestSingleLocation()
             }
         }
         .onChange(of: locationManager.authorizationStatus) { _, newStatus in
             // Auto-switch to distance sorting when permission is granted for the first time
             if (newStatus == .authorizedWhenInUse || newStatus == .authorizedAlways) {
-                locationManager.getLocationIfAuthorized()
                 // Only auto-switch if we don't have favorites yet or if sorting was alphabetical
                 if favoritesManager.favorites.isEmpty || sortOption == .alphabetical {
                     sortOption = .distance
+                }
+                updateLocationTrackingMode()
+            }
+        }
+        .onChange(of: sortOption) { _, _ in
+            // Update tracking mode when sort option changes
+            updateLocationTrackingMode()
+        }
+        .onChange(of: locationManager.effectiveLocation) { _, _ in
+            // Resort when the user moves significantly and reload departures for visible top items
+            if sortOption == .distance {
+                // Trigger a state update by toggling hasInitializedSort briefly
+                hasInitializedSort.toggle()
+                hasInitializedSort.toggle()
+                Task { @MainActor in
+                    await refreshFavorites()
                 }
             }
         }
@@ -148,8 +187,8 @@ struct FavoritesView: View {
     }
     
     private func setupInitialSortOption() {
-        // Auto-select based on location permission
-        if locationManager.hasLocationPermission && locationManager.location != nil {
+        // Auto-select based on location permission and any effective location (live or cached)
+        if locationManager.hasLocationPermission && locationManager.effectiveLocation != nil {
             sortOption = .distance
         } else {
             sortOption = .alphabetical
@@ -158,9 +197,22 @@ struct FavoritesView: View {
         hasInitializedSort = true
     }
     
+    private func updateLocationTrackingMode() {
+        // Use precise updates when distance sorting is active and we have permission
+        if sortOption == .distance && locationManager.hasLocationPermission {
+            locationManager.startPreciseUpdates()
+        } else {
+            // Use single shot for alphabetical sorting or when no permission
+            locationManager.requestSingleLocation()
+        }
+    }
+    
     @MainActor
     private func loadFirst3FavoritesDepartures() async {
         let first3Favorites = getFirst3FavoritesForDepartures()
+        
+        // Initialize the current top 3 tracking
+        currentTop3LocationIds = Array(first3Favorites.map { $0.location.id })
         
         for favorite in first3Favorites {
             let locationId = favorite.location.id
@@ -224,9 +276,43 @@ struct FavoritesView: View {
         // Get the current first 3 favorites (could have changed due to sorting/location)
         let first3Favorites = getFirst3FavoritesForDepartures()
         
+        // Update the current top 3 tracking
+        currentTop3LocationIds = Array(first3Favorites.map { $0.location.id })
+        
         // Load fresh departures for each of the first 3 favorites
         for favorite in first3Favorites {
             let locationId = favorite.location.id
+            loadingFavorites.insert(locationId)
+            
+            // Load departures for this favorite
+            Task {
+                await loadDeparturesForFavorite(favorite)
+            }
+        }
+    }
+    
+    @MainActor
+    private func reloadDeparturesForChangedTop3() async {
+        let first3Favorites = getFirst3FavoritesForDepartures()
+        let currentTop3Ids = Set(first3Favorites.map { $0.location.id })
+        
+        // Remove departures that are no longer in top 3
+        for locationId in favoriteDepartures.keys {
+            if !currentTop3Ids.contains(locationId) {
+                favoriteDepartures.removeValue(forKey: locationId)
+                loadingFavorites.remove(locationId)
+            }
+        }
+        
+        // Load departures for new top 3 stations that don't have data yet
+        for favorite in first3Favorites {
+            let locationId = favorite.location.id
+            
+            // Skip if already loading or already loaded
+            if loadingFavorites.contains(locationId) || favoriteDepartures[locationId] != nil {
+                continue
+            }
+            
             loadingFavorites.insert(locationId)
             
             // Load departures for this favorite
@@ -280,8 +366,8 @@ struct FilteredFavoriteRowView: View {
             
             Spacer()
             
-            // Distance Display (always when we have location permission and location)
-            if locationManager.hasLocationPermission && locationManager.location != nil,
+            // Distance Display (always when we have location permission and effective location)
+            if locationManager.hasLocationPermission && locationManager.effectiveLocation != nil,
                let distance = locationManager.distanceFrom(favorite.location.coord ?? []) {
                 Text(locationManager.formattedDistance(distance))
                     .font(.system(size: 14, weight: .medium))
@@ -338,8 +424,8 @@ struct FavoriteWithDeparturesView: View {
                 
                 Spacer()
                 
-                // Distance Display (always when we have location permission and location)
-                if locationManager.hasLocationPermission && locationManager.location != nil,
+                // Distance Display (always when we have location permission and effective location)
+                if locationManager.hasLocationPermission && locationManager.effectiveLocation != nil,
                    let distance = locationManager.distanceFrom(favorite.location.coord ?? []) {
                     Text(locationManager.formattedDistance(distance))
                         .font(.system(size: 14, weight: .medium))
@@ -384,6 +470,7 @@ struct FavoriteWithDeparturesView: View {
 struct CompactDepartureRowView: View {
     let departure: StopEvent
     @AppStorage("timeDisplayMode") private var timeDisplayModeRaw: String = TimeDisplayMode.relative.rawValue
+    @State private var now: Date = Date()
     
     private var timeDisplayMode: TimeDisplayMode {
         TimeDisplayMode(rawValue: timeDisplayModeRaw) ?? .relative
@@ -401,9 +488,12 @@ struct CompactDepartureRowView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             
             // Departure time
-            Text(DepartureRowStyling.formattedDepartureTime(for: departure, mode: timeDisplayMode))
+            Text(DepartureRowStyling.formattedDepartureTime(for: departure, mode: timeDisplayMode, referenceDate: now))
                 .font(.system(size: 12, weight: .semibold, design: .monospaced))
                 .foregroundColor(DepartureRowStyling.shouldShowOrange(for: departure) ? .orange : .secondary)
+        }
+        .onReceive(Timer.publish(every: 30, on: .main, in: .common).autoconnect()) { current in
+            self.now = current
         }
     }
     

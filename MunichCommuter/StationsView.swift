@@ -36,15 +36,15 @@ struct StationsView: View {
         .navigationBarTitleDisplayMode(.large)
         .background(Color(.systemGroupedBackground))
         .onAppear {
-            // Only get location if we already have permission, don't prompt for it
-            locationManager.getLocationIfAuthorized()
+            // Request a single location update - don't need continuous updates here
+            locationManager.requestSingleLocation()
             
-            // Auto-load nearby stations if we have permission and location
-            if locationManager.hasLocationPermission && locationManager.location != nil && searchText.isEmpty && mvvService.locations.isEmpty {
+            // Auto-load nearby stations if we have permission and effective location
+            if locationManager.hasLocationPermission && locationManager.effectiveLocation != nil && searchText.isEmpty && mvvService.locations.isEmpty {
                 showNearbyStations()
             }
         }
-        .onChange(of: locationManager.location) { _, newLocation in
+        .onChange(of: locationManager.effectiveLocation) { _, newLocation in
             // If user requested nearby stations but location wasn't available before
             if isShowingNearbyStations && newLocation != nil && mvvService.locations.isEmpty {
                 if let coordString = locationManager.coordStringForAPI() {
@@ -315,9 +315,9 @@ struct StationsView: View {
             return
         }
         
-        // If we have permission but no location yet, try to get it
-        if locationManager.location == nil {
-            locationManager.getLocationIfAuthorized()
+        // If we have permission but no effective location yet, try to get it
+        if locationManager.effectiveLocation == nil {
+            locationManager.requestSingleLocation()
         }
         
         guard let coordString = locationManager.coordStringForAPI() else {

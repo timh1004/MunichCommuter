@@ -132,6 +132,7 @@ struct TripDetailView: View {
 struct TripHeaderView: View {
     let departure: StopEvent
     @AppStorage("timeDisplayMode") private var timeDisplayModeRaw: String = TimeDisplayMode.relative.rawValue
+    @State private var now: Date = Date()
     
     private var timeDisplayMode: TimeDisplayMode {
         TimeDisplayMode(rawValue: timeDisplayModeRaw) ?? .relative
@@ -273,7 +274,8 @@ struct TripHeaderView: View {
             plannedTime: departure.departureTimePlanned,
             estimatedTime: departure.departureTimeEstimated,
             includeDelay: true,
-            mode: timeDisplayMode
+            mode: timeDisplayMode,
+            referenceDate: now
         )
     }
     
