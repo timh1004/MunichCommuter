@@ -949,16 +949,7 @@ struct DepartureRowView: View {
                     .foregroundColor(DepartureRowStyling.shouldShowOrange(for: departure) ? .orange : .primary)
                 
                 HStack(spacing: 4) {
-                    if DepartureRowStyling.isRealtime(for: departure) {
-                        HStack(spacing: 3) {
-                            Circle()
-                                .fill(.green)
-                                .frame(width: 6, height: 6)
-                            Text("Live")
-                                .font(.caption2)
-                                .foregroundColor(.green)
-                        }
-                    }
+                    RealtimeBadge(isRealtime: DepartureRowStyling.isRealtime(for: departure))
                     
                     if let delayText = DepartureRowStyling.delayDisplay(for: departure) {
                         Text(delayText)

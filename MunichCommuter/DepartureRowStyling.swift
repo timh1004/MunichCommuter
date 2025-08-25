@@ -142,3 +142,23 @@ struct TransportBadge: View {
         }
     }
 } 
+
+// MARK: - Reusable Realtime Badge
+struct RealtimeBadge: View {
+    let isRealtime: Bool
+    
+    var body: some View {
+        Group {
+            if isRealtime {
+                HStack(spacing: 3) {
+                    Circle()
+                        .fill(.green)
+                        .frame(width: 6, height: 6)
+                    Text("Live")
+                        .font(.caption2)
+                        .foregroundColor(.green)
+                }
+            }
+        }
+    }
+}

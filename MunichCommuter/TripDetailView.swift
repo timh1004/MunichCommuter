@@ -171,23 +171,14 @@ struct TripHeaderView: View {
                     
                     Text(formattedDepartureTime)
                         .font(.system(size: 24, weight: .semibold, design: .monospaced))
-                        .foregroundColor(shouldShowOrange ? .orange : .primary)
+                        .foregroundColor(DepartureRowStyling.shouldShowOrange(for: departure) ? .orange : .primary)
                 }
                 
                 Spacer()
                 
                 VStack(alignment: .trailing, spacing: 4) {
                     HStack(spacing: 4) {
-                        if departure.isRealtimeControlled == true {
-                            HStack(spacing: 3) {
-                                Circle()
-                                    .fill(.green)
-                                    .frame(width: 6, height: 6)
-                                Text("Live")
-                                    .font(.caption2)
-                                    .foregroundColor(.green)
-                            }
-                        }
+                        RealtimeBadge(isRealtime: departure.isRealtimeControlled == true)
                         
                         if let delayText = delayDisplay {
                             Text(delayText)
@@ -267,17 +258,7 @@ struct TripHeaderView: View {
         return estimatedDate > plannedDate
     }
     
-    private var shouldShowOrange: Bool {
-        // Zeige orange nur wenn Abfahrt in 1 Minute oder weniger stattfindet
-        // Verwende die geplante Zeit für die Berechnung, nicht die geschätzte Zeit
-        let timeString = departure.departureTimePlanned ?? departure.departureTimeEstimated ?? ""
-        guard let departureDate = Date.parseISO8601(timeString) else {
-            return false
-        }
-        
-        let minutesFromNow = departureDate.minutesFromNow()
-        return minutesFromNow <= 1
-    }
+    // removed local shouldShowOrange; use DepartureRowStyling.shouldShowOrange(for:)
     
     private var formattedTimes: (timeDisplay: String, delayDisplay: String?) {
         return DepartureTimeFormatter.formatDepartureTime(
