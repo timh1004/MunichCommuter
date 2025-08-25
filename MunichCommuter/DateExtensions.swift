@@ -26,13 +26,13 @@ struct DepartureTimeFormatter {
             return ("--:--", nil)
         }
         
-        // Berechne Minuten basierend auf der geplanten Zeit (ohne Verspätung)
-        let plannedTimeString = plannedTime ?? estimatedTime ?? ""
-        guard let plannedDate = Date.parseISO8601(plannedTimeString) else {
+        // Berechne Minuten basierend auf der geschätzten Zeit (mit Verspätung)
+        let timeStringForCalculation = estimatedTime ?? plannedTime ?? ""
+        guard let timeDateForCalculation = Date.parseISO8601(timeStringForCalculation) else {
             return ("--:--", nil)
         }
         
-        let minutesFromNow = plannedDate.minutesFromNow()
+        let minutesFromNow = timeDateForCalculation.minutesFromNow()
         
         // Berechne Verspätung falls verfügbar
         var delayMinutes: Int? = nil
@@ -71,5 +71,22 @@ struct DepartureTimeFormatter {
         let delayDisplay = delayMinutes.map { "+\($0)" }
         
         return (timeDisplay, delayDisplay)
+    }
+    
+    // MARK: - Sorting Logic
+    
+    /// Sortiert Abfahrten chronologisch nach der geschätzten Abfahrtszeit (mit Verspätung)
+    static func sortDeparturesByEstimatedTime(_ departures: [StopEvent]) -> [StopEvent] {
+        return departures.sorted { departure1, departure2 in
+            let time1 = departure1.departureTimeEstimated ?? departure1.departureTimePlanned ?? ""
+            let time2 = departure2.departureTimeEstimated ?? departure2.departureTimePlanned ?? ""
+            
+            guard let date1 = Date.parseISO8601(time1),
+                  let date2 = Date.parseISO8601(time2) else {
+                return false
+            }
+            
+            return date1 < date2
+        }
     }
 }

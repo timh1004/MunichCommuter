@@ -224,7 +224,10 @@ struct FavoritesView: View {
             transportTypeFilters: favorite.transportTypeFilters
         )
         
-        favoriteDepartures[locationId] = Array(filteredDepartures.prefix(3))
+        // Sortiere Abfahrten nach der geschätzten Abfahrtszeit (mit Verspätung)
+        let sortedDepartures = DepartureTimeFormatter.sortDeparturesByEstimatedTime(filteredDepartures)
+        
+        favoriteDepartures[locationId] = Array(sortedDepartures.prefix(3))
         loadingFavorites.remove(locationId)
     }
     

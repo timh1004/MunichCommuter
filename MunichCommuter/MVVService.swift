@@ -364,7 +364,10 @@ class MVVService: ObservableObject {
                         }
                     }
                     
-                    self.departures = stopEvents
+                    // Sortiere Abfahrten nach der geschätzten Abfahrtszeit (mit Verspätung)
+                    let sortedStopEvents = DepartureTimeFormatter.sortDeparturesByEstimatedTime(stopEvents)
+                    
+                    self.departures = sortedStopEvents
                     self.departureLocations = departureResponse.locations ?? []
                 } catch {
                     self.departureErrorMessage = "Fehler beim Verarbeiten der Abfahrtsdaten: \(error.localizedDescription)"
