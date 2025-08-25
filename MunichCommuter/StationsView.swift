@@ -22,11 +22,7 @@ struct StationsView: View {
     }
     
     private func getLocationDistance(_ location: Location) -> Double {
-        if let apiDist = location.distance {
-            return Double(apiDist)
-        } else {
-            return locationManager.distanceFrom(location.coord ?? []) ?? Double.infinity
-        }
+        return locationManager.distanceFor(location: location) ?? Double.infinity
     }
     
     var body: some View {
@@ -371,13 +367,8 @@ struct LocationRowView: View {
             // Distance Display
             if showDistance {
                 // Use API distance if available (for nearby stops), otherwise calculate distance
-                if let apiDistance = location.distance {
-                    let distance = CLLocationDistance(apiDistance)
+                if let distance = locationManager.distanceFor(location: location) {
                     Text(locationManager.formattedDistance(distance))
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.secondary)
-                } else if let calculatedDistance = locationManager.distanceFrom(location.coord ?? []) {
-                    Text(locationManager.formattedDistance(calculatedDistance))
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.secondary)
                 }

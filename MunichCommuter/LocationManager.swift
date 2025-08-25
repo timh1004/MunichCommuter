@@ -96,6 +96,14 @@ class LocationManager: NSObject, ObservableObject {
         }
     }
     
+    // Convenience: compute distance for a Location model using available sources
+    func distanceFor(location: Location) -> CLLocationDistance? {
+        if let apiDist = location.distance {
+            return CLLocationDistance(apiDist)
+        }
+        return distanceFrom(location.coord ?? [])
+    }
+    
     func coordStringForAPI() -> String? {
         guard let location = location else { return nil }
         

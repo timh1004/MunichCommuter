@@ -20,8 +20,8 @@ struct FavoritesHelper {
                 }
             }
             return favorites.sorted { favorite1, favorite2 in
-                let distance1 = locationManager.distanceFrom(favorite1.location.coord ?? []) ?? Double.infinity
-                let distance2 = locationManager.distanceFrom(favorite2.location.coord ?? []) ?? Double.infinity
+                let distance1 = locationManager.distanceFor(location: favorite1.location) ?? Double.infinity
+                let distance2 = locationManager.distanceFor(location: favorite2.location) ?? Double.infinity
                 return distance1 < distance2
             }
         }
