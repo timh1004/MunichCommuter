@@ -32,10 +32,8 @@ class FilteringHelper {
     // MARK: - Platform Filtering
     static func hasPlatformMatch(departure: StopEvent, platforms: [String]) -> Bool {
         // Check if any of the platform filters match this departure
-        // Try platformName first, then plannedPlatformName, then fall back to platform
-        let departurePlatform = departure.location?.properties?.platformName 
-                             ?? departure.location?.properties?.plannedPlatformName 
-                             ?? departure.location?.properties?.platform
+        // Use unified platform resolution
+        let departurePlatform = PlatformHelper.effectivePlatform(from: departure.location?.properties)
         
         guard let departurePlatform = departurePlatform else {
             return false // No platform info available

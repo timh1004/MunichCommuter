@@ -805,24 +805,12 @@ struct DepartureDetailView: View {
         var platforms = Set<String>()
         
         for departure in mvvService.departures {
-            // Add platform info if available, using the same priority as display and filtering
-            let platform = departure.location?.properties?.platformName 
-                         ?? departure.location?.properties?.plannedPlatformName 
-                         ?? departure.location?.properties?.platform
-            
-            if let platform = platform {
+            if let platform = PlatformHelper.effectivePlatform(from: departure.location?.properties) {
                 platforms.insert(platform)
             }
         }
         
-        return Array(platforms).sorted { platform1, platform2 in
-            // Sort numerically if both are numbers
-            if let num1 = Int(platform1), let num2 = Int(platform2) {
-                return num1 < num2
-            }
-            // Otherwise sort alphabetically
-            return platform1.localizedCaseInsensitiveCompare(platform2) == .orderedAscending
-        }
+        return PlatformHelper.sortPlatforms(Array(platforms))
     }
 }
 

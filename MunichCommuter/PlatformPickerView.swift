@@ -147,23 +147,10 @@ struct PlatformPickerView: View {
     
     private var filteredPlatforms: [String] {
         if searchText.isEmpty {
-            return platforms.sorted { platform1, platform2 in
-                // Sort numerically if both are numbers
-                if let num1 = Int(platform1), let num2 = Int(platform2) {
-                    return num1 < num2
-                }
-                // Otherwise sort alphabetically
-                return platform1.localizedCaseInsensitiveCompare(platform2) == .orderedAscending
-            }
+            return PlatformHelper.sortPlatforms(platforms)
         } else {
-            return platforms.filter { 
-                $0.localizedCaseInsensitiveContains(searchText) 
-            }.sorted { platform1, platform2 in
-                if let num1 = Int(platform1), let num2 = Int(platform2) {
-                    return num1 < num2
-                }
-                return platform1.localizedCaseInsensitiveCompare(platform2) == .orderedAscending
-            }
+            let filtered = platforms.filter { $0.localizedCaseInsensitiveContains(searchText) }
+            return PlatformHelper.sortPlatforms(filtered)
         }
     }
     
