@@ -383,6 +383,11 @@ struct FavoriteWithDeparturesView: View {
 
 struct CompactDepartureRowView: View {
     let departure: StopEvent
+    @AppStorage("timeDisplayMode") private var timeDisplayModeRaw: String = TimeDisplayMode.relative.rawValue
+    
+    private var timeDisplayMode: TimeDisplayMode {
+        TimeDisplayMode(rawValue: timeDisplayModeRaw) ?? .relative
+    }
     
     var body: some View {
         HStack(spacing: 8) {
@@ -396,7 +401,7 @@ struct CompactDepartureRowView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             
             // Departure time
-            Text(DepartureRowStyling.formattedDepartureTime(for: departure))
+            Text(DepartureRowStyling.formattedDepartureTime(for: departure, mode: timeDisplayMode))
                 .font(.system(size: 12, weight: .semibold, design: .monospaced))
                 .foregroundColor(DepartureRowStyling.shouldShowOrange(for: departure) ? .orange : .secondary)
         }

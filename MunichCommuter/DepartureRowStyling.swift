@@ -74,10 +74,12 @@ struct DepartureRowStyling {
     }
     
     // MARK: - Formatted Departure Time
-    static func formattedDepartureTime(for departure: StopEvent) -> String {
+    static func formattedDepartureTime(for departure: StopEvent, mode: TimeDisplayMode = .relative) -> String {
         let (timeDisplay, _) = DepartureTimeFormatter.formatDepartureTime(
             plannedTime: departure.departureTimePlanned,
-            estimatedTime: departure.departureTimeEstimated
+            estimatedTime: departure.departureTimeEstimated,
+            includeDelay: true,
+            mode: mode
         )
         return timeDisplay
     }
@@ -86,7 +88,9 @@ struct DepartureRowStyling {
     static func delayDisplay(for departure: StopEvent) -> String? {
         let (_, delayDisplay) = DepartureTimeFormatter.formatDepartureTime(
             plannedTime: departure.departureTimePlanned,
-            estimatedTime: departure.departureTimeEstimated
+            estimatedTime: departure.departureTimeEstimated,
+            includeDelay: true,
+            mode: .relative
         )
         return delayDisplay
     }

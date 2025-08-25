@@ -131,6 +131,11 @@ struct TripDetailView: View {
 
 struct TripHeaderView: View {
     let departure: StopEvent
+    @AppStorage("timeDisplayMode") private var timeDisplayModeRaw: String = TimeDisplayMode.relative.rawValue
+    
+    private var timeDisplayMode: TimeDisplayMode {
+        TimeDisplayMode(rawValue: timeDisplayModeRaw) ?? .relative
+    }
     
     var body: some View {
         VStack(spacing: 16) {
@@ -172,6 +177,9 @@ struct TripHeaderView: View {
                     Text(formattedDepartureTime)
                         .font(.system(size: 24, weight: .semibold, design: .monospaced))
                         .foregroundColor(DepartureRowStyling.shouldShowOrange(for: departure) ? .orange : .primary)
+                        .onTapGesture {
+                            timeDisplayModeRaw = (timeDisplayMode == .relative ? TimeDisplayMode.absolute.rawValue : TimeDisplayMode.relative.rawValue)
+                        }
                 }
                 
                 Spacer()
@@ -263,7 +271,9 @@ struct TripHeaderView: View {
     private var formattedTimes: (timeDisplay: String, delayDisplay: String?) {
         return DepartureTimeFormatter.formatDepartureTime(
             plannedTime: departure.departureTimePlanned,
-            estimatedTime: departure.departureTimeEstimated
+            estimatedTime: departure.departureTimeEstimated,
+            includeDelay: true,
+            mode: timeDisplayMode
         )
     }
     

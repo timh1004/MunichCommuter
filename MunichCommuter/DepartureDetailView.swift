@@ -880,6 +880,11 @@ struct TransportTypeFilterButton: View {
 
 struct DepartureRowView: View {
     let departure: StopEvent
+    @AppStorage("timeDisplayMode") private var timeDisplayModeRaw: String = TimeDisplayMode.relative.rawValue
+    
+    private var timeDisplayMode: TimeDisplayMode {
+        TimeDisplayMode(rawValue: timeDisplayModeRaw) ?? .relative
+    }
     
     var body: some View {
         HStack(alignment: .center, spacing: 8) {
@@ -932,9 +937,12 @@ struct DepartureRowView: View {
             
             // Departure Time (Rechtsbündig)
             VStack(alignment: .trailing, spacing: 3) {
-                Text(DepartureRowStyling.formattedDepartureTime(for: departure))
+                Text(DepartureRowStyling.formattedDepartureTime(for: departure, mode: timeDisplayMode))
                     .font(.system(size: 18, weight: .semibold, design: .monospaced))
                     .foregroundColor(DepartureRowStyling.shouldShowOrange(for: departure) ? .orange : .primary)
+                    .onTapGesture {
+                        timeDisplayModeRaw = (timeDisplayMode == .relative ? TimeDisplayMode.absolute.rawValue : TimeDisplayMode.relative.rawValue)
+                    }
                 
                 HStack(spacing: 4) {
                     RealtimeBadge(isRealtime: DepartureRowStyling.isRealtime(for: departure))

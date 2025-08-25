@@ -12,11 +12,17 @@ extension Date {
     }
 }
 
+enum TimeDisplayMode: String {
+    case relative
+    case absolute
+}
+
 struct DepartureTimeFormatter {
     static func formatDepartureTime(
         plannedTime: String?,
         estimatedTime: String?,
-        includeDelay: Bool = true
+        includeDelay: Bool = true,
+        mode: TimeDisplayMode = .relative
     ) -> (timeDisplay: String, delayDisplay: String?) {
         
         // Verwende die geschätzte Zeit für die Anzeige, aber berechne Minuten basierend auf der geplanten Zeit
@@ -50,17 +56,18 @@ struct DepartureTimeFormatter {
             }
         }
         
-        // Formatiere die Zeitanzeige basierend auf den Regeln
+        // Formatiere die Zeitanzeige basierend auf dem Modus
+        // Wenn es mehr als 60 Minuten sind, immer absolute Anzeige
+        let effectiveMode: TimeDisplayMode = (minutesFromNow > 60) ? .absolute : mode
         let timeDisplay: String
-        
-        if minutesFromNow <= 0 {
-            // Abfahrt ist jetzt oder in der Vergangenheit
-            timeDisplay = "Jetzt"
-        } else if minutesFromNow <= 20 {
-            // Abfahrt ist in den nächsten 20 Minuten
-            timeDisplay = "\(minutesFromNow) Min"
-        } else {
-            // Abfahrt ist später - zeige Uhrzeit der geschätzten Zeit
+        switch effectiveMode {
+        case .relative:
+            if minutesFromNow <= 0 {
+                timeDisplay = "Jetzt"
+            } else {
+                timeDisplay = "\(minutesFromNow) Min"
+            }
+        case .absolute:
             let formatter = DateFormatter()
             formatter.timeStyle = .short
             formatter.dateStyle = .none
