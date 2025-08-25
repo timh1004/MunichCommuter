@@ -275,18 +275,10 @@ struct TripHeaderView: View {
         return formattedTimes.delayDisplay
     }
     
-    // Legacy computed property for backwards compatibility
+    // Delay via shared helper
     private var delayMinutes: Int? {
-        guard let plannedString = departure.departureTimePlanned,
-              let estimatedString = departure.departureTimeEstimated,
-              let planned = Date.parseISO8601(plannedString),
-              let estimated = Date.parseISO8601(estimatedString) else {
-            return nil
-        }
-        
-        let difference = estimated.timeIntervalSince(planned)
-        let minutes = Int(difference / 60)
-        return minutes > 0 ? minutes : nil
+        return DepartureTimeFormatter.delayMinutes(planned: departure.departureTimePlanned,
+                                                   estimated: departure.departureTimeEstimated)
     }
 }
 

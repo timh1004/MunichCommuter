@@ -89,4 +89,16 @@ struct DepartureTimeFormatter {
             return date1 < date2
         }
     }
+
+    // MARK: - Delay Helper
+    static func delayMinutes(planned: String?, estimated: String?) -> Int? {
+        guard let plannedString = planned,
+              let estimatedString = estimated,
+              let plannedDate = Date.parseISO8601(plannedString),
+              let estimatedDate = Date.parseISO8601(estimatedString) else {
+            return nil
+        }
+        let diff = Int(estimatedDate.timeIntervalSince(plannedDate) / 60)
+        return diff > 0 ? diff : nil
+    }
 }
