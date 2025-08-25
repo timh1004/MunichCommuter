@@ -17,32 +17,8 @@ struct FavoritesView: View {
     
     private var sortedFavorites: [FilteredFavorite] {
         // Don't show favorites until initial sort is determined to avoid jumping
-        guard hasInitializedSort else {
-            return []
-        }
-        
-        switch sortOption {
-        case .alphabetical:
-            return favoritesManager.favorites.sorted { favorite1, favorite2 in
-                let name1 = favorite1.location.disassembledName ?? favorite1.location.name ?? ""
-                let name2 = favorite2.location.disassembledName ?? favorite2.location.name ?? ""
-                return name1.localizedCaseInsensitiveCompare(name2) == .orderedAscending
-            }
-        case .distance:
-            guard locationManager.location != nil else {
-                // If no location available but distance sort is selected, fall back to alphabetical
-                return favoritesManager.favorites.sorted { favorite1, favorite2 in
-                    let name1 = favorite1.location.disassembledName ?? favorite1.location.name ?? ""
-                    let name2 = favorite2.location.disassembledName ?? favorite2.location.name ?? ""
-                    return name1.localizedCaseInsensitiveCompare(name2) == .orderedAscending
-                }
-            }
-            return favoritesManager.favorites.sorted { favorite1, favorite2 in
-                let distance1 = locationManager.distanceFrom(favorite1.location.coord ?? []) ?? Double.infinity
-                let distance2 = locationManager.distanceFrom(favorite2.location.coord ?? []) ?? Double.infinity
-                return distance1 < distance2
-            }
-        }
+        guard hasInitializedSort else { return [] }
+        return FavoritesHelper.sortFavorites(favoritesManager.favorites, by: sortOption, locationManager: locationManager)
     }
     
     var body: some View {
@@ -235,32 +211,7 @@ struct FavoritesView: View {
         // Use the same sorting logic but ensure we have favorites
         guard !favoritesManager.favorites.isEmpty else { return [] }
         
-        let sorted: [FilteredFavorite]
-        
-        switch sortOption {
-        case .alphabetical:
-            sorted = favoritesManager.favorites.sorted { favorite1, favorite2 in
-                let name1 = favorite1.location.disassembledName ?? favorite1.location.name ?? ""
-                let name2 = favorite2.location.disassembledName ?? favorite2.location.name ?? ""
-                return name1.localizedCaseInsensitiveCompare(name2) == .orderedAscending
-            }
-        case .distance:
-            guard locationManager.location != nil else {
-                // Fall back to alphabetical if no location
-                sorted = favoritesManager.favorites.sorted { favorite1, favorite2 in
-                    let name1 = favorite1.location.disassembledName ?? favorite1.location.name ?? ""
-                    let name2 = favorite2.location.disassembledName ?? favorite2.location.name ?? ""
-                    return name1.localizedCaseInsensitiveCompare(name2) == .orderedAscending
-                }
-                return Array(sorted.prefix(3))
-            }
-            sorted = favoritesManager.favorites.sorted { favorite1, favorite2 in
-                let distance1 = locationManager.distanceFrom(favorite1.location.coord ?? []) ?? Double.infinity
-                let distance2 = locationManager.distanceFrom(favorite2.location.coord ?? []) ?? Double.infinity
-                return distance1 < distance2
-            }
-        }
-        
+        let sorted = FavoritesHelper.sortFavorites(favoritesManager.favorites, by: sortOption, locationManager: locationManager)
         return Array(sorted.prefix(3))
     }
     
