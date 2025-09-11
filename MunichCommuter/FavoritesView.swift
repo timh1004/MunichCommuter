@@ -10,12 +10,14 @@ struct FavoritesView: View {
     @StateObject private var favoritesManager = FavoritesManager.shared
     @StateObject private var locationManager = LocationManager.shared
     @StateObject private var mvvService = MVVService()
+    @Environment(\.scenePhase) private var scenePhase
     @State private var sortOption: FavoritesSortOption = .alphabetical
     @State private var favoriteDepartures: [String: [StopEvent]] = [:] // locationId -> departures
     @State private var loadingFavorites: Set<String> = [] // locationIds being loaded
     @State private var hasInitializedSort = false
     @State private var initializedDeparturesAfterLocation = false
     @State private var currentTop3LocationIds: [String] = [] // Track current top 3 for change detection
+    @State private var lastFavoriteRefreshAt: [String: Date] = [:] // locationId -> last refresh timestamp
     
     private var sortedFavorites: [FilteredFavorite] {
         // Don't show favorites until initial sort is determined to avoid jumping
@@ -177,6 +179,28 @@ struct FavoritesView: View {
                 }
             }
         }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                Task { @MainActor in
+                    let first3 = getFirst3FavoritesForDepartures()
+                    for favorite in first3 {
+                        let locationId = favorite.location.id
+                        let isStale: Bool
+                        if let last = lastFavoriteRefreshAt[locationId] {
+                            isStale = last.isOlder(thanMinutes: 5)
+                        } else {
+                            isStale = favoriteDepartures[locationId] == nil
+                        }
+                        if isStale && !loadingFavorites.contains(locationId) {
+                            loadingFavorites.insert(locationId)
+                            Task {
+                                await loadDeparturesForFavorite(favorite)
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
     
     private func deleteFavorites(offsets: IndexSet) {
@@ -257,6 +281,7 @@ struct FavoritesView: View {
         
         favoriteDepartures[locationId] = Array(sortedDepartures.prefix(3))
         loadingFavorites.remove(locationId)
+        lastFavoriteRefreshAt[locationId] = Date()
     }
     
     private func getFirst3FavoritesForDepartures() -> [FilteredFavorite] {

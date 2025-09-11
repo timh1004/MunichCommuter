@@ -33,6 +33,7 @@ class MVVService: ObservableObject {
     @Published var isDeparturesLoading = false
     @Published var errorMessage: String?
     @Published var departureErrorMessage: String?
+    @Published var lastDeparturesFetchAt: Date?
     
     private let stopFinderURL = "https://def-efa-mvv02.defas-fgi.de/gullivr_ios/XML_STOPFINDER_REQUEST"
     private let departureMonitorURL = "https://def-efa-mvv02.defas-fgi.de/gullivr_ios/XML_DM_REQUEST"
@@ -369,6 +370,7 @@ class MVVService: ObservableObject {
                     
                     self.departures = sortedStopEvents
                     self.departureLocations = departureResponse.locations ?? []
+                    self.lastDeparturesFetchAt = Date()
                 } catch {
                     self.departureErrorMessage = "Fehler beim Verarbeiten der Abfahrtsdaten: \(error.localizedDescription)"
                     print("❌ Departure JSON Decoding Error: \(error)")
