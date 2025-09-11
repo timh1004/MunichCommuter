@@ -10,6 +10,10 @@ extension Date {
         let difference = self.timeIntervalSinceNow
         return Int(difference / 60)
     }
+
+    func isOlder(thanMinutes minutes: Double, comparedTo referenceDate: Date = Date()) -> Bool {
+        return referenceDate.timeIntervalSince(self) > minutes * 60
+    }
 }
 
 enum TimeDisplayMode: String {

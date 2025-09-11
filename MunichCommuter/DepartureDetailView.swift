@@ -68,6 +68,7 @@ struct DepartureDetailView: View {
     
     @StateObject private var mvvService = MVVService()
     @StateObject private var favoritesManager = FavoritesManager.shared
+    @Environment(\.scenePhase) private var scenePhase
     
     @State private var destinationFilters: [String] = []
     @State private var platformFilters: [String] = []
@@ -457,6 +458,18 @@ struct DepartureDetailView: View {
         }
         .onDisappear {
             // Clean up when view disappears to prevent state pollution
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                // Auto-refresh if data is stale (>5 minutes) or empty
+                if let last = mvvService.lastDeparturesFetchAt {
+                    if last.isOlder(thanMinutes: 5) {
+                        mvvService.loadDepartures(locationId: locationId)
+                    }
+                } else if mvvService.departures.isEmpty {
+                    mvvService.loadDepartures(locationId: locationId)
+                }
+            }
         }
         .onReceive(mvvService.$departureLocations) { departureLocations in
             // Extract location information from API response
