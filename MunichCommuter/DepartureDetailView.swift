@@ -78,6 +78,7 @@ struct DepartureDetailView: View {
     @State private var resolvedLocation: Location?
     @State private var selectedTransportTypes: Set<TransportType> = Set(TransportType.allCases)
     @State private var hasInitialized = false
+    @State private var showPlansSheet = false
     
     init(locationId: String, locationName: String? = nil, initialFilter: String? = nil) {
         self.locationId = locationId
@@ -504,6 +505,12 @@ struct DepartureDetailView: View {
                 isPresented: $showPlatformPicker
             )
         }
+        .sheet(isPresented: $showPlansSheet) {
+            StationPlansSheet(
+                stationName: cleanLocationName,
+                plans: MVGPlansData.stationPlans(for: cleanLocationName)
+            )
+        }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 HStack {
@@ -578,6 +585,13 @@ struct DepartureDetailView: View {
                                     .offset(x: 8, y: -8)
                             }
                         }
+                    }
+                    
+                    // Plans Button
+                    Button {
+                        showPlansSheet = true
+                    } label: {
+                        Image(systemName: "map")
                     }
                     
                     // Refresh Button

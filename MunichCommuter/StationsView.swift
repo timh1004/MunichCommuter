@@ -216,57 +216,64 @@ struct StationsView: View {
     }
     
     private var emptyStateSection: some View {
-        VStack(spacing: 16) {
-            Spacer()
+        Group {
             if searchText.isEmpty && !isShowingNearbyStations {
-                // Initial state - no search performed yet
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 60))
-                    .foregroundColor(.gray.opacity(0.5))
-                
-                Text("Haltestelle suchen")
-                    .font(.title2)
-                    .fontWeight(.medium)
-                    .foregroundColor(.primary)
-                
-                VStack(spacing: 8) {
-                    Text("Geben Sie den Namen einer Haltestelle ein")
-                        .font(.body)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                    
-                    Text("oder nutzen Sie den Button unten für Stationen in der Umgebung")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Search hint
+                        VStack(spacing: 8) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 40))
+                                .foregroundColor(.gray.opacity(0.5))
+                            
+                            Text("Haltestelle suchen")
+                                .font(.title3)
+                                .fontWeight(.medium)
+                                .foregroundColor(.primary)
+                            
+                            Text("Geben Sie den Namen einer Haltestelle ein oder nutzen Sie die Umgebungssuche")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 40)
+                        }
+                        .padding(.top, 16)
+                        
+                        // Plans Section
+                        PlansCompactSection()
+                    }
                 }
-                .padding(.horizontal, 40)
             } else if isShowingNearbyStations {
-                // Showing nearby stations but no results
-                Image(systemName: "location.circle")
-                    .font(.largeTitle)
-                    .foregroundColor(.blue)
-                
-                Text("Keine Haltestellen in der Nähe")
-                    .font(.headline)
-                
-                Text("Es wurden keine Haltestellen in Ihrer Umgebung gefunden")
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
+                VStack(spacing: 16) {
+                    Spacer()
+                    Image(systemName: "location.circle")
+                        .font(.largeTitle)
+                        .foregroundColor(.blue)
+                    
+                    Text("Keine Haltestellen in der Nähe")
+                        .font(.headline)
+                    
+                    Text("Es wurden keine Haltestellen in Ihrer Umgebung gefunden")
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                    Spacer()
+                }
             } else {
-                // Search performed but no results found
-                Image(systemName: "magnifyingglass")
-                    .font(.largeTitle)
-                    .foregroundColor(.gray)
-                
-                Text("Keine Haltestellen gefunden")
-                    .font(.headline)
-                
-                Text("Versuchen Sie eine andere Suche")
-                    .foregroundColor(.secondary)
+                VStack(spacing: 16) {
+                    Spacer()
+                    Image(systemName: "magnifyingglass")
+                        .font(.largeTitle)
+                        .foregroundColor(.gray)
+                    
+                    Text("Keine Haltestellen gefunden")
+                        .font(.headline)
+                    
+                    Text("Versuchen Sie eine andere Suche")
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
             }
-            Spacer()
         }
     }
     
