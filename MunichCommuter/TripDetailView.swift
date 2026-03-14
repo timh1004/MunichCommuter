@@ -9,6 +9,13 @@ import SwiftUI
 import MapKit
 import Foundation
 
+private struct StopCenterPreference: PreferenceKey {
+    static var defaultValue: [Int: CGFloat] = [:]
+    static func reduce(value: inout [Int: CGFloat], nextValue: () -> [Int: CGFloat]) {
+        value.merge(nextValue()) { _, new in new }
+    }
+}
+
 struct TripDetailView: View {
     let departure: StopEvent
     let currentStopName: String
@@ -40,64 +47,134 @@ struct TripDetailView: View {
         return stops
     }
     
+    private let currentStopId = "current"
+    
+    private var currentStopIndex: Int {
+        departure.previousLocations?.count ?? 0
+    }
+    
+    @State private var highlightedStopIndex: Int = 0
+    @State private var scrollToIndex: Int?
+    @State private var suppressHighlightUpdate = false
+    @State private var scrollViewHeight: CGFloat = 300
+    
     var body: some View {
-        ScrollView {
+        ScrollViewReader { proxy in
             VStack(spacing: 0) {
-                // Header with Line Info
                 TripHeaderView(departure: departure)
                 
-                // Route Map Section
                 if !allStops.isEmpty {
-                    RouteMapView(stops: allStops, currentStopName: currentStopName)
-                        .frame(height: 200)
-                        .cornerRadius(12)
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 20)
+                    RouteMapView(
+                        stops: allStops,
+                        currentStopName: currentStopName,
+                        currentStopIndex: currentStopIndex,
+                        highlightedStopIndex: highlightedStopIndex,
+                        onStopTapped: { index in
+                            scrollToIndex = index
+                        }
+                    )
+                    .frame(height: 200)
+                    .cornerRadius(12)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
                 }
                 
-                // Route Timeline
-                LazyVStack(spacing: 0) {
-                    // Previous stops
-                    if let previousStops = departure.previousLocations {
-                        ForEach(Array(previousStops.enumerated()), id: \.offset) { index, stop in
-                            RouteStopView(
-                                stop: convertPlatformToRouteLocation(stop),
-                                isCurrentStop: false,
-                                isPast: true,
-                                isFirst: index == 0,
-                                isLast: false
-                            )
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        if let previousStops = departure.previousLocations {
+                            ForEach(Array(previousStops.enumerated()), id: \.offset) { index, stop in
+                                RouteStopView(
+                                    stop: convertPlatformToRouteLocation(stop),
+                                    isCurrentStop: false,
+                                    isPast: true,
+                                    isFirst: index == 0,
+                                    isLast: false
+                                )
+                                .id("stop-\(index)")
+                                .background(stopPositionReporter(globalIndex: index))
+                            }
+                        }
+                        
+                        RouteStopView(
+                            stop: createCurrentStopLocation(),
+                            isCurrentStop: true,
+                            isPast: false,
+                            isFirst: departure.previousLocations?.isEmpty ?? true,
+                            isLast: departure.onwardLocations?.isEmpty ?? true
+                        )
+                        .id("stop-\(currentStopIndex)")
+                        .background(stopPositionReporter(globalIndex: currentStopIndex))
+                        
+                        if let onwardStops = departure.onwardLocations {
+                            ForEach(Array(onwardStops.enumerated()), id: \.offset) { index, stop in
+                                let globalIndex = currentStopIndex + 1 + index
+                                let isLast = index == onwardStops.count - 1
+                                RouteStopView(
+                                    stop: convertPlatformToRouteLocation(stop),
+                                    isCurrentStop: false,
+                                    isPast: false,
+                                    isFirst: false,
+                                    isLast: isLast
+                                )
+                                .id("stop-\(globalIndex)")
+                                .background(stopPositionReporter(globalIndex: globalIndex))
+                            }
                         }
                     }
-                    
-                    // Current stop
-                    RouteStopView(
-                        stop: createCurrentStopLocation(),
-                        isCurrentStop: true,
-                        isPast: false,
-                        isFirst: departure.previousLocations?.isEmpty ?? true,
-                        isLast: departure.onwardLocations?.isEmpty ?? true
-                    )
-                    
-                    // Future stops
-                    if let onwardStops = departure.onwardLocations {
-                        ForEach(Array(onwardStops.enumerated()), id: \.offset) { index, stop in
-                            RouteStopView(
-                                stop: convertPlatformToRouteLocation(stop),
-                                isCurrentStop: false,
-                                isPast: false,
-                                isFirst: false,
-                                isLast: index == onwardStops.count - 1
-                            )
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 24)
+                }
+                .coordinateSpace(name: "stopList")
+                .background(
+                    GeometryReader { geo in
+                        Color.clear
+                            .onAppear { scrollViewHeight = geo.size.height }
+                            .onChange(of: geo.size.height) { _, h in scrollViewHeight = h }
+                    }
+                )
+                .onPreferenceChange(StopCenterPreference.self) { positions in
+                    guard !suppressHighlightUpdate, !positions.isEmpty else { return }
+                    let center = scrollViewHeight / 2
+                    if let closest = positions.min(by: { abs($0.value - center) < abs($1.value - center) }) {
+                        if closest.key != highlightedStopIndex {
+                            highlightedStopIndex = closest.key
                         }
                     }
                 }
-                .padding(.horizontal, 20)
+                .onAppear {
+                    highlightedStopIndex = currentStopIndex
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                        withAnimation(.easeInOut(duration: 0.35)) {
+                            proxy.scrollTo("stop-\(currentStopIndex)", anchor: .center)
+                        }
+                    }
+                }
+                .onChange(of: scrollToIndex) { _, newValue in
+                    guard let idx = newValue else { return }
+                    suppressHighlightUpdate = true
+                    highlightedStopIndex = idx
+                    withAnimation(.easeInOut(duration: 0.35)) {
+                        proxy.scrollTo("stop-\(idx)", anchor: .center)
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        suppressHighlightUpdate = false
+                        scrollToIndex = nil
+                    }
+                }
             }
         }
         .navigationTitle("\(departure.transportation?.name ?? "Fahrt")")
         .navigationBarTitleDisplayMode(.inline)
         .background(Color(.systemGroupedBackground))
+    }
+    
+    private func stopPositionReporter(globalIndex: Int) -> some View {
+        GeometryReader { geo in
+            Color.clear.preference(
+                key: StopCenterPreference.self,
+                value: [globalIndex: geo.frame(in: .named("stopList")).midY]
+            )
+        }
     }
     
     private func createCurrentStopLocation() -> RouteLocation {
@@ -139,68 +216,53 @@ struct TripHeaderView: View {
     }
     
     var body: some View {
-        VStack(spacing: 16) {
-            // Line Badge and Route Info
-            HStack(spacing: 16) {
-                // Line Badge
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(lineColor)
-                        .frame(width: 60, height: 40)
-                    
-                    Text(departure.transportation?.number ?? "?")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
-                }
+        HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(lineColor)
+                    .frame(width: 48, height: 32)
                 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(departure.transportation?.description ?? "Unbekannte Route")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.primary)
-                    
-                    if let operatorName = departure.transportation?.transportOperator?.name {
-                        Text(operatorName)
-                            .font(.system(size: 14))
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
-                Spacer()
+                Text(departure.transportation?.number ?? "?")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(.white)
             }
             
-            // Departure Time Info
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Abfahrt")
-                        .font(.caption)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(departure.transportation?.description ?? "Unbekannte Route")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+                
+                if let operatorName = departure.transportation?.transportOperator?.name {
+                    Text(operatorName)
+                        .font(.system(size: 11))
                         .foregroundColor(.secondary)
-                    
-                    Text(formattedDepartureTime)
-                        .font(.system(size: 24, weight: .semibold, design: .monospaced))
-                        .foregroundColor(DepartureRowStyling.shouldShowOrange(for: departure) ? .orange : .primary)
-                        .onTapGesture {
-                            timeDisplayModeRaw = (timeDisplayMode == .relative ? TimeDisplayMode.absolute.rawValue : TimeDisplayMode.relative.rawValue)
-                        }
+                        .lineLimit(1)
                 }
+            }
+            
+            Spacer()
+            
+            HStack(spacing: 6) {
+                Text(formattedDepartureTime)
+                    .font(.system(size: 18, weight: .semibold, design: .monospaced))
+                    .foregroundColor(DepartureRowStyling.shouldShowOrange(for: departure) ? .orange : .primary)
+                    .onTapGesture {
+                        timeDisplayModeRaw = (timeDisplayMode == .relative ? TimeDisplayMode.absolute.rawValue : TimeDisplayMode.relative.rawValue)
+                    }
                 
-                Spacer()
-                
-                VStack(alignment: .trailing, spacing: 4) {
-                    HStack(spacing: 4) {
-                        RealtimeBadge(isRealtime: departure.isRealtimeControlled == true)
-                        
-                        if let delayText = delayDisplay {
-                            Text(delayText)
-                                .font(.caption2)
-                                .fontWeight(.medium)
-                                .foregroundColor(.orange)
-                        }
+                VStack(spacing: 2) {
+                    RealtimeBadge(isRealtime: departure.isRealtimeControlled == true)
+                    if let delayText = delayDisplay {
+                        Text(delayText)
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(.orange)
                     }
                 }
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 20)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
         .background(Color(.systemBackground))
     }
     
@@ -303,59 +365,27 @@ struct RouteStopView: View {
     
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
-            // Improved Timeline with continuous line
-            ZStack(alignment: .leading) {
-                // Continuous background line for entire route
-                if !isLast {
-                    Rectangle()
-                        .fill(Color.blue.opacity(0.2))
-                        .frame(width: 4)
-                        .offset(x: 8)
+            // Nur Punkt, keine Linie (bessere Lesbarkeit)
+            ZStack {
+                if isCurrentStop {
+                    Circle()
+                        .stroke(Color.blue, lineWidth: 2.5)
+                        .frame(width: 18, height: 18)
+                        .background(Circle().fill(.white))
                 }
-                
-                // Active line segment
-                VStack(spacing: 0) {
-                    // Top line segment
-                    if !isFirst {
-                        Rectangle()
-                            .fill(isPast ? .blue : Color.blue.opacity(0.4))
-                            .frame(width: 4, height: 30)
-                    }
-                    
-                    // Station indicator
-                    ZStack {
-                        // Outer ring for current station
-                        if isCurrentStop {
-                            Circle()
-                                .stroke(Color.blue, lineWidth: 3)
-                                .frame(width: 20, height: 20)
-                                .background(Circle().fill(.white))
-                        }
-                        
-                        Circle()
-                            .fill(dotColor)
-                            .frame(width: isCurrentStop ? 14 : 12, height: isCurrentStop ? 14 : 12)
-                        
-                        if isCurrentStop {
-                            Circle()
-                                .fill(.white)
-                                .frame(width: 6, height: 6)
-                        }
-                    }
-                    
-                    // Bottom line segment
-                    if !isLast {
-                        Rectangle()
-                            .fill(isPast ? .blue : Color.blue.opacity(0.4))
-                            .frame(width: 4, height: 30)
-                    }
+                Circle()
+                    .fill(dotColor)
+                    .frame(width: isCurrentStop ? 12 : 10, height: isCurrentStop ? 12 : 10)
+                if isCurrentStop {
+                    Circle()
+                        .fill(.white)
+                        .frame(width: 4, height: 4)
                 }
-                .offset(x: 8)
             }
-            .frame(width: 24)
+            .frame(width: 24, height: 24)
             
             // Stop Information
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(stop.name ?? "Unbekannte Haltestelle")
                     .font(.system(size: 16, weight: isCurrentStop ? .semibold : .medium))
                     .foregroundColor(isCurrentStop ? .primary : (isPast ? .secondary : .primary))
@@ -437,7 +467,10 @@ struct RouteStopView: View {
             
             Spacer()
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, isCurrentStop ? 10 : 8)
+        .padding(.horizontal, isCurrentStop ? 8 : 0)
+        .background(isCurrentStop ? Color.blue.opacity(0.08) : Color.clear)
+        .cornerRadius(isCurrentStop ? 10 : 0)
     }
     
     private var dotColor: Color {
@@ -489,41 +522,63 @@ struct RouteLocation: Identifiable {
     }
 }
 
-// MARK: - Route Map View
+// MARK: - Route Map View (mit Polyline, Karte fixiert)
 struct RouteMapView: View {
     let stops: [RouteLocation]
     let currentStopName: String
-    
-    @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 48.1351, longitude: 11.5820),
-        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-    )
+    var currentStopIndex: Int = 0
+    var highlightedStopIndex: Int = 0
+    var onStopTapped: ((Int) -> Void)?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Streckenverlauf")
                 .font(.headline)
+                .foregroundColor(.primary)
                 .padding(.horizontal, 16)
             
-            Map(coordinateRegion: $region, annotationItems: validStops) { stop in
-                MapAnnotation(coordinate: stop.coordinate) {
-                    ZStack {
-                        Circle()
-                            .fill(stop.name == currentStopName ? .red : .blue)
-                            .frame(width: stop.name == currentStopName ? 12 : 8, height: stop.name == currentStopName ? 12 : 8)
-                        
-                        if stop.name == currentStopName {
-                            Circle()
-                                .fill(.white)
-                                .frame(width: 4, height: 4)
+            RouteMapUIKitView(
+                stops: validStops,
+                currentStopName: currentStopName,
+                currentStopIndexInValid: currentStopIndexInValidStops,
+                highlightedIndex: highlightedIndexInValid,
+                onStopTapped: { validIndex in
+                    if validIndex < validStops.count {
+                        let tappedName = validStops[validIndex].name
+                        if let globalIdx = globalIndexForName(tappedName) {
+                            onStopTapped?(globalIdx)
                         }
                     }
                 }
-            }
-            .onAppear {
-                calculateMapRegion()
-            }
+            )
         }
+    }
+    
+    private var currentStopIndexInValidStops: Int {
+        validStops.firstIndex(where: { $0.name == currentStopName }) ?? 0
+    }
+    
+    private var highlightedIndexInValid: Int {
+        var validIdx = 0
+        var globalIdx = 0
+        for stop in stops {
+            let isValid = stop.coord != nil && (stop.coord?.count ?? 0) >= 2 && stop.name != nil
+            if globalIdx == highlightedStopIndex {
+                return isValid ? validIdx : max(validIdx - 1, 0)
+            }
+            if isValid { validIdx += 1 }
+            globalIdx += 1
+        }
+        return max(validStops.count - 1, 0)
+    }
+    
+    private func globalIndexForName(_ name: String) -> Int? {
+        var globalIdx = 0
+        for stop in stops {
+            if stop.name == name { return globalIdx }
+            globalIdx += 1
+        }
+        return nil
     }
     
     private var validStops: [RouteMapStop] {
@@ -539,27 +594,185 @@ struct RouteMapView: View {
             )
         }
     }
+}
+
+// Custom Annotation um Index für Highlight zu speichern
+final class StopAnnotation: NSObject, MKAnnotation {
+    let coordinate: CLLocationCoordinate2D
+    let title: String?
+    let index: Int
+    init(coordinate: CLLocationCoordinate2D, title: String?, index: Int) {
+        self.coordinate = coordinate
+        self.title = title
+        self.index = index
+    }
+}
+
+// UIKit Map: kleine Punkte, Scroll-Highlight, Tap-zu-Liste
+struct RouteMapUIKitView: UIViewRepresentable {
+    let stops: [RouteMapStop]
+    let currentStopName: String
+    var currentStopIndexInValid: Int = 0
+    var highlightedIndex: Int = 0
+    var onStopTapped: ((Int) -> Void)?
     
-    private func calculateMapRegion() {
-        guard !validStops.isEmpty else { return }
+    private static let dotSize: CGFloat = 10
+    private static let highlightDotSize: CGFloat = 16
+    
+    func makeUIView(context: Context) -> MKMapView {
+        let map = MKMapView()
+        map.delegate = context.coordinator
+        map.showsUserLocation = false
+        map.isRotateEnabled = false
+        map.isPitchEnabled = false
+        return map
+    }
+    
+    func updateUIView(_ map: MKMapView, context: Context) {
+        context.coordinator.highlightedIndex = highlightedIndex
+        context.coordinator.currentStopIndex = currentStopIndexInValid
+        context.coordinator.onStopTapped = onStopTapped
         
-        let coordinates = validStops.map { $0.coordinate }
-        let minLat = coordinates.map { $0.latitude }.min() ?? 48.1351
-        let maxLat = coordinates.map { $0.latitude }.max() ?? 48.1351
-        let minLon = coordinates.map { $0.longitude }.min() ?? 11.5820
-        let maxLon = coordinates.map { $0.longitude }.max() ?? 11.5820
+        let needsRebuild = map.annotations.count != stops.count
         
-        let center = CLLocationCoordinate2D(
-            latitude: (minLat + maxLat) / 2,
-            longitude: (minLon + maxLon) / 2
-        )
+        if needsRebuild {
+            map.removeAnnotations(map.annotations)
+            map.removeOverlays(map.overlays)
+            
+            guard !stops.isEmpty else { return }
+            
+            let coords = stops.map { $0.coordinate }
+            let polyline = MKPolyline(coordinates: coords, count: coords.count)
+            map.addOverlay(polyline)
+            
+            for (index, stop) in stops.enumerated() {
+                let ann = StopAnnotation(coordinate: stop.coordinate, title: stop.name, index: index)
+                map.addAnnotation(ann)
+            }
+            
+            let rect = MKMapRect(coordinates: coords)
+            map.setVisibleMapRect(rect, edgePadding: UIEdgeInsets(top: 30, left: 30, bottom: 30, right: 30), animated: false)
+        } else {
+            for annotation in map.annotations {
+                guard let stopAnn = annotation as? StopAnnotation,
+                      let view = map.view(for: stopAnn) else { continue }
+                updateDotAppearance(view: view, index: stopAnn.index)
+            }
+        }
+    }
+    
+    private func updateDotAppearance(view: MKAnnotationView, index: Int) {
+        let isHighlighted = index == highlightedIndex
+        let isCurrent = index == currentStopIndexInValid
+        let isPast = index < currentStopIndexInValid
         
-        let span = MKCoordinateSpan(
-            latitudeDelta: max(maxLat - minLat, 0.01) * 1.2,
-            longitudeDelta: max(maxLon - minLon, 0.01) * 1.2
-        )
+        let size = isHighlighted ? Self.highlightDotSize : Self.dotSize
+        let color: UIColor
+        if isHighlighted {
+            color = .systemOrange
+        } else if isCurrent {
+            color = .systemRed
+        } else if isPast {
+            color = .systemGray
+        } else {
+            color = .systemBlue
+        }
         
-        region = MKCoordinateRegion(center: center, span: span)
+        view.frame.size = CGSize(width: size, height: size)
+        view.image = Self.dotImage(color: color, size: size)
+        view.centerOffset = CGPoint(x: 0, y: 0)
+        view.displayPriority = .required
+        view.layer.zPosition = isHighlighted ? 100 : (isCurrent ? 50 : 0)
+    }
+    
+    static func dotImage(color: UIColor, size: CGFloat) -> UIImage {
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: size, height: size))
+        return renderer.image { ctx in
+            ctx.cgContext.setFillColor(color.cgColor)
+            ctx.cgContext.fillEllipse(in: CGRect(x: 0, y: 0, width: size, height: size))
+            ctx.cgContext.setStrokeColor(UIColor.white.cgColor)
+            ctx.cgContext.setLineWidth(1.5)
+            ctx.cgContext.strokeEllipse(in: CGRect(x: 0.75, y: 0.75, width: size - 1.5, height: size - 1.5))
+        }
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(currentStopIndex: currentStopIndexInValid, highlightedIndex: highlightedIndex, onStopTapped: onStopTapped)
+    }
+    
+    class Coordinator: NSObject, MKMapViewDelegate {
+        var currentStopIndex: Int
+        var highlightedIndex: Int
+        var onStopTapped: ((Int) -> Void)?
+        
+        init(currentStopIndex: Int, highlightedIndex: Int, onStopTapped: ((Int) -> Void)?) {
+            self.currentStopIndex = currentStopIndex
+            self.highlightedIndex = highlightedIndex
+            self.onStopTapped = onStopTapped
+        }
+        
+        func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+            guard let poly = overlay as? MKPolyline else { return MKOverlayRenderer(overlay: overlay) }
+            let renderer = MKPolylineRenderer(polyline: poly)
+            renderer.strokeColor = .systemBlue
+            renderer.lineWidth = 3
+            return renderer
+        }
+        
+        func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+            guard let ann = annotation as? StopAnnotation else { return nil }
+            let reuseId = "DotStop"
+            let view = mapView.dequeueReusableAnnotationView(withIdentifier: reuseId)
+                ?? MKAnnotationView(annotation: annotation, reuseIdentifier: reuseId)
+            view.annotation = annotation
+            view.canShowCallout = false
+            
+            let isHighlighted = ann.index == highlightedIndex
+            let isCurrent = ann.index == currentStopIndex
+            let isPast = ann.index < currentStopIndex
+            
+            let size = isHighlighted ? RouteMapUIKitView.highlightDotSize : RouteMapUIKitView.dotSize
+            let color: UIColor
+            if isHighlighted {
+                color = .systemOrange
+            } else if isCurrent {
+                color = .systemRed
+            } else if isPast {
+                color = .systemGray
+            } else {
+                color = .systemBlue
+            }
+            
+            view.image = RouteMapUIKitView.dotImage(color: color, size: size)
+            view.frame.size = CGSize(width: size, height: size)
+            view.centerOffset = .zero
+            view.displayPriority = .required
+            view.layer.zPosition = isHighlighted ? 100 : (isCurrent ? 50 : 0)
+            return view
+        }
+        
+        func mapView(_ mapView: MKMapView, didSelect annotation: MKAnnotation) {
+            guard let ann = annotation as? StopAnnotation else { return }
+            onStopTapped?(ann.index)
+            mapView.deselectAnnotation(annotation, animated: false)
+        }
+    }
+}
+
+extension MKMapRect {
+    init(coordinates: [CLLocationCoordinate2D]) {
+        guard !coordinates.isEmpty else {
+            self = .world
+            return
+        }
+        var minX = Double.infinity, maxX = -Double.infinity
+        var minY = Double.infinity, maxY = -Double.infinity
+        for c in coordinates {
+            let pt = MKMapPoint(c)
+            minX = min(minX, pt.x); maxX = max(maxX, pt.x)
+            minY = min(minY, pt.y); maxY = max(maxY, pt.y)
+        }
+        self = MKMapRect(x: minX, y: minY, width: max(maxX - minX, 0.001), height: max(maxY - minY, 0.001))
     }
 }
 
