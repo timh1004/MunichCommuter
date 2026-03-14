@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		083A9C752F65C04B000C70C9 /* MunichCommuterKit in Frameworks */ = {isa = PBXBuildFile; productRef = F1B000082E5EF0010060EED6 /* MunichCommuterKit */; };
 		0843D4FF2F65B9D4006A4700 /* MunichCommuterKit in Frameworks */ = {isa = PBXBuildFile; productRef = F1A000022E5EF0000060EED6 /* MunichCommuterKit */; };
+		F1B000112E5EF0010060EED6 /* MunichCommuterWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = F1B000012E5EF0010060EED6 /* MunichCommuterWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F1C0000B2E5EF0020060EED6 /* MunichCommuterKit in Frameworks */ = {isa = PBXBuildFile; productRef = F1C0000A2E5EF0020060EED6 /* MunichCommuterKit */; };
 		F1C0000F2E5EF0020060EED6 /* MunichCommuterWatchWidgets.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = F1C000012E5EF0020060EED6 /* MunichCommuterWatchWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
@@ -28,6 +29,13 @@
 			remoteGlobalIDString = 083DD7A82E2EEE7D0060EED6;
 			remoteInfo = MunichCommuter;
 		};
+		F1B000122E5EF0010060EED6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 083DD7A12E2EEE7D0060EED6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F1B000032E5EF0010060EED6;
+			remoteInfo = MunichCommuterWatch;
+		};
 		F1C0000C2E5EF0020060EED6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 083DD7A12E2EEE7D0060EED6 /* Project object */;
@@ -38,6 +46,17 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		F1B000132E5EF0010060EED6 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				F1B000112E5EF0010060EED6 /* MunichCommuterWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F1C0000E2E5EF0020060EED6 /* Embed App Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -201,11 +220,13 @@
 			buildPhases = (
 				083DD7A52E2EEE7D0060EED6 /* Sources */,
 				083DD7A62E2EEE7D0060EED6 /* Frameworks */,
+				F1B000132E5EF0010060EED6 /* Embed Watch Content */,
 				083DD7A72E2EEE7D0060EED6 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				F1B000142E5EF0010060EED6 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				083DD7AB2E2EEE7D0060EED6 /* MunichCommuter */,
@@ -453,6 +474,11 @@
 			isa = PBXTargetDependency;
 			target = 083DD7A82E2EEE7D0060EED6 /* MunichCommuter */;
 			targetProxy = 083DD7C52E2EEE7F0060EED6 /* PBXContainerItemProxy */;
+		};
+		F1B000142E5EF0010060EED6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F1B000032E5EF0010060EED6 /* MunichCommuterWatch */;
+			targetProxy = F1B000122E5EF0010060EED6 /* PBXContainerItemProxy */;
 		};
 		F1C0000D2E5EF0020060EED6 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -773,7 +799,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.iaha.mvgcommuter.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -805,7 +831,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.iaha.mvgcommuter.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -832,7 +858,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.iaha.mvgcommuter.watchkitapp.widgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -859,7 +885,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.iaha.mvgcommuter.watchkitapp.widgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
