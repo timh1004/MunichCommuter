@@ -12,9 +12,7 @@ struct PlansOverviewView: View {
                 if !plans.isEmpty {
                     Section(header: Text(category.rawValue)) {
                         ForEach(plans) { plan in
-                            Button {
-                                openURL(plan.url)
-                            } label: {
+                            NavigationLink(destination: PDFViewerView(title: plan.name, url: plan.url)) {
                                 NetworkPlanRow(plan: plan)
                             }
                         }
@@ -26,26 +24,11 @@ struct PlansOverviewView: View {
                 Button {
                     openURL(MVGPlansData.fahrplaeneNetzplaeneURL)
                 } label: {
-                    HStack {
-                        Image(systemName: "globe")
-                            .foregroundColor(.blue)
-                            .frame(width: 32, height: 32)
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Alle Pläne auf MVG.de")
-                                .font(.system(size: 15, weight: .medium))
-                                .foregroundColor(.primary)
-                            Text("Fahrpläne, Netzpläne & mehr")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        Spacer()
-                        
-                        Image(systemName: "arrow.up.right.square")
-                            .font(.system(size: 14))
-                            .foregroundColor(.secondary)
-                    }
+                    ExternalLinkRow(
+                        title: "Alle Pläne auf MVG.de",
+                        subtitle: "Fahrpläne, Netzpläne & mehr",
+                        icon: "globe"
+                    )
                 }
             }
         }
@@ -79,10 +62,6 @@ struct NetworkPlanRow: View {
             }
             
             Spacer()
-            
-            Image(systemName: "arrow.up.right.square")
-                .font(.system(size: 14))
-                .foregroundColor(.secondary)
         }
         .padding(.vertical, 2)
     }
@@ -99,11 +78,48 @@ struct NetworkPlanRow: View {
     }
 }
 
+// MARK: - External Link Row
+
+struct ExternalLinkRow: View {
+    let title: String
+    let subtitle: String?
+    let icon: String
+    
+    init(title: String, subtitle: String? = nil, icon: String = "globe") {
+        self.title = title
+        self.subtitle = subtitle
+        self.icon = icon
+    }
+    
+    var body: some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundColor(.blue)
+                .frame(width: 32, height: 32)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(.primary)
+                if let subtitle = subtitle {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            
+            Spacer()
+            
+            Image(systemName: "arrow.up.right.square")
+                .font(.system(size: 14))
+                .foregroundColor(.secondary)
+        }
+    }
+}
+
 // MARK: - Compact Plans Section (for embedding in StationsView)
 
 struct PlansCompactSection: View {
-    @Environment(\.openURL) private var openURL
-    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -122,9 +138,10 @@ struct PlansCompactSection: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(MVGPlansData.networkPlans.filter { $0.category == .netzplaene }) { plan in
-                        PlanCard(plan: plan) {
-                            openURL(plan.url)
+                        NavigationLink(destination: PDFViewerView(title: plan.name, url: plan.url)) {
+                            PlanCardLabel(plan: plan)
                         }
+                        .buttonStyle(PlainButtonStyle())
                     }
                     
                     NavigationLink(destination: PlansOverviewView()) {
@@ -139,39 +156,35 @@ struct PlansCompactSection: View {
     }
 }
 
-// MARK: - Plan Card (for horizontal scroll)
+// MARK: - Plan Card Label (non-interactive display for NavigationLink)
 
-struct PlanCard: View {
+struct PlanCardLabel: View {
     let plan: MVGNetworkPlan
-    let action: () -> Void
     
     var body: some View {
-        Button(action: action) {
-            VStack(spacing: 8) {
-                Image(systemName: plan.icon)
-                    .font(.system(size: 24))
-                    .foregroundColor(.white)
-                    .frame(width: 56, height: 56)
-                    .background(cardColor)
-                    .cornerRadius(12)
+        VStack(spacing: 8) {
+            Image(systemName: plan.icon)
+                .font(.system(size: 24))
+                .foregroundColor(.white)
+                .frame(width: 56, height: 56)
+                .background(cardColor)
+                .cornerRadius(12)
+            
+            VStack(spacing: 2) {
+                Text(plan.name)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(.primary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
                 
-                VStack(spacing: 2) {
-                    Text(plan.name)
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(.primary)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.center)
-                    
-                    Text(plan.subtitle)
-                        .font(.system(size: 9))
-                        .foregroundColor(.secondary)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.center)
-                }
+                Text(plan.subtitle)
+                    .font(.system(size: 9))
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
             }
-            .frame(width: 90)
         }
-        .buttonStyle(PlainButtonStyle())
+        .frame(width: 90)
     }
     
     private var cardColor: Color {
@@ -230,28 +243,16 @@ struct StationPlansSheet: View {
                 if !plans.isEmpty {
                     Section(header: Text("Haltestellenpläne")) {
                         ForEach(plans) { plan in
-                            Button {
-                                openURL(plan.url)
-                            } label: {
-                                HStack(spacing: 12) {
-                                    Image(systemName: plan.icon)
-                                        .font(.system(size: 18))
-                                        .foregroundColor(.white)
-                                        .frame(width: 36, height: 36)
-                                        .background(Color(red: 0/255, green: 101/255, blue: 189/255))
-                                        .cornerRadius(8)
-                                    
-                                    Text(plan.name)
-                                        .font(.system(size: 15, weight: .medium))
-                                        .foregroundColor(.primary)
-                                    
-                                    Spacer()
-                                    
-                                    Image(systemName: "arrow.up.right.square")
-                                        .font(.system(size: 14))
-                                        .foregroundColor(.secondary)
+                            if plan.url.pathExtension.lowercased() == "pdf" {
+                                NavigationLink(destination: PDFViewerView(title: plan.name, url: plan.url)) {
+                                    StationPlanRow(plan: plan)
                                 }
-                                .padding(.vertical, 2)
+                            } else {
+                                Button {
+                                    openURL(plan.url)
+                                } label: {
+                                    StationPlanRow(plan: plan, isExternal: true)
+                                }
                             }
                         }
                     }
@@ -259,9 +260,7 @@ struct StationPlansSheet: View {
                 
                 Section(header: Text("Netzpläne")) {
                     ForEach(Array(MVGPlansData.networkPlans.prefix(4))) { plan in
-                        Button {
-                            openURL(plan.url)
-                        } label: {
+                        NavigationLink(destination: PDFViewerView(title: plan.name, url: plan.url)) {
                             NetworkPlanRow(plan: plan)
                         }
                     }
@@ -271,21 +270,10 @@ struct StationPlansSheet: View {
                     Button {
                         openURL(MVGPlansData.fahrplaeneNetzplaeneURL)
                     } label: {
-                        HStack {
-                            Image(systemName: "globe")
-                                .foregroundColor(.blue)
-                                .frame(width: 32, height: 32)
-                            
-                            Text("Alle Pläne auf MVG.de")
-                                .font(.system(size: 15, weight: .medium))
-                                .foregroundColor(.primary)
-                            
-                            Spacer()
-                            
-                            Image(systemName: "arrow.up.right.square")
-                                .font(.system(size: 14))
-                                .foregroundColor(.secondary)
-                        }
+                        ExternalLinkRow(
+                            title: "Alle Pläne auf MVG.de",
+                            subtitle: "Fahrpläne, Netzpläne & mehr"
+                        )
                     }
                 }
             }
@@ -302,6 +290,39 @@ struct StationPlansSheet: View {
         }
     }
 }
+
+// MARK: - Station Plan Row
+
+struct StationPlanRow: View {
+    let plan: MVGStationPlan
+    var isExternal: Bool = false
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: plan.icon)
+                .font(.system(size: 18))
+                .foregroundColor(.white)
+                .frame(width: 36, height: 36)
+                .background(Color(red: 0/255, green: 101/255, blue: 189/255))
+                .cornerRadius(8)
+            
+            Text(plan.name)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(.primary)
+            
+            Spacer()
+            
+            if isExternal {
+                Image(systemName: "arrow.up.right.square")
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(.vertical, 2)
+    }
+}
+
+// MARK: - Previews
 
 #Preview("Plans Overview") {
     NavigationView {
