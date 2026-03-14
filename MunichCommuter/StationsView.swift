@@ -277,13 +277,50 @@ struct StationsView: View {
         }
     }
     
+    /// Bei Umgebungssuche nur die nächsten 5 Stationen, bei Suche alle.
+    private var displayedLocations: [Location] {
+        if isShowingNearbyStations {
+            return Array(sortedLocations.prefix(5))
+        }
+        return sortedLocations
+    }
+    
     private var resultsListSection: some View {
-        // Results List
-        List(sortedLocations) { location in
-            NavigationLink(destination: DepartureDetailView(locationId: location.id, locationName: location.disassembledName ?? location.name, initialFilters: nil, initialTransportTypes: nil)) {
-                LocationRowView(location: location, showDistance: isShowingNearbyStations)
+        let netzplaene = MVGPlansData.networkPlans.filter { $0.category == .netzplaene }
+        return List {
+            Section {
+                ForEach(displayedLocations) { location in
+                    NavigationLink(destination: DepartureDetailView(locationId: location.id, locationName: location.disassembledName ?? location.name, initialFilters: nil, initialTransportTypes: nil)) {
+                        LocationRowView(location: location, showDistance: isShowingNearbyStations)
+                    }
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 16))
+                }
+            } header: {
+                Text(isShowingNearbyStations ? "Nahegelegene Haltestellen" : "Suchergebnisse")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                    .textCase(nil)
             }
-            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 16))
+            Section {
+                ForEach(netzplaene) { plan in
+                    NavigationLink(destination: PDFViewerView(title: plan.name, url: plan.url)) {
+                        PlanCardLabel(plan: plan, showChevron: false)
+                    }
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .listRowBackground(Color(.secondarySystemGroupedBackground))
+                    .listRowSeparator(.visible)
+                }
+                NavigationLink(destination: PlansOverviewView()) {
+                    MorePlansCard(showChevron: false)
+                }
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                .listRowBackground(Color(.secondarySystemGroupedBackground))
+            } header: {
+                Text("Pläne & Netzpläne")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                    .textCase(nil)
+            }
         }
         .listStyle(PlainListStyle())
     }

@@ -53,7 +53,7 @@ struct PDFViewerView: View {
     
     var body: some View {
         Group {
-            if cacheManager.isLoading {
+            if cacheManager.isLoading || (cacheManager.pdfDocument == nil && cacheManager.errorMessage == nil) {
                 VStack(spacing: 16) {
                     ProgressView()
                         .scaleEffect(1.2)
@@ -125,6 +125,7 @@ struct PDFViewerView: View {
             }
         }
         .onAppear {
+            print("[PDFViewerView] Lade PDF: \(url.absoluteString)")
             cacheManager.loadPDF(from: url)
         }
     }
@@ -200,6 +201,7 @@ class PDFCacheManager: ObservableObject {
     }
     
     func loadPDF(from url: URL) {
+        print("[PDFCacheManager] loadPDF URL: \(url.absoluteString)")
         isLoading = true
         errorMessage = nil
         pdfDocument = nil
@@ -208,6 +210,7 @@ class PDFCacheManager: ObservableObject {
            fileManager.fileExists(atPath: cachedFileURL.path),
            isCacheValid(at: cachedFileURL),
            let document = PDFDocument(url: cachedFileURL) {
+            print("[PDFCacheManager] PDF aus Cache geladen: \(url.absoluteString)")
             DispatchQueue.main.async {
                 self.pdfDocument = document
                 self.isLoading = false
@@ -215,6 +218,7 @@ class PDFCacheManager: ObservableObject {
             return
         }
         
+        print("[PDFCacheManager] PDF wird aus dem Netz geladen: \(url.absoluteString)")
         var request = URLRequest(url: url)
         request.cachePolicy = .returnCacheDataElseLoad
         
@@ -224,25 +228,30 @@ class PDFCacheManager: ObservableObject {
                 self.isLoading = false
                 
                 if let error = error {
+                    print("[PDFCacheManager] Download-Fehler für \(url.absoluteString): \(error.localizedDescription)")
                     self.errorMessage = "Download fehlgeschlagen: \(error.localizedDescription)"
                     return
                 }
                 
                 guard let data = data, !data.isEmpty else {
+                    print("[PDFCacheManager] Keine Daten für \(url.absoluteString) (Leere: \(data?.isEmpty ?? true))")
                     self.errorMessage = "Keine Daten empfangen"
                     return
                 }
                 
                 if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+                    print("[PDFCacheManager] HTTP \(httpResponse.statusCode) für \(url.absoluteString)")
                     self.errorMessage = "Server-Fehler (HTTP \(httpResponse.statusCode))"
                     return
                 }
                 
                 guard let document = PDFDocument(data: data) else {
+                    print("[PDFCacheManager] PDF-Daten konnten nicht gelesen werden: \(url.absoluteString)")
                     self.errorMessage = "PDF konnte nicht gelesen werden"
                     return
                 }
                 
+                print("[PDFCacheManager] PDF erfolgreich geladen: \(url.absoluteString)")
                 self.pdfDocument = document
                 
                 if let cachedFileURL = self.cacheFileURL(for: url) {

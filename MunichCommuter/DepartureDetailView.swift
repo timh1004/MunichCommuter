@@ -508,6 +508,7 @@ struct DepartureDetailView: View {
         .sheet(isPresented: $showPlansSheet) {
             StationPlansSheet(
                 stationName: cleanLocationName,
+                locationId: locationId,
                 plans: MVGPlansData.stationPlans(for: cleanLocationName)
             )
         }

@@ -109,101 +109,106 @@ struct ExternalLinkRow: View {
 // MARK: - Compact Plans Section (for embedding in StationsView)
 
 struct PlansCompactSection: View {
+    private let columns = [
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12)
+    ]
+    
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: "map.fill")
-                    .foregroundColor(.blue)
-                    .font(.system(size: 16))
-                
-                Text("Pläne & Netzpläne")
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(MVGPlansData.networkPlans.filter { $0.category == .netzplaene }) { plan in
-                        NavigationLink(destination: PDFViewerView(title: plan.name, url: plan.url)) {
-                            PlanCardLabel(plan: plan)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                    }
-                    
-                    NavigationLink(destination: PlansOverviewView()) {
-                        MorePlansCard()
-                    }
-                    .buttonStyle(PlainButtonStyle())
+        let netzplaene = MVGPlansData.networkPlans.filter { $0.category == .netzplaene }
+        LazyVGrid(columns: columns, spacing: 12) {
+            ForEach(netzplaene) { plan in
+                NavigationLink(destination: PDFViewerView(title: plan.name, url: plan.url)) {
+                    PlanCardLabel(plan: plan)
                 }
-                .padding(.horizontal, 16)
+                .buttonStyle(PlainButtonStyle())
             }
+            NavigationLink(destination: PlansOverviewView()) {
+                MorePlansCard()
+            }
+            .buttonStyle(PlainButtonStyle())
         }
-        .padding(.vertical, 12)
+        .padding(.horizontal, 4)
     }
 }
 
-// MARK: - Plan Card Label (non-interactive display for NavigationLink)
+// MARK: - Plan Card Label (compact card for grid)
 
 struct PlanCardLabel: View {
     let plan: MVGNetworkPlan
+    var showChevron: Bool = true
     
     var body: some View {
-        VStack(spacing: 8) {
+        HStack(spacing: 12) {
             Image(systemName: plan.icon)
-                .font(.system(size: 24))
+                .font(.system(size: 20))
                 .foregroundColor(.white)
-                .frame(width: 56, height: 56)
+                .frame(width: 44, height: 44)
                 .background(plan.category.color)
-                .cornerRadius(12)
+                .cornerRadius(10)
             
-            VStack(spacing: 2) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(plan.name)
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
                     .foregroundColor(.primary)
                     .lineLimit(2)
-                    .multilineTextAlignment(.center)
                 
                 Text(plan.subtitle)
-                    .font(.system(size: 9))
+                    .font(.caption)
                     .foregroundColor(.secondary)
                     .lineLimit(2)
-                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            
+            if showChevron {
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(Color(.tertiaryLabel))
             }
         }
-        .frame(width: 90)
+        .padding(showChevron ? 12 : 0)
+        .background(showChevron ? Color(.secondarySystemGroupedBackground) : Color.clear)
+        .cornerRadius(showChevron ? 12 : 0)
     }
 }
 
 // MARK: - "More Plans" Card
 
 struct MorePlansCard: View {
+    var showChevron: Bool = true
+    
     var body: some View {
-        VStack(spacing: 8) {
+        HStack(spacing: 12) {
             Image(systemName: "ellipsis.circle.fill")
-                .font(.system(size: 24))
+                .font(.system(size: 20))
                 .foregroundColor(.white)
-                .frame(width: 56, height: 56)
+                .frame(width: 44, height: 44)
                 .background(Color(.systemGray3))
-                .cornerRadius(12)
+                .cornerRadius(10)
             
-            VStack(spacing: 2) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text("Alle Pläne")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
                     .foregroundColor(.primary)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
                 
-                Text("Übersicht")
-                    .font(.system(size: 9))
+                Text("Übersicht auf MVG.de")
+                    .font(.caption)
                     .foregroundColor(.secondary)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            
+            if showChevron {
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(Color(.tertiaryLabel))
             }
         }
-        .frame(width: 90)
+        .padding(showChevron ? 12 : 0)
+        .background(showChevron ? Color(.secondarySystemGroupedBackground) : Color.clear)
+        .cornerRadius(showChevron ? 12 : 0)
     }
 }
 
@@ -211,14 +216,67 @@ struct MorePlansCard: View {
 
 struct StationPlansSheet: View {
     let stationName: String
+    let locationId: String?
     let plans: [MVGStationPlan]
+    @State private var zdmAbbreviation: String?
+    @State private var aushangEntries: [MVGPlansData.AushangEntry] = []
     @Environment(\.openURL) private var openURL
     @Environment(\.dismiss) private var dismiss
+    
+    private var contextMapEntry: MVGPlansData.AushangEntry? {
+        aushangEntries.first { $0.scheduleKind == "CONTEXT_MAP" }
+    }
+    
+    private var stationOverviewEntry: MVGPlansData.AushangEntry? {
+        aushangEntries.first { $0.scheduleKind == "STATION_OVERVIEW_MAP" }
+    }
+    
+    private var linePlans: [MVGPlansData.AushangEntry] {
+        aushangEntries.filter { ["SUBWAY", "TRAM", "BUS", "NIGHT_LINE"].contains($0.scheduleKind) }
+    }
     
     var body: some View {
         NavigationView {
             List {
-                if !plans.isEmpty {
+                if !aushangEntries.isEmpty {
+                    Section(header: Text("Umgebungsplan & Übersicht")) {
+                        if let entry = contextMapEntry, let url = entry.url {
+                            NavigationLink(destination: PDFViewerView(title: entry.displayTitle, url: url)) {
+                                AushangEntryRow(entry: entry)
+                            }
+                        }
+                        if let entry = stationOverviewEntry, let url = entry.url {
+                            NavigationLink(destination: PDFViewerView(title: entry.displayTitle, url: url)) {
+                                AushangEntryRow(entry: entry)
+                            }
+                        }
+                    }
+                    
+                    if !linePlans.isEmpty {
+                        Section(header: Text("Linienfahrpläne")) {
+                            ForEach(linePlans) { entry in
+                                if let url = entry.url {
+                                    NavigationLink(destination: PDFViewerView(title: "\(entry.scheduleName) – \(entry.direction ?? "")", url: url)) {
+                                        AushangEntryRow(entry: entry)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    let externalPlans = plans.filter { $0.url.pathExtension.lowercased() != "pdf" }
+                    if !externalPlans.isEmpty {
+                        Section(header: Text("Links")) {
+                            ForEach(externalPlans) { plan in
+                                Button {
+                                    openURL(plan.url)
+                                } label: {
+                                    StationPlanRow(plan: plan, isExternal: true)
+                                }
+                            }
+                        }
+                    }
+                } else if !plans.isEmpty {
                     Section(header: Text("Haltestellenpläne")) {
                         ForEach(plans) { plan in
                             if plan.url.pathExtension.lowercased() == "pdf" {
@@ -265,7 +323,45 @@ struct StationPlansSheet: View {
                     }
                 }
             }
+            .task {
+                guard let id = locationId else { return }
+                zdmAbbreviation = await MVGPlansData.fetchStationAbbreviation(locationId: id)
+                if let abbr = zdmAbbreviation {
+                    aushangEntries = await MVGPlansData.fetchAushangPlans(abbreviation: abbr)
+                }
+            }
         }
+    }
+}
+
+// MARK: - Aushang Entry Row (API-Pläne)
+
+struct AushangEntryRow: View {
+    let entry: MVGPlansData.AushangEntry
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: entry.icon)
+                .font(.system(size: 18))
+                .foregroundColor(.white)
+                .frame(width: 36, height: 36)
+                .background(MVGNetworkPlan.PlanCategory.netzplaene.color)
+                .cornerRadius(8)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(entry.displayTitle)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(.primary)
+                if let subtitle = entry.displaySubtitle, !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                }
+            }
+            Spacer()
+        }
+        .padding(.vertical, 2)
     }
 }
 
@@ -320,6 +416,7 @@ struct StationPlanRow: View {
 #Preview("Station Plans Sheet") {
     StationPlansSheet(
         stationName: "Marienplatz",
+        locationId: "de:09162:50",
         plans: MVGPlansData.stationPlans(for: "Marienplatz")
     )
 }
