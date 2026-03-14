@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import MunichCommuterKit
 
 @main
 struct MunichCommuterApp: App {

@@ -8,6 +8,7 @@
 import SwiftUI
 import MapKit
 import Foundation
+import MunichCommuterKit
 
 private struct StopCenterPreference: PreferenceKey {
     static var defaultValue: [Int: CGFloat] = [:]

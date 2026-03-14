@@ -1,4 +1,5 @@
 import SwiftUI
+import MunichCommuterKit
 
 struct DestinationPickerView: View {
     let destinations: [String]

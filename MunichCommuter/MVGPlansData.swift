@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import MunichCommuterKit
 
 struct MVGNetworkPlan: Identifiable {
     let id = UUID()

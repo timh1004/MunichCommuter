@@ -1,0 +1,430 @@
+{
+  "builtTestProducts" : [
+
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.MunichCommuterKit-arm64-apple-macosx26.0-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/sources",
+      "importPath" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Helpers/DateExtensions.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Helpers/DepartureRowStyling.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Helpers/FavoritesHelper.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Helpers/FilteringHelper.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Helpers/PlatformHelper.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/DepartureModels.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/FavoritesSortOption.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/FilteredFavorite.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/MVVModels.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/StringExtensions.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/TransportType.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Services/FavoritesManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Services/LocationManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Services/MVVService.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "MunichCommuterKit",
+      "moduleOutputPath" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/Modules/MunichCommuterKit.swiftmodule",
+      "objects" : [
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/DateExtensions.swift.o",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/DepartureRowStyling.swift.o",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/FavoritesHelper.swift.o",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/FilteringHelper.swift.o",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/PlatformHelper.swift.o",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/DepartureModels.swift.o",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/FavoritesSortOption.swift.o",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/FilteredFavorite.swift.o",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/MVVModels.swift.o",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/StringExtensions.swift.o",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/TransportType.swift.o",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/FavoritesManager.swift.o",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/LocationManager.swift.o",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/MVVService.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j10",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/include/MunichCommuterKit-Swift.h",
+        "-swift-version",
+        "6",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "munichcommuterkit"
+      ],
+      "outputFileMapPath" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/DateExtensions.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/DepartureRowStyling.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/FavoritesHelper.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/FilteringHelper.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/PlatformHelper.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/DepartureModels.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/FavoritesSortOption.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/FilteredFavorite.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/MVVModels.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/StringExtensions.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/TransportType.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/FavoritesManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/LocationManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/MVVService.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/Modules/MunichCommuterKit.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Helpers/DateExtensions.swift",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Helpers/DepartureRowStyling.swift",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Helpers/FavoritesHelper.swift",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Helpers/FilteringHelper.swift",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Helpers/PlatformHelper.swift",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/DepartureModels.swift",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/FavoritesSortOption.swift",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/FilteredFavorite.swift",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/MVVModels.swift",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/StringExtensions.swift",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/TransportType.swift",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Services/FavoritesManager.swift",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Services/LocationManager.swift",
+        "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Services/MVVService.swift"
+      ],
+      "tempsPath" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build",
+      "wholeModuleOptimization" : false
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "MunichCommuterKit" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "MunichCommuterKit",
+      "-package-name",
+      "munichcommuterkit",
+      "-c",
+      "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Helpers/DateExtensions.swift",
+      "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Helpers/DepartureRowStyling.swift",
+      "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Helpers/FavoritesHelper.swift",
+      "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Helpers/FilteringHelper.swift",
+      "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Helpers/PlatformHelper.swift",
+      "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/DepartureModels.swift",
+      "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/FavoritesSortOption.swift",
+      "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/FilteredFavorite.swift",
+      "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/MVVModels.swift",
+      "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/StringExtensions.swift",
+      "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/TransportType.swift",
+      "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Services/FavoritesManager.swift",
+      "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Services/LocationManager.swift",
+      "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Services/MVVService.swift",
+      "-I",
+      "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j10",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/include/MunichCommuterKit-Swift.h",
+      "-swift-version",
+      "6",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "munichcommuterkit",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "MunichCommuterKit" : [
+
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+
+  },
+  "traitConfiguration" : {
+    "default" : {
+
+    }
+  },
+  "writeCommands" : {
+    "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Helpers/DateExtensions.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Helpers/DepartureRowStyling.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Helpers/FavoritesHelper.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Helpers/FilteringHelper.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Helpers/PlatformHelper.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/DepartureModels.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/FavoritesSortOption.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/FilteredFavorite.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/MVVModels.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/StringExtensions.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Models/TransportType.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Services/FavoritesManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Services/LocationManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/Sources/MunichCommuterKit/Services/MVVService.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/MunichCommuterKit.build/sources"
+    },
+    "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/timhaug/Documents/dev/MunichCommuter/MunichCommuterKit/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+    }
+  }
+}

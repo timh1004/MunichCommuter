@@ -1,4 +1,5 @@
 import SwiftUI
+import MunichCommuterKit
 
 struct MainTabView: View {
     @StateObject private var locationManager = LocationManager.shared

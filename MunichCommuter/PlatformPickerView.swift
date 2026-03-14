@@ -1,4 +1,5 @@
 import SwiftUI
+import MunichCommuterKit
 
 struct PlatformPickerView: View {
     let platforms: [String]

@@ -1,10 +1,6 @@
 import SwiftUI
 import Foundation
-
-enum FavoritesSortOption {
-    case alphabetical
-    case distance
-}
+import MunichCommuterKit
 
 struct FavoritesView: View {
     @StateObject private var favoritesManager = FavoritesManager.shared

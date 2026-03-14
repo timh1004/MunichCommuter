@@ -1,6 +1,7 @@
 import SwiftUI
 import Combine
 import CoreLocation
+import MunichCommuterKit
 
 struct StationsView: View {
     @StateObject private var mvvService = MVVService()

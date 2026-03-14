@@ -6,6 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		083A9C752F65C04B000C70C9 /* MunichCommuterKit in Frameworks */ = {isa = PBXBuildFile; productRef = F1B000082E5EF0010060EED6 /* MunichCommuterKit */; };
+		0843D4FF2F65B9D4006A4700 /* MunichCommuterKit in Frameworks */ = {isa = PBXBuildFile; productRef = F1A000022E5EF0000060EED6 /* MunichCommuterKit */; };
+		F1C0000B2E5EF0020060EED6 /* MunichCommuterKit in Frameworks */ = {isa = PBXBuildFile; productRef = F1C0000A2E5EF0020060EED6 /* MunichCommuterKit */; };
+		F1C0000F2E5EF0020060EED6 /* MunichCommuterWatchWidgets.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = F1C000012E5EF0020060EED6 /* MunichCommuterWatchWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		083DD7BB2E2EEE7F0060EED6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -21,12 +28,35 @@
 			remoteGlobalIDString = 083DD7A82E2EEE7D0060EED6;
 			remoteInfo = MunichCommuter;
 		};
+		F1C0000C2E5EF0020060EED6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 083DD7A12E2EEE7D0060EED6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F1C000032E5EF0020060EED6;
+			remoteInfo = MunichCommuterWatchWidgets;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F1C0000E2E5EF0020060EED6 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				F1C0000F2E5EF0020060EED6 /* MunichCommuterWatchWidgets.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		083DD7A92E2EEE7D0060EED6 /* MunichCommuter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MunichCommuter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		083DD7BA2E2EEE7F0060EED6 /* MunichCommuterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MunichCommuterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		083DD7C42E2EEE7F0060EED6 /* MunichCommuterUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MunichCommuterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F1B000012E5EF0010060EED6 /* MunichCommuterWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MunichCommuterWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F1C000012E5EF0020060EED6 /* MunichCommuterWatchWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MunichCommuterWatchWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -36,6 +66,20 @@
 				Info.plist,
 			);
 			target = 083DD7A82E2EEE7D0060EED6 /* MunichCommuter */;
+		};
+		F1B000022E5EF0010060EED6 /* Exceptions for "MunichCommuterWatch" folder in "MunichCommuterWatch" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = F1B000032E5EF0010060EED6 /* MunichCommuterWatch */;
+		};
+		F1C000112E5EF0020060EED6 /* Exceptions for "MunichCommuterWatchWidgets" folder in "MunichCommuterWatchWidgets" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = F1C000032E5EF0020060EED6 /* MunichCommuterWatchWidgets */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -58,6 +102,27 @@
 			path = MunichCommuterUITests;
 			sourceTree = "<group>";
 		};
+		F1A000032E5EF0000060EED6 /* MunichCommuterKit */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MunichCommuterKit;
+			sourceTree = "<group>";
+		};
+		F1B000042E5EF0010060EED6 /* MunichCommuterWatch */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				F1B000022E5EF0010060EED6 /* Exceptions for "MunichCommuterWatch" folder in "MunichCommuterWatch" target */,
+			);
+			path = MunichCommuterWatch;
+			sourceTree = "<group>";
+		};
+		F1C000022E5EF0020060EED6 /* MunichCommuterWatchWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				F1C000112E5EF0020060EED6 /* Exceptions for "MunichCommuterWatchWidgets" folder in "MunichCommuterWatchWidgets" target */,
+			);
+			path = MunichCommuterWatchWidgets;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,6 +130,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0843D4FF2F65B9D4006A4700 /* MunichCommuterKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -82,6 +148,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F1B000052E5EF0010060EED6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				083A9C752F65C04B000C70C9 /* MunichCommuterKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F1C000042E5EF0020060EED6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F1C0000B2E5EF0020060EED6 /* MunichCommuterKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -89,8 +171,11 @@
 			isa = PBXGroup;
 			children = (
 				083DD7AB2E2EEE7D0060EED6 /* MunichCommuter */,
+				F1B000042E5EF0010060EED6 /* MunichCommuterWatch */,
+				F1C000022E5EF0020060EED6 /* MunichCommuterWatchWidgets */,
 				083DD7BD2E2EEE7F0060EED6 /* MunichCommuterTests */,
 				083DD7C72E2EEE7F0060EED6 /* MunichCommuterUITests */,
+				F1A000032E5EF0000060EED6 /* MunichCommuterKit */,
 				083DD7AA2E2EEE7D0060EED6 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -99,6 +184,8 @@
 			isa = PBXGroup;
 			children = (
 				083DD7A92E2EEE7D0060EED6 /* MunichCommuter.app */,
+				F1B000012E5EF0010060EED6 /* MunichCommuterWatch.app */,
+				F1C000012E5EF0020060EED6 /* MunichCommuterWatchWidgets.appex */,
 				083DD7BA2E2EEE7F0060EED6 /* MunichCommuterTests.xctest */,
 				083DD7C42E2EEE7F0060EED6 /* MunichCommuterUITests.xctest */,
 			);
@@ -125,6 +212,7 @@
 			);
 			name = MunichCommuter;
 			packageProductDependencies = (
+				F1A000022E5EF0000060EED6 /* MunichCommuterKit */,
 			);
 			productName = MunichCommuter;
 			productReference = 083DD7A92E2EEE7D0060EED6 /* MunichCommuter.app */;
@@ -176,6 +264,54 @@
 			productReference = 083DD7C42E2EEE7F0060EED6 /* MunichCommuterUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		F1B000032E5EF0010060EED6 /* MunichCommuterWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F1B000102E5EF0010060EED6 /* Build configuration list for PBXNativeTarget "MunichCommuterWatch" */;
+			buildPhases = (
+				F1B000062E5EF0010060EED6 /* Sources */,
+				F1B000052E5EF0010060EED6 /* Frameworks */,
+				F1B000072E5EF0010060EED6 /* Resources */,
+				F1C0000E2E5EF0020060EED6 /* Embed App Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F1C0000D2E5EF0020060EED6 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				F1B000042E5EF0010060EED6 /* MunichCommuterWatch */,
+			);
+			name = MunichCommuterWatch;
+			packageProductDependencies = (
+				F1B000082E5EF0010060EED6 /* MunichCommuterKit */,
+			);
+			productName = MunichCommuterWatch;
+			productReference = F1B000012E5EF0010060EED6 /* MunichCommuterWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
+		F1C000032E5EF0020060EED6 /* MunichCommuterWatchWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F1C000092E5EF0020060EED6 /* Build configuration list for PBXNativeTarget "MunichCommuterWatchWidgets" */;
+			buildPhases = (
+				F1C000062E5EF0020060EED6 /* Sources */,
+				F1C000042E5EF0020060EED6 /* Frameworks */,
+				F1C000052E5EF0020060EED6 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				F1C000022E5EF0020060EED6 /* MunichCommuterWatchWidgets */,
+			);
+			name = MunichCommuterWatchWidgets;
+			packageProductDependencies = (
+				F1C0000A2E5EF0020060EED6 /* MunichCommuterKit */,
+			);
+			productName = MunichCommuterWatchWidgets;
+			productReference = F1C000012E5EF0020060EED6 /* MunichCommuterWatchWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -197,6 +333,12 @@
 						CreatedOnToolsVersion = 16.4;
 						TestTargetID = 083DD7A82E2EEE7D0060EED6;
 					};
+					F1B000032E5EF0010060EED6 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					F1C000032E5EF0020060EED6 = {
+						CreatedOnToolsVersion = 16.4;
+					};
 				};
 			};
 			buildConfigurationList = 083DD7A42E2EEE7D0060EED6 /* Build configuration list for PBXProject "MunichCommuter" */;
@@ -208,12 +350,17 @@
 			);
 			mainGroup = 083DD7A02E2EEE7D0060EED6;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				F1A000012E5EF0000060EED6 /* XCLocalSwiftPackageReference "MunichCommuterKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 083DD7AA2E2EEE7D0060EED6 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				083DD7A82E2EEE7D0060EED6 /* MunichCommuter */,
+				F1B000032E5EF0010060EED6 /* MunichCommuterWatch */,
+				F1C000032E5EF0020060EED6 /* MunichCommuterWatchWidgets */,
 				083DD7B92E2EEE7F0060EED6 /* MunichCommuterTests */,
 				083DD7C32E2EEE7F0060EED6 /* MunichCommuterUITests */,
 			);
@@ -236,6 +383,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		083DD7C22E2EEE7F0060EED6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F1B000072E5EF0010060EED6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F1C000052E5EF0020060EED6 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -266,6 +427,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F1B000062E5EF0010060EED6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F1C000062E5EF0020060EED6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -278,6 +453,11 @@
 			isa = PBXTargetDependency;
 			target = 083DD7A82E2EEE7D0060EED6 /* MunichCommuter */;
 			targetProxy = 083DD7C52E2EEE7F0060EED6 /* PBXContainerItemProxy */;
+		};
+		F1C0000D2E5EF0020060EED6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F1C000032E5EF0020060EED6 /* MunichCommuterWatchWidgets */;
+			targetProxy = F1C0000C2E5EF0020060EED6 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -574,6 +754,124 @@
 			};
 			name = Release;
 		};
+		F1B000092E5EF0010060EED6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MunichCommuterWatch/MunichCommuterWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9HS2528ANW;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MunichCommuterWatch/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Abfahrten;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.iaha.mvgcommuter;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iaha.mvgcommuter.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Debug;
+		};
+		F1B0000A2E5EF0010060EED6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MunichCommuterWatch/MunichCommuterWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9HS2528ANW;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MunichCommuterWatch/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Abfahrten;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.iaha.mvgcommuter;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iaha.mvgcommuter.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Release;
+		};
+		F1C000072E5EF0020060EED6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9HS2528ANW;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MunichCommuterWatchWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iaha.mvgcommuter.watchkitapp.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Debug;
+		};
+		F1C000082E5EF0020060EED6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9HS2528ANW;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MunichCommuterWatchWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iaha.mvgcommuter.watchkitapp.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -613,7 +911,47 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		F1B000102E5EF0010060EED6 /* Build configuration list for PBXNativeTarget "MunichCommuterWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F1B000092E5EF0010060EED6 /* Debug */,
+				F1B0000A2E5EF0010060EED6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F1C000092E5EF0020060EED6 /* Build configuration list for PBXNativeTarget "MunichCommuterWatchWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F1C000072E5EF0020060EED6 /* Debug */,
+				F1C000082E5EF0020060EED6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		F1A000012E5EF0000060EED6 /* XCLocalSwiftPackageReference "MunichCommuterKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = MunichCommuterKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F1A000022E5EF0000060EED6 /* MunichCommuterKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MunichCommuterKit;
+		};
+		F1B000082E5EF0010060EED6 /* MunichCommuterKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MunichCommuterKit;
+		};
+		F1C0000A2E5EF0020060EED6 /* MunichCommuterKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MunichCommuterKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 083DD7A12E2EEE7D0060EED6 /* Project object */;
 }

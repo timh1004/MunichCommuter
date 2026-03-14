@@ -1,4 +1,5 @@
 import SwiftUI
+import MunichCommuterKit
 
 // MARK: - Network Plans Overview (Standalone)
 
