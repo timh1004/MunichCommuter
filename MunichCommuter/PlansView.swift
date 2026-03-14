@@ -49,7 +49,7 @@ struct NetworkPlanRow: View {
                 .font(.system(size: 18))
                 .foregroundColor(.white)
                 .frame(width: 36, height: 36)
-                .background(iconColor(for: plan.category))
+                .background(plan.category.color)
                 .cornerRadius(8)
             
             VStack(alignment: .leading, spacing: 2) {
@@ -64,17 +64,6 @@ struct NetworkPlanRow: View {
             Spacer()
         }
         .padding(.vertical, 2)
-    }
-    
-    private func iconColor(for category: MVGNetworkPlan.PlanCategory) -> Color {
-        switch category {
-        case .netzplaene:
-            return Color(red: 0/255, green: 101/255, blue: 189/255)
-        case .linienplaene:
-            return Color(red: 0/255, green: 142/255, blue: 78/255)
-        case .barrierefreiheit:
-            return Color(red: 0/255, green: 87/255, blue: 106/255)
-        }
     }
 }
 
@@ -167,7 +156,7 @@ struct PlanCardLabel: View {
                 .font(.system(size: 24))
                 .foregroundColor(.white)
                 .frame(width: 56, height: 56)
-                .background(cardColor)
+                .background(plan.category.color)
                 .cornerRadius(12)
             
             VStack(spacing: 2) {
@@ -185,17 +174,6 @@ struct PlanCardLabel: View {
             }
         }
         .frame(width: 90)
-    }
-    
-    private var cardColor: Color {
-        switch plan.category {
-        case .netzplaene:
-            return Color(red: 0/255, green: 101/255, blue: 189/255)
-        case .linienplaene:
-            return Color(red: 0/255, green: 142/255, blue: 78/255)
-        case .barrierefreiheit:
-            return Color(red: 0/255, green: 87/255, blue: 106/255)
-        }
     }
 }
 
@@ -303,7 +281,7 @@ struct StationPlanRow: View {
                 .font(.system(size: 18))
                 .foregroundColor(.white)
                 .frame(width: 36, height: 36)
-                .background(Color(red: 0/255, green: 101/255, blue: 189/255))
+                .background(MVGNetworkPlan.PlanCategory.netzplaene.color)
                 .cornerRadius(8)
             
             Text(plan.name)

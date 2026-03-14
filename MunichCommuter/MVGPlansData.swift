@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 struct MVGNetworkPlan: Identifiable {
     let id = UUID()
@@ -12,6 +13,17 @@ struct MVGNetworkPlan: Identifiable {
         case netzplaene = "Netzpläne"
         case linienplaene = "Linien & Tarif"
         case barrierefreiheit = "Barrierefreiheit"
+        
+        var color: Color {
+            switch self {
+            case .netzplaene:
+                return Color(red: 0/255, green: 101/255, blue: 189/255)
+            case .linienplaene:
+                return Color(red: 0/255, green: 142/255, blue: 78/255)
+            case .barrierefreiheit:
+                return Color(red: 0/255, green: 87/255, blue: 106/255)
+            }
+        }
     }
 }
 
@@ -91,7 +103,6 @@ struct MVGPlansData {
         
         let replacements: [(String, String)] = [
             ("ä", "ae"), ("ö", "oe"), ("ü", "ue"), ("ß", "ss"),
-            ("Ä", "ae"), ("Ö", "oe"), ("Ü", "ue"),
         ]
         for (from, to) in replacements {
             slug = slug.replacingOccurrences(of: from, with: to)
@@ -232,7 +243,9 @@ struct MVGPlansData {
         "Klinikum Großhadern": "KG",
     ]
     
-    /// Look up the station code for a given station name, trying various matching strategies.
+    /// Look up the station code for a given station name.
+    /// Tries exact match first, then falls back to the longest matching key
+    /// to avoid ambiguity (e.g. "Messestadt" won't randomly pick West vs. Ost).
     static func stationCode(for stationName: String?) -> String? {
         guard let name = stationName else { return nil }
         
@@ -240,13 +253,24 @@ struct MVGPlansData {
             return code
         }
         
+        var bestMatch: (key: String, code: String)?
+        
         for (key, code) in uBahnStationCodes {
-            if name.localizedCaseInsensitiveContains(key) || key.localizedCaseInsensitiveContains(name) {
-                return code
+            let matches = name.localizedCaseInsensitiveContains(key) || key.localizedCaseInsensitiveContains(name)
+            guard matches else { continue }
+            
+            if let current = bestMatch {
+                if key.count > current.key.count {
+                    bestMatch = (key, code)
+                } else if key.count == current.key.count && key < current.key {
+                    bestMatch = (key, code)
+                }
+            } else {
+                bestMatch = (key, code)
             }
         }
         
-        return nil
+        return bestMatch?.code
     }
     
     /// Returns available station plans for a given station name.
