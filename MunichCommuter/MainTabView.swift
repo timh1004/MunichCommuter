@@ -6,11 +6,23 @@ enum AppTab: Hashable {
     case stationen
 }
 
+/// Navigation value for deep-linking into a station detail with optional favorite filters.
+struct StationDeepLink: Hashable {
+    let locationId: String
+    let locationName: String?
+    let destinationFilters: [String]?
+    let platformFilters: [String]?
+    let transportTypeFilters: [String]?
+}
+
 struct MainTabView: View {
+    @Binding var widgetDeepLink: WidgetDeepLink?
     @ObservedObject private var locationManager = LocationManager.shared
+    @ObservedObject private var favoritesManager = FavoritesManager.shared
     @Environment(\.scenePhase) private var scenePhase
     @State private var selectedTab = AppTab.favoriten
     @State private var stationsSearchIsActive = false
+    @State private var favoritesPath = NavigationPath()
 
     private var tabSelection: Binding<AppTab> {
         Binding(
@@ -28,8 +40,17 @@ struct MainTabView: View {
     var body: some View {
         TabView(selection: tabSelection) {
             Tab("Favoriten", systemImage: "star.fill", value: .favoriten) {
-                NavigationStack {
+                NavigationStack(path: $favoritesPath) {
                     FavoritesView()
+                        .navigationDestination(for: StationDeepLink.self) { link in
+                            DepartureDetailView(
+                                locationId: link.locationId,
+                                locationName: link.locationName,
+                                initialDestinationFilters: link.destinationFilters,
+                                initialPlatformFilters: link.platformFilters,
+                                initialTransportTypes: link.transportTypeFilters
+                            )
+                        }
                 }
             }
 
@@ -59,9 +80,41 @@ struct MainTabView: View {
                 break
             }
         }
+        .onChange(of: widgetDeepLink) { _, deepLink in
+            guard let deepLink else { return }
+            // Switch to Favoriten tab and pop to root first
+            selectedTab = .favoriten
+            favoritesPath = NavigationPath()
+            widgetDeepLink = nil
+
+            // Look up matching favorite to pass its filters.
+            // Prefer exact match by favoriteId, fall back to locationId.
+            let matchingFavorite: FilteredFavorite? = {
+                if let fid = deepLink.favoriteId {
+                    return favoritesManager.favorites.first { $0.id == fid }
+                }
+                let normalizedId = deepLink.locationId.normalizedStationId
+                return favoritesManager.favorites.first {
+                    $0.location.id.normalizedStationId == normalizedId
+                }
+            }()
+
+            let link = StationDeepLink(
+                locationId: deepLink.locationId,
+                locationName: matchingFavorite?.displayName,
+                destinationFilters: matchingFavorite?.destinationFilters,
+                platformFilters: matchingFavorite?.platformFilters,
+                transportTypeFilters: matchingFavorite?.transportTypeFilters
+            )
+
+            // Delay the push so SwiftUI can process the pop-to-root first
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                favoritesPath.append(link)
+            }
+        }
     }
 }
 
 #Preview {
-    MainTabView()
+    MainTabView(widgetDeepLink: .constant(nil))
 }

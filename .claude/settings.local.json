@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:www.xcodebuildmcp.com)",
+      "Bash(find /Users/timhaug/dev-local/MunichCommuter -type f \\\\\\(-name Info.plist -o -name *.xcconfig -o -name project.pbxproj \\\\\\))",
+      "Bash(xargs ls:*)"
+    ]
+  }
+}

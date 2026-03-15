@@ -30,54 +30,17 @@ struct DepartureDetailView: View {
     @State private var hasInitialized = false
     @State private var showPlansSheet = false
     
-    init(locationId: String, locationName: String? = nil, initialFilter: String? = nil) {
-        self.locationId = locationId
-        self.locationName = locationName
-        self.initialFilters = initialFilter.map { [$0] }
-        self.initialPlatformFilters = nil
-        self.initialTransportTypes = nil
-    }
-    
-    // New init for multiple filters
-    init(locationId: String, locationName: String? = nil, initialFilters: [String]? = nil) {
-        self.locationId = locationId
-        self.locationName = locationName
-        self.initialFilters = initialFilters
-        self.initialPlatformFilters = nil
-        self.initialTransportTypes = nil
-    }
-    
-    // Convenience initializer for backward compatibility
-    init(location: Location, initialFilter: String? = nil) {
-        self.locationId = location.id
-        self.locationName = location.disassembledName ?? location.name
-        self.initialFilters = initialFilter.map { [$0] }
-        self.initialPlatformFilters = nil
-        self.initialTransportTypes = nil
-    }
-    
-    // Initializer for favorites with transport type filters
-    init(locationId: String, locationName: String? = nil, initialFilter: String? = nil, initialTransportTypes: [String]? = nil) {
-        self.locationId = locationId
-        self.locationName = locationName
-        self.initialFilters = initialFilter.map { [$0] }
-        self.initialPlatformFilters = nil
-        self.initialTransportTypes = initialTransportTypes
-    }
-    
-    // New initializer for favorites with multiple destination filters
-    init(locationId: String, locationName: String? = nil, initialFilters: [String]? = nil, initialTransportTypes: [String]? = nil) {
-        self.locationId = locationId
-        self.locationName = locationName
-        self.initialFilters = initialFilters
-        self.initialPlatformFilters = nil
-        self.initialTransportTypes = initialTransportTypes
-    }
-    
-    // New initializer for favorites with all filter types
     init(locationId: String, locationName: String? = nil, initialDestinationFilters: [String]? = nil, initialPlatformFilters: [String]? = nil, initialTransportTypes: [String]? = nil) {
         self.locationId = locationId
         self.locationName = locationName
+        self.initialFilters = initialDestinationFilters
+        self.initialPlatformFilters = initialPlatformFilters
+        self.initialTransportTypes = initialTransportTypes
+    }
+
+    init(location: Location, initialDestinationFilters: [String]? = nil, initialPlatformFilters: [String]? = nil, initialTransportTypes: [String]? = nil) {
+        self.locationId = location.id
+        self.locationName = location.disassembledName ?? location.name
         self.initialFilters = initialDestinationFilters
         self.initialPlatformFilters = initialPlatformFilters
         self.initialTransportTypes = initialTransportTypes
@@ -940,8 +903,7 @@ struct DepartureRowView: View {
     NavigationStack {
         DepartureDetailView(
             locationId: "de:09162:10",
-            locationName: "Pasing",
-            initialFilter: nil
+            locationName: "Pasing"
         )
     }
 }
@@ -951,7 +913,7 @@ struct DepartureRowView: View {
         DepartureDetailView(
             locationId: "de:09162:10",
             locationName: "Pasing",
-            initialFilter: "Marienplatz"
+            initialDestinationFilters: ["Marienplatz"]
         )
     }
 }

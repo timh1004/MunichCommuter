@@ -9,9 +9,13 @@
 /* Begin PBXBuildFile section */
 		083A9C752F65C04B000C70C9 /* MunichCommuterKit in Frameworks */ = {isa = PBXBuildFile; productRef = F1B000082E5EF0010060EED6 /* MunichCommuterKit */; };
 		0843D4FF2F65B9D4006A4700 /* MunichCommuterKit in Frameworks */ = {isa = PBXBuildFile; productRef = F1A000022E5EF0000060EED6 /* MunichCommuterKit */; };
+		08F2F9A52F675208004386FF /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08F2F9A42F675208004386FF /* WidgetKit.framework */; };
+		08F2F9A72F675208004386FF /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08F2F9A62F675208004386FF /* SwiftUI.framework */; };
+		08F2F9B82F67520A004386FF /* MunichCommuterWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 08F2F9A22F675208004386FF /* MunichCommuterWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		08F2F9BE2F67520A004386FF /* MunichCommuterKit in Frameworks */ = {isa = PBXBuildFile; productRef = 08F2F9BF2F67520A004386FF /* MunichCommuterKit */; };
 		F1B000112E5EF0010060EED6 /* MunichCommuterWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = F1B000012E5EF0010060EED6 /* MunichCommuterWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F1C0000B2E5EF0020060EED6 /* MunichCommuterKit in Frameworks */ = {isa = PBXBuildFile; productRef = F1C0000A2E5EF0020060EED6 /* MunichCommuterKit */; };
-		F1C0000F2E5EF0020060EED6 /* MunichCommuterWatchWidgets.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = F1C000012E5EF0020060EED6 /* MunichCommuterWatchWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		F1C0000F2E5EF0020060EED6 /* MunichCommuterWatchWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F1C000012E5EF0020060EED6 /* MunichCommuterWatchWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F1D000022E5EF0030060EED6 /* MunichCommuter/MunichCommuterIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = F1D000012E5EF0030060EED6 /* MunichCommuter/MunichCommuterIcon.icon */; };
 /* End PBXBuildFile section */
 
@@ -30,6 +34,13 @@
 			remoteGlobalIDString = 083DD7A82E2EEE7D0060EED6;
 			remoteInfo = MunichCommuter;
 		};
+		08F2F9B62F67520A004386FF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 083DD7A12E2EEE7D0060EED6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 08F2F9A12F675208004386FF;
+			remoteInfo = MunichCommuterWidgetsExtension;
+		};
 		F1B000122E5EF0010060EED6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 083DD7A12E2EEE7D0060EED6 /* Project object */;
@@ -47,6 +58,17 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		08F2F9BD2F67520A004386FF /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				08F2F9B82F67520A004386FF /* MunichCommuterWidgetsExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F1B000132E5EF0010060EED6 /* Embed Watch Content */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -58,15 +80,15 @@
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F1C0000E2E5EF0020060EED6 /* Embed App Extensions */ = {
+		F1C0000E2E5EF0020060EED6 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				F1C0000F2E5EF0020060EED6 /* MunichCommuterWatchWidgets.appex in Embed App Extensions */,
+				F1C0000F2E5EF0020060EED6 /* MunichCommuterWatchWidgets.appex in Embed Foundation Extensions */,
 			);
-			name = "Embed App Extensions";
+			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -75,6 +97,10 @@
 		083DD7A92E2EEE7D0060EED6 /* MunichCommuter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MunichCommuter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		083DD7BA2E2EEE7F0060EED6 /* MunichCommuterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MunichCommuterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		083DD7C42E2EEE7F0060EED6 /* MunichCommuterUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MunichCommuterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		08F22EFD2F67543A004386FF /* MunichCommuterWidgetsExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MunichCommuterWidgetsExtension.entitlements; sourceTree = "<group>"; };
+		08F2F9A22F675208004386FF /* MunichCommuterWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MunichCommuterWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		08F2F9A42F675208004386FF /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		08F2F9A62F675208004386FF /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		F1B000012E5EF0010060EED6 /* MunichCommuterWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MunichCommuterWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F1C000012E5EF0020060EED6 /* MunichCommuterWatchWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MunichCommuterWatchWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		F1D000012E5EF0030060EED6 /* MunichCommuter/MunichCommuterIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = MunichCommuter/MunichCommuterIcon.icon; sourceTree = "<group>"; };
@@ -87,6 +113,13 @@
 				Info.plist,
 			);
 			target = 083DD7A82E2EEE7D0060EED6 /* MunichCommuter */;
+		};
+		08F2F9BC2F67520A004386FF /* Exceptions for "MunichCommuterWidgets" folder in "MunichCommuterWidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 08F2F9A12F675208004386FF /* MunichCommuterWidgetsExtension */;
 		};
 		F1B000022E5EF0010060EED6 /* Exceptions for "MunichCommuterWatch" folder in "MunichCommuterWatch" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -121,6 +154,14 @@
 		083DD7C72E2EEE7F0060EED6 /* MunichCommuterUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = MunichCommuterUITests;
+			sourceTree = "<group>";
+		};
+		08F2F9A82F675208004386FF /* MunichCommuterWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				08F2F9BC2F67520A004386FF /* Exceptions for "MunichCommuterWidgets" folder in "MunichCommuterWidgetsExtension" target */,
+			);
+			path = MunichCommuterWidgets;
 			sourceTree = "<group>";
 		};
 		F1A000032E5EF0000060EED6 /* MunichCommuterKit */ = {
@@ -169,6 +210,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		08F2F99F2F675208004386FF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				08F2F9A72F675208004386FF /* SwiftUI.framework in Frameworks */,
+				08F2F9A52F675208004386FF /* WidgetKit.framework in Frameworks */,
+				08F2F9BE2F67520A004386FF /* MunichCommuterKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F1B000052E5EF0010060EED6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -191,6 +242,7 @@
 		083DD7A02E2EEE7D0060EED6 = {
 			isa = PBXGroup;
 			children = (
+				08F22EFD2F67543A004386FF /* MunichCommuterWidgetsExtension.entitlements */,
 				083DD7AB2E2EEE7D0060EED6 /* MunichCommuter */,
 				F1D000012E5EF0030060EED6 /* MunichCommuter/MunichCommuterIcon.icon */,
 				F1B000042E5EF0010060EED6 /* MunichCommuterWatch */,
@@ -198,6 +250,8 @@
 				083DD7BD2E2EEE7F0060EED6 /* MunichCommuterTests */,
 				083DD7C72E2EEE7F0060EED6 /* MunichCommuterUITests */,
 				F1A000032E5EF0000060EED6 /* MunichCommuterKit */,
+				08F2F9A82F675208004386FF /* MunichCommuterWidgets */,
+				08F2F9A32F675208004386FF /* Frameworks */,
 				083DD7AA2E2EEE7D0060EED6 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -210,8 +264,18 @@
 				F1C000012E5EF0020060EED6 /* MunichCommuterWatchWidgets.appex */,
 				083DD7BA2E2EEE7F0060EED6 /* MunichCommuterTests.xctest */,
 				083DD7C42E2EEE7F0060EED6 /* MunichCommuterUITests.xctest */,
+				08F2F9A22F675208004386FF /* MunichCommuterWidgetsExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		08F2F9A32F675208004386FF /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				08F2F9A42F675208004386FF /* WidgetKit.framework */,
+				08F2F9A62F675208004386FF /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -225,11 +289,13 @@
 				083DD7A62E2EEE7D0060EED6 /* Frameworks */,
 				F1B000132E5EF0010060EED6 /* Embed Watch Content */,
 				083DD7A72E2EEE7D0060EED6 /* Resources */,
+				08F2F9BD2F67520A004386FF /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				F1B000142E5EF0010060EED6 /* PBXTargetDependency */,
+				08F2F9B72F67520A004386FF /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				083DD7AB2E2EEE7D0060EED6 /* MunichCommuter */,
@@ -288,6 +354,29 @@
 			productReference = 083DD7C42E2EEE7F0060EED6 /* MunichCommuterUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		08F2F9A12F675208004386FF /* MunichCommuterWidgetsExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 08F2F9B92F67520A004386FF /* Build configuration list for PBXNativeTarget "MunichCommuterWidgetsExtension" */;
+			buildPhases = (
+				08F2F99E2F675208004386FF /* Sources */,
+				08F2F99F2F675208004386FF /* Frameworks */,
+				08F2F9A02F675208004386FF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				08F2F9A82F675208004386FF /* MunichCommuterWidgets */,
+			);
+			name = MunichCommuterWidgetsExtension;
+			packageProductDependencies = (
+				08F2F9BF2F67520A004386FF /* MunichCommuterKit */,
+			);
+			productName = MunichCommuterWidgetsExtension;
+			productReference = 08F2F9A22F675208004386FF /* MunichCommuterWidgetsExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		F1B000032E5EF0010060EED6 /* MunichCommuterWatch */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = F1B000102E5EF0010060EED6 /* Build configuration list for PBXNativeTarget "MunichCommuterWatch" */;
@@ -295,7 +384,7 @@
 				F1B000062E5EF0010060EED6 /* Sources */,
 				F1B000052E5EF0010060EED6 /* Frameworks */,
 				F1B000072E5EF0010060EED6 /* Resources */,
-				F1C0000E2E5EF0020060EED6 /* Embed App Extensions */,
+				F1C0000E2E5EF0020060EED6 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
@@ -343,8 +432,8 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1640;
-				LastUpgradeCheck = 1640;
+				LastSwiftUpdateCheck = 2630;
+				LastUpgradeCheck = 2630;
 				TargetAttributes = {
 					083DD7A82E2EEE7D0060EED6 = {
 						CreatedOnToolsVersion = 16.4;
@@ -356,6 +445,9 @@
 					083DD7C32E2EEE7F0060EED6 = {
 						CreatedOnToolsVersion = 16.4;
 						TestTargetID = 083DD7A82E2EEE7D0060EED6;
+					};
+					08F2F9A12F675208004386FF = {
+						CreatedOnToolsVersion = 26.3;
 					};
 					F1B000032E5EF0010060EED6 = {
 						CreatedOnToolsVersion = 16.4;
@@ -387,6 +479,7 @@
 				F1C000032E5EF0020060EED6 /* MunichCommuterWatchWidgets */,
 				083DD7B92E2EEE7F0060EED6 /* MunichCommuterTests */,
 				083DD7C32E2EEE7F0060EED6 /* MunichCommuterUITests */,
+				08F2F9A12F675208004386FF /* MunichCommuterWidgetsExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -407,6 +500,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		083DD7C22E2EEE7F0060EED6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		08F2F9A02F675208004386FF /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -452,6 +552,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		08F2F99E2F675208004386FF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F1B000062E5EF0010060EED6 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -479,6 +586,11 @@
 			target = 083DD7A82E2EEE7D0060EED6 /* MunichCommuter */;
 			targetProxy = 083DD7C52E2EEE7F0060EED6 /* PBXContainerItemProxy */;
 		};
+		08F2F9B72F67520A004386FF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 08F2F9A12F675208004386FF /* MunichCommuterWidgetsExtension */;
+			targetProxy = 08F2F9B62F67520A004386FF /* PBXContainerItemProxy */;
+		};
 		F1B000142E5EF0010060EED6 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = F1B000032E5EF0010060EED6 /* MunichCommuterWatch */;
@@ -501,9 +613,12 @@
 				CODE_SIGN_ENTITLEMENTS = MunichCommuter/MunichCommuter.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 9HS2528ANW;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MunichCommuter/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Abfahrten;
@@ -544,9 +659,12 @@
 				CODE_SIGN_ENTITLEMENTS = MunichCommuter/MunichCommuter.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 9HS2528ANW;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MunichCommuter/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Abfahrten;
@@ -612,6 +730,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 9HS2528ANW;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -635,6 +754,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -674,6 +794,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 9HS2528ANW;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -690,6 +811,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 			};
 			name = Release;
@@ -700,6 +822,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 9HS2528ANW;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
@@ -723,6 +846,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 9HS2528ANW;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
@@ -745,6 +869,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 9HS2528ANW;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
@@ -767,6 +892,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 9HS2528ANW;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
@@ -781,6 +907,73 @@
 				TARGETED_DEVICE_FAMILY = "1,2,7";
 				TEST_TARGET_NAME = MunichCommuter;
 				XROS_DEPLOYMENT_TARGET = 2.5;
+			};
+			name = Release;
+		};
+		08F2F9BA2F67520A004386FF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = MunichCommuterWidgetsExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9HS2528ANW;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MunichCommuterWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = MunichCommuterWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iaha.mvgcommuter.MunichCommuterWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		08F2F9BB2F67520A004386FF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = MunichCommuterWidgetsExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9HS2528ANW;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MunichCommuterWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = MunichCommuterWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iaha.mvgcommuter.MunichCommuterWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
@@ -941,6 +1134,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		08F2F9B92F67520A004386FF /* Build configuration list for PBXNativeTarget "MunichCommuterWidgetsExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				08F2F9BA2F67520A004386FF /* Debug */,
+				08F2F9BB2F67520A004386FF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		F1B000102E5EF0010060EED6 /* Build configuration list for PBXNativeTarget "MunichCommuterWatch" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -969,6 +1171,10 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		08F2F9BF2F67520A004386FF /* MunichCommuterKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MunichCommuterKit;
+		};
 		F1A000022E5EF0000060EED6 /* MunichCommuterKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = MunichCommuterKit;

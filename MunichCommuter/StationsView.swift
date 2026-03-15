@@ -280,7 +280,7 @@ struct StationsView: View {
         return List {
             Section {
                 ForEach(displayedLocations) { location in
-                    NavigationLink(destination: DepartureDetailView(locationId: location.id, locationName: location.disassembledName ?? location.name, initialFilters: nil, initialTransportTypes: nil)) {
+                    NavigationLink(destination: DepartureDetailView(locationId: location.id, locationName: location.disassembledName ?? location.name)) {
                         LocationRowView(location: location, showDistance: isShowingNearbyStations)
                     }
                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 16))
