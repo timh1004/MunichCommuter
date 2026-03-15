@@ -4,12 +4,15 @@ import CoreLocation
 import MunichCommuterKit
 
 struct StationsView: View {
+    @Binding var activateSearch: Bool
+
     @StateObject private var mvvService = MVVService()
-    @StateObject private var locationManager = LocationManager.shared
+    @ObservedObject private var locationManager = LocationManager.shared
     @State private var searchText = ""
-    @State private var debounceTimer: Timer?
+    @State private var searchIsPresented = false
+    @State private var debounceTask: Task<Void, Never>?
     @State private var isShowingNearbyStations = false
-    
+
     private var sortedLocations: [Location] {
         if isShowingNearbyStations {
             return mvvService.locations.sorted { location1, location2 in
@@ -21,25 +24,56 @@ struct StationsView: View {
             return mvvService.locations
         }
     }
-    
+
     private func getLocationDistance(_ location: Location) -> Double {
         return locationManager.distanceFor(location: location) ?? Double.infinity
     }
-    
+
     var body: some View {
-        VStack(spacing: 0) {
-            searchBarSection
-            nearbyStationsButtonSection
-            locationErrorSection
-            contentSection
+        ZStack {
+            Color(.systemGroupedBackground)
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                nearbyStationsButtonSection
+                locationErrorSection
+                contentSection
+            }
         }
-        .navigationTitle(isShowingNearbyStations ? "Nahegelegene Stationen" : "Stationen")
+        .searchable(text: $searchText, isPresented: $searchIsPresented, prompt: "Haltestelle suchen...")
+        .autocorrectionDisabled()
+        .textInputAutocapitalization(.never)
+        .onChange(of: activateSearch) { _, shouldActivate in
+            if shouldActivate {
+                searchIsPresented = true
+                activateSearch = false
+            }
+        }
+        .onSubmit(of: .search) {
+            performSearch()
+        }
+        .onChange(of: searchText) { _, newValue in
+            debounceTask?.cancel()
+            guard newValue.count >= 2 else {
+                if newValue.isEmpty {
+                    mvvService.locations = []
+                    isShowingNearbyStations = false
+                }
+                return
+            }
+            isShowingNearbyStations = false
+            debounceTask = Task {
+                try? await Task.sleep(nanoseconds: 500_000_000)
+                guard !Task.isCancelled else { return }
+                performSearch()
+            }
+        }
+        .navigationTitle("Stationen")
         .navigationBarTitleDisplayMode(.large)
-        .background(Color(.systemGroupedBackground))
         .onAppear {
             // Request a single location update - don't need continuous updates here
             locationManager.requestSingleLocation()
-            
+
             // Auto-load nearby stations if we have permission and effective location
             if locationManager.hasLocationPermission && locationManager.effectiveLocation != nil && searchText.isEmpty && mvvService.locations.isEmpty {
                 showNearbyStations()
@@ -52,7 +86,7 @@ struct StationsView: View {
                     mvvService.searchNearbyStops(coordinate: coordString)
                 }
             }
-            
+
             // Auto-load nearby stations if we just got location and no search is active
             if newLocation != nil && searchText.isEmpty && mvvService.locations.isEmpty && !isShowingNearbyStations {
                 showNearbyStations()
@@ -67,54 +101,9 @@ struct StationsView: View {
             }
         }
     }
-    
+
     // MARK: - View Sections
-    
-    private var searchBarSection: some View {
-        // Enhanced Search Bar with Auto-search and Clear Button
-        HStack {
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.secondary)
-                    .font(.system(size: 16))
-                
-                TextField("Haltestelle suchen...", text: $searchText)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.never)
-                    .onChange(of: searchText) { _, newValue in
-                        startDebounceTimer(for: newValue)
-                    }
-                    .onSubmit {
-                        performSearch()
-                    }
-                
-                if !searchText.isEmpty {
-                    Button(action: {
-                        searchText = ""
-                        isShowingNearbyStations = false
-                        mvvService.locations = []
-                    }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.secondary)
-                            .font(.system(size: 16))
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(Color(.systemBackground))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color(.systemGray4), lineWidth: 1)
-            )
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color(.systemGroupedBackground))
-    }
-    
+
     private var nearbyStationsButtonSection: some View {
         Group {
             // Nearby Stations Button
@@ -132,7 +121,7 @@ struct StationsView: View {
                             Image(systemName: "location.circle")
                                 .foregroundColor(.white)
                         }
-                        
+
                         Text(nearbyButtonText)
                             .fontWeight(.medium)
                             .foregroundColor(.white)
@@ -148,7 +137,7 @@ struct StationsView: View {
             }
         }
     }
-    
+
     private var nearbyButtonText: String {
         switch locationManager.authorizationStatus {
         case .denied, .restricted:
@@ -159,7 +148,7 @@ struct StationsView: View {
             return "Stationen in der Umgebung"
         }
     }
-    
+
     private var nearbyButtonColor: Color {
         switch locationManager.authorizationStatus {
         case .denied, .restricted:
@@ -168,13 +157,13 @@ struct StationsView: View {
             return .blue
         }
     }
-    
+
     private var locationErrorSection: some View {
         Group {
             // Location Error Message
             if let locationError = locationManager.locationError {
                 VStack {
-                    Text("📍 \(locationError)")
+                    Label(locationError, systemImage: "location")
                         .font(.caption)
                         .foregroundColor(.orange)
                         .multilineTextAlignment(.center)
@@ -184,7 +173,7 @@ struct StationsView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private var contentSection: some View {
         // Content Area
@@ -215,7 +204,7 @@ struct StationsView: View {
             resultsListSection
         }
     }
-    
+
     private var emptyStateSection: some View {
         Group {
             if searchText.isEmpty && !isShowingNearbyStations {
@@ -225,13 +214,13 @@ struct StationsView: View {
                         VStack(spacing: 8) {
                             Image(systemName: "magnifyingglass")
                                 .font(.system(size: 40))
-                                .foregroundColor(.gray.opacity(0.5))
-                            
+                                .foregroundStyle(.gray.opacity(0.5))
+
                             Text("Haltestelle suchen")
                                 .font(.title3)
                                 .fontWeight(.medium)
                                 .foregroundColor(.primary)
-                            
+
                             Text("Geben Sie den Namen einer Haltestelle ein oder nutzen Sie die Umgebungssuche")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
@@ -239,7 +228,7 @@ struct StationsView: View {
                                 .padding(.horizontal, 40)
                         }
                         .padding(.top, 16)
-                        
+
                         // Plans Section
                         PlansCompactSection()
                     }
@@ -250,10 +239,10 @@ struct StationsView: View {
                     Image(systemName: "location.circle")
                         .font(.largeTitle)
                         .foregroundColor(.blue)
-                    
+
                     Text("Keine Haltestellen in der Nähe")
                         .font(.headline)
-                    
+
                     Text("Es wurden keine Haltestellen in Ihrer Umgebung gefunden")
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -266,10 +255,10 @@ struct StationsView: View {
                     Image(systemName: "magnifyingglass")
                         .font(.largeTitle)
                         .foregroundColor(.gray)
-                    
+
                     Text("Keine Haltestellen gefunden")
                         .font(.headline)
-                    
+
                     Text("Versuchen Sie eine andere Suche")
                         .foregroundColor(.secondary)
                     Spacer()
@@ -277,7 +266,7 @@ struct StationsView: View {
             }
         }
     }
-    
+
     /// Bei Umgebungssuche nur die nächsten 5 Stationen, bei Suche alle.
     private var displayedLocations: [Location] {
         if isShowingNearbyStations {
@@ -285,7 +274,7 @@ struct StationsView: View {
         }
         return sortedLocations
     }
-    
+
     private var resultsListSection: some View {
         let netzplaene = MVGPlansData.networkPlans.filter { $0.category == .netzplaene }
         return List {
@@ -323,55 +312,39 @@ struct StationsView: View {
                     .textCase(nil)
             }
         }
-        .listStyle(PlainListStyle())
+        .listStyle(.plain)
     }
-    
+
     // MARK: - Search Functions
-    private func startDebounceTimer(for searchText: String) {
-        // Cancel existing timer
-        debounceTimer?.invalidate()
-        
-        // Don't search for very short queries
-        guard searchText.count >= 2 else {
-            mvvService.locations = []
-            isShowingNearbyStations = false
-            return
-        }
-        
-        // Start new timer with 0.5 second delay
-        debounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
-            performSearch()
-        }
-    }
-    
+
     private func performSearch() {
         guard !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             return
         }
-        
+
         isShowingNearbyStations = false
         mvvService.searchStops(name: searchText)
     }
-    
+
     private func showNearbyStations() {
         // Explicitly request location permission if not granted
         if !locationManager.hasLocationPermission {
             locationManager.requestLocationPermission()
             return
         }
-        
+
         // If we have permission but no effective location yet, try to get it
         if locationManager.effectiveLocation == nil {
             locationManager.requestSingleLocation()
         }
-        
+
         guard let coordString = locationManager.coordStringForAPI() else {
             // Location is being fetched, the onChange handler will trigger the search
             isShowingNearbyStations = true
             searchText = ""
             return
         }
-        
+
         isShowingNearbyStations = true
         searchText = ""
         mvvService.searchNearbyStops(coordinate: coordString)
@@ -381,40 +354,42 @@ struct StationsView: View {
 struct LocationRowView: View {
     let location: Location
     let showDistance: Bool
-    @StateObject private var locationManager = LocationManager.shared
-    
+    @ObservedObject private var locationManager = LocationManager.shared
+
     init(location: Location, showDistance: Bool = false) {
         self.location = location
         self.showDistance = showDistance
     }
-    
+
     var body: some View {
         HStack {
             // Location Type Icon
             Image(systemName: locationIcon)
                 .frame(width: 24, height: 24)
                 .foregroundColor(.secondary)
-            
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(locationDisplayName)
-                    .font(.system(size: 16, weight: .medium))
+                    .font(.body)
+                    .fontWeight(.medium)
                     .foregroundColor(.primary)
-                
+
                 if let parent = location.parent?.name {
                     Text(parent)
-                        .font(.system(size: 14))
+                        .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
             }
-            
+
             Spacer()
-            
+
             // Distance Display
             if showDistance {
                 // Use API distance if available (for nearby stops), otherwise calculate distance
                 if let distance = locationManager.distanceFor(location: location) {
                     Text(locationManager.formattedDistance(distance))
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.subheadline)
+                        .fontWeight(.medium)
                         .foregroundColor(.secondary)
                 }
             }
@@ -422,12 +397,12 @@ struct LocationRowView: View {
         .padding(.vertical, 12)
         .padding(.horizontal, 16)
     }
-    
+
     private var locationDisplayName: String {
         // Use the proper disassembled name from API - no manual string manipulation needed!
         return location.disassembledName ?? location.name ?? "Unbekannte Haltestelle"
     }
-    
+
     private var locationIcon: String {
         switch location.type {
         case "stop":
@@ -441,7 +416,7 @@ struct LocationRowView: View {
 }
 
 #Preview {
-    NavigationView {
-        StationsView()
+    NavigationStack {
+        StationsView(activateSearch: .constant(false))
     }
-} 
+}

@@ -148,6 +148,7 @@ public struct TransportBadge: View {
                 .minimumScaleFactor(0.7)
                 .lineLimit(1)
         }
+        .accessibilityLabel("\(DepartureRowStyling.transportTypeName(for: departure)) \(departure.transportation?.number ?? "")")
     }
 }
 
@@ -170,6 +171,7 @@ public struct RealtimeBadge: View {
                         .font(.caption2)
                         .foregroundColor(.green)
                 }
+                .accessibilityLabel("Echtzeitdaten verfügbar")
             }
         }
     }

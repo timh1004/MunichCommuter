@@ -9,7 +9,7 @@ struct WatchDepartureListView: View {
     var transportTypeFilters: [String]? = nil
 
     @StateObject private var mvvService = MVVService()
-    @StateObject private var favoritesManager = FavoritesManager.shared
+    @ObservedObject private var favoritesManager = FavoritesManager.shared
     @Environment(\.scenePhase) private var scenePhase
     @State private var now = Date()
 

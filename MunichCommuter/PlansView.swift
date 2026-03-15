@@ -33,7 +33,7 @@ struct PlansOverviewView: View {
                 }
             }
         }
-        .listStyle(InsetGroupedListStyle())
+        .listStyle(.insetGrouped)
         .navigationTitle("Pläne")
         .navigationBarTitleDisplayMode(.large)
     }
@@ -47,21 +47,22 @@ struct NetworkPlanRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: plan.icon)
-                .font(.system(size: 18))
+                .font(.body)
                 .foregroundColor(.white)
                 .frame(width: 36, height: 36)
                 .background(plan.category.color)
                 .cornerRadius(8)
-            
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(plan.name)
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.subheadline)
+                    .fontWeight(.medium)
                     .foregroundColor(.primary)
                 Text(plan.subtitle)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             Spacer()
         }
         .padding(.vertical, 2)
@@ -74,22 +75,23 @@ struct ExternalLinkRow: View {
     let title: String
     let subtitle: String?
     let icon: String
-    
+
     init(title: String, subtitle: String? = nil, icon: String = "globe") {
         self.title = title
         self.subtitle = subtitle
         self.icon = icon
     }
-    
+
     var body: some View {
         HStack {
             Image(systemName: icon)
                 .foregroundColor(.blue)
                 .frame(width: 32, height: 32)
-            
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.subheadline)
+                    .fontWeight(.medium)
                     .foregroundColor(.primary)
                 if let subtitle = subtitle {
                     Text(subtitle)
@@ -97,11 +99,11 @@ struct ExternalLinkRow: View {
                         .foregroundColor(.secondary)
                 }
             }
-            
+
             Spacer()
-            
+
             Image(systemName: "arrow.up.right.square")
-                .font(.system(size: 14))
+                .font(.subheadline)
                 .foregroundColor(.secondary)
         }
     }
@@ -237,7 +239,7 @@ struct StationPlansSheet: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 if !aushangEntries.isEmpty {
                     Section(header: Text("Umgebungsplan & Übersicht")) {
@@ -314,7 +316,7 @@ struct StationPlansSheet: View {
                     }
                 }
             }
-            .listStyle(InsetGroupedListStyle())
+            .listStyle(.insetGrouped)
             .navigationTitle("Pläne")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -343,15 +345,16 @@ struct AushangEntryRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: entry.icon)
-                .font(.system(size: 18))
+                .font(.body)
                 .foregroundColor(.white)
                 .frame(width: 36, height: 36)
                 .background(MVGNetworkPlan.PlanCategory.netzplaene.color)
                 .cornerRadius(8)
-            
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.displayTitle)
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.subheadline)
+                    .fontWeight(.medium)
                     .foregroundColor(.primary)
                 if let subtitle = entry.displaySubtitle, !subtitle.isEmpty {
                     Text(subtitle)
@@ -375,21 +378,22 @@ struct StationPlanRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: plan.icon)
-                .font(.system(size: 18))
+                .font(.body)
                 .foregroundColor(.white)
                 .frame(width: 36, height: 36)
                 .background(MVGNetworkPlan.PlanCategory.netzplaene.color)
                 .cornerRadius(8)
-            
+
             Text(plan.name)
-                .font(.system(size: 15, weight: .medium))
+                .font(.subheadline)
+                .fontWeight(.medium)
                 .foregroundColor(.primary)
-            
+
             Spacer()
-            
+
             if isExternal {
                 Image(systemName: "arrow.up.right.square")
-                    .font(.system(size: 14))
+                    .font(.subheadline)
                     .foregroundColor(.secondary)
             }
         }
@@ -400,13 +404,13 @@ struct StationPlanRow: View {
 // MARK: - Previews
 
 #Preview("Plans Overview") {
-    NavigationView {
+    NavigationStack {
         PlansOverviewView()
     }
 }
 
 #Preview("Compact Section") {
-    NavigationView {
+    NavigationStack {
         VStack {
             PlansCompactSection()
             Spacer()

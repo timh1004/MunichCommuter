@@ -17,7 +17,7 @@ struct DepartureDetailView: View {
     let initialTransportTypes: [String]?
     
     @StateObject private var mvvService = MVVService()
-    @StateObject private var favoritesManager = FavoritesManager.shared
+    @ObservedObject private var favoritesManager = FavoritesManager.shared
     @Environment(\.scenePhase) private var scenePhase
     
     @State private var destinationFilters: [String] = []
@@ -138,7 +138,6 @@ struct DepartureDetailView: View {
                         HStack {
                             Image(systemName: "line.horizontal.3.decrease.circle")
                                 .foregroundColor(.blue)
-                                .font(.system(size: 16))
                             
                             Text("Zielhaltestellen (\(destinationFilters.count))")
                                 .font(.headline)
@@ -210,7 +209,6 @@ struct DepartureDetailView: View {
                         HStack {
                             Image(systemName: "train.side.front.car")
                                 .foregroundColor(.orange)
-                                .font(.system(size: 16))
                             
                             Text("Gleise (\(platformFilters.count))")
                                 .font(.headline)
@@ -357,7 +355,7 @@ struct DepartureDetailView: View {
                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 16))
                     .listRowSeparator(.hidden)
                 }
-                .listStyle(PlainListStyle())
+                .listStyle(.plain)
                 .refreshable {
                     mvvService.loadDepartures(locationId: locationId)
                 }
@@ -387,25 +385,13 @@ struct DepartureDetailView: View {
             mvvService.loadDepartures(locationId: locationId)
             
             // Apply initial filters if provided
-            var hasInitialFilters = false
-            
             if let filters = initialFilters, !filters.isEmpty {
                 destinationFilters = filters
-                hasInitialFilters = true
             }
-            
+
             if let platforms = initialPlatformFilters, !platforms.isEmpty {
                 platformFilters = platforms
-                hasInitialFilters = true
             }
-            
-            // Check if transport types are filtered
-            if selectedTransportTypes.count < TransportType.allCases.count {
-                hasInitialFilters = true
-            }
-            
-            // Note: Filter bar stays closed even with active filters from favorites
-            // User can manually open it if needed
         }
         .onDisappear {
             // Clean up when view disappears to prevent state pollution
@@ -508,7 +494,6 @@ struct DepartureDetailView: View {
                         }
                     } label: {
                         Image(systemName: isCurrentFavorite ? "star.fill" : "star")
-                            .foregroundColor(isCurrentFavorite ? .orange : .primary)
                     }
                     
                     // Filter Button with Active Indicator
@@ -526,32 +511,36 @@ struct DepartureDetailView: View {
                     } label: {
                         ZStack {
                             Image(systemName: showFilterBar ? "line.horizontal.3.decrease.circle.fill" : "line.horizontal.3.decrease.circle")
-                                .foregroundColor(showFilterBar ? .blue : .primary)
-                            
+
                             // Active filter indicator
                             if hasActiveFilters {
                                 Circle()
                                     .fill(.red)
                                     .frame(width: 8, height: 8)
                                     .offset(x: 8, y: -8)
+                                    .accessibilityHidden(true)
                             }
                         }
                     }
-                    
+                    .accessibilityLabel(hasActiveFilters ? "Filter aktiv" : "Filter")
+
                     // Plans Button
                     Button {
                         showPlansSheet = true
                     } label: {
                         Image(systemName: "map")
                     }
-                    
+                    .accessibilityLabel("Pläne anzeigen")
+
                     // Refresh Button
                     Button {
                         mvvService.loadDepartures(locationId: locationId)
                     } label: {
                         Image(systemName: "arrow.clockwise")
                     }
+                    .accessibilityLabel("Abfahrten aktualisieren")
                 }
+                .tint(.accentColor)
             }
         }
     }
@@ -562,35 +551,26 @@ struct DepartureDetailView: View {
         
         // Filter by transport type
         if selectedTransportTypes.count < TransportType.allCases.count {
-            let beforeCount = filtered.count
             filtered = filtered.filter { departure in
                 guard let product = departure.transportation?.product?.name else { return false }
                 return selectedTransportTypes.contains { transportType in
                     matchesTransportType(product: product, transportType: transportType)
                 }
             }
-            let afterCount = filtered.count
-            print("🚇 Transport filter: \(beforeCount) → \(afterCount) departures")
         }
-        
+
         // Filter by destination
         if !destinationFilters.isEmpty {
-            let beforeCount = filtered.count
             filtered = filtered.filter { departure in
                 hasDestinationInRoute(departure: departure, destination: destinationFilters)
             }
-            let afterCount = filtered.count
-            print("🎯 Destination filter: \(beforeCount) → \(afterCount) departures")
         }
-        
+
         // Filter by platform
         if !platformFilters.isEmpty {
-            let beforeCount = filtered.count
             filtered = filtered.filter { departure in
                 hasPlatformMatch(departure: departure, platforms: platformFilters)
             }
-            let afterCount = filtered.count
-            print("🚉 Platform filter: \(beforeCount) → \(afterCount) departures")
         }
         
         return filtered
@@ -803,10 +783,12 @@ struct TransportTypeFilterButton: View {
         Button(action: action) {
             HStack(spacing: 6) {
                 Image(systemName: transportType.icon)
-                    .font(.system(size: 12, weight: .medium))
-                
+                    .font(.caption)
+                    .fontWeight(.medium)
+
                 Text(transportType.shortName)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.caption)
+                    .fontWeight(.medium)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
@@ -883,10 +865,11 @@ struct DepartureRowView: View {
             // Destination and Platform (Nimmt maximalen verfügbaren Platz ein)
             VStack(alignment: .leading, spacing: 3) {
                 Text(departure.transportation?.destination?.name ?? "Unbekanntes Ziel")
-                    .font(.system(size: 16, weight: .medium))
+                    .font(.body)
+                    .fontWeight(.medium)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading) // Explicit maxWidth
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 
                 HStack(spacing: 8) {
                     if let platformName = departure.location?.properties?.platformName {
@@ -917,7 +900,8 @@ struct DepartureRowView: View {
             // Departure Time (Rechtsbündig)
             VStack(alignment: .trailing, spacing: 3) {
                 Text(DepartureRowStyling.formattedDepartureTime(for: departure, mode: timeDisplayMode, referenceDate: now))
-                    .font(.system(size: 18, weight: .semibold, design: .monospaced))
+                    .font(.headline)
+                    .monospacedDigit()
                     .foregroundColor(DepartureRowStyling.shouldShowOrange(for: departure) ? .orange : .primary)
                     .onTapGesture {
                         timeDisplayModeRaw = (timeDisplayMode == .relative ? TimeDisplayMode.absolute.rawValue : TimeDisplayMode.relative.rawValue)
@@ -947,7 +931,7 @@ struct DepartureRowView: View {
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         DepartureDetailView(
             locationId: "de:09162:10",
             locationName: "Pasing",
@@ -957,7 +941,7 @@ struct DepartureRowView: View {
 }
 
 #Preview("With Filter") {
-    NavigationView {
+    NavigationStack {
         DepartureDetailView(
             locationId: "de:09162:10",
             locationName: "Pasing",

@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 import CoreLocation
 
 @MainActor
@@ -283,6 +284,22 @@ public class MVVService: ObservableObject {
                 }
             }
         }.resume()
+    }
+
+    /// Loads departures and waits for the result using Combine instead of polling.
+    public func loadDeparturesAsync(locationId: String) async {
+        loadDepartures(locationId: locationId)
+        await withCheckedContinuation { continuation in
+            var cancellable: AnyCancellable?
+            cancellable = $isDeparturesLoading
+                .dropFirst()
+                .filter { !$0 }
+                .first()
+                .sink { _ in
+                    cancellable?.cancel()
+                    continuation.resume()
+                }
+        }
     }
 
     private func extractLocationId(from location: Location) -> String? {
