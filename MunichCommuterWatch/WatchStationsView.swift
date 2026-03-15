@@ -75,7 +75,7 @@ struct WatchStationsView: View {
                 }
             }
         }
-        .searchable(text: $searchText, prompt: "Haltestelle")
+        .searchable(text: $searchText, prompt: "Haltestelle suchen")
         .onChange(of: searchText) { _, newValue in
             debounceTask?.cancel()
             guard newValue.count >= 2 else {
@@ -90,7 +90,7 @@ struct WatchStationsView: View {
                 mvvService.searchStops(name: newValue)
             }
         }
-        .navigationTitle("Suche")
+        .navigationTitle("Haltestellen")
         .onAppear {
             locationManager.requestSingleLocation()
             if locationManager.hasLocationPermission && mvvService.locations.isEmpty && searchText.isEmpty {

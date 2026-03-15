@@ -117,6 +117,15 @@ public struct FilteredFavorite: Codable, Identifiable, Sendable {
         self.dateCreated = Date()
     }
 
+    public init(id: UUID, location: Location, destinationFilters: [String]?, platformFilters: [String]?, transportTypeFilters: [String]?, dateCreated: Date) {
+        self.id = id
+        self.location = location
+        self.destinationFilters = destinationFilters
+        self.platformFilters = platformFilters
+        self.transportTypeFilters = transportTypeFilters
+        self.dateCreated = dateCreated
+    }
+
     public init(location: Location, destinationFilter: String? = nil, transportTypeFilters: [String]? = nil) {
         self.id = UUID()
         self.location = location

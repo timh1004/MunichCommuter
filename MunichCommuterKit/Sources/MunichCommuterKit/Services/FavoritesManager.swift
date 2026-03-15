@@ -108,6 +108,41 @@ public class FavoritesManager: ObservableObject {
         return favorites.contains { $0.location.id.normalizedStationId == normalizedLocationId }
     }
 
+    public func updateCoordinatesIfNeeded(locationId: String, coord: [Double]) {
+        let normalizedId = locationId.normalizedStationId
+        var didUpdate = false
+        for i in favorites.indices {
+            if favorites[i].location.id.normalizedStationId == normalizedId,
+               favorites[i].location.coord == nil {
+                let old = favorites[i].location
+                let updated = Location(
+                    id: old.id,
+                    type: old.type,
+                    name: old.name,
+                    disassembledName: old.disassembledName,
+                    coord: coord,
+                    parent: old.parent,
+                    assignedStops: old.assignedStops,
+                    properties: old.properties,
+                    distance: old.distance,
+                    duration: old.duration
+                )
+                favorites[i] = FilteredFavorite(
+                    id: favorites[i].id,
+                    location: updated,
+                    destinationFilters: favorites[i].destinationFilters,
+                    platformFilters: favorites[i].platformFilters,
+                    transportTypeFilters: favorites[i].transportTypeFilters,
+                    dateCreated: favorites[i].dateCreated
+                )
+                didUpdate = true
+            }
+        }
+        if didUpdate {
+            saveFavorites()
+        }
+    }
+
     public func getFavorites(for location: Location) -> [FilteredFavorite] {
         let normalizedLocationId = location.id.normalizedStationId
         return favorites.filter { $0.location.id.normalizedStationId == normalizedLocationId }
