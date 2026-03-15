@@ -8,6 +8,34 @@
       buildArchitectures = "Automatic">
       <BuildActionEntries>
          <BuildActionEntry
+            buildForTesting = "NO"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "F1C000032E5EF0020060EED6"
+               BuildableName = "MunichCommuterWatchWidgets.appex"
+               BlueprintName = "MunichCommuterWatchWidgets"
+               ReferencedContainer = "container:MunichCommuter.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "NO"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "F1B000032E5EF0010060EED6"
+               BuildableName = "MunichCommuterWatch.app"
+               BlueprintName = "MunichCommuterWatch"
+               ReferencedContainer = "container:MunichCommuter.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
             buildForTesting = "YES"
             buildForRunning = "YES"
             buildForProfiling = "YES"
