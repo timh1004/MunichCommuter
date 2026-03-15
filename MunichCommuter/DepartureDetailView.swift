@@ -540,6 +540,7 @@ struct DepartureDetailView: View {
                     }
                     .accessibilityLabel("Abfahrten aktualisieren")
                 }
+                .tint(.accentColor)
             }
         }
     }

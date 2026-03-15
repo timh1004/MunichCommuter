@@ -349,11 +349,6 @@ struct FilteredFavoriteRowView: View {
     
     var body: some View {
         HStack {
-            // Star Icon
-            Image(systemName: favorite.hasFilters ? "star.circle.fill" : "star.fill")
-                .frame(width: 24, height: 24)
-                .foregroundColor(.orange)
-            
             VStack(alignment: .leading, spacing: 2) {
                 Text(favorite.location.disassembledName ?? favorite.location.name ?? "Unbekannte Haltestelle")
                     .font(.body)
@@ -409,11 +404,6 @@ struct FavoriteWithDeparturesView: View {
         VStack(alignment: .leading, spacing: 12) {
             // Standard favorite info (same as FilteredFavoriteRowView)
             HStack {
-                // Star Icon
-                Image(systemName: favorite.hasFilters ? "star.circle.fill" : "star.fill")
-                    .frame(width: 24, height: 24)
-                    .foregroundColor(.orange)
-
                 VStack(alignment: .leading, spacing: 2) {
                     Text(favorite.location.disassembledName ?? favorite.location.name ?? "Unbekannte Haltestelle")
                         .font(.body)
@@ -463,7 +453,7 @@ struct FavoriteWithDeparturesView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
-                .padding(.leading, 40) // Align with text above
+                .padding(.leading, 0)
             } else if departures.isEmpty {
                 HStack {
                     Image(systemName: "exclamationmark.triangle")
@@ -473,14 +463,14 @@ struct FavoriteWithDeparturesView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
-                .padding(.leading, 40) // Align with text above
+                .padding(.leading, 0)
             } else {
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(departures.prefix(3)) { departure in
                         CompactDepartureRowView(departure: departure)
                     }
                 }
-                .padding(.leading, 40) // Align with text above
+                .padding(.leading, 0)
             }
         }
         .padding(.vertical, 12)
