@@ -9,24 +9,83 @@ struct WatchFavoritesView: View {
     @State private var loadingFavorites: Set<String> = []
     @State private var hasInitialLoad = false
     @State private var lastRefreshAt: Date?
+    @State private var isShowingSearch = false
 
     private var sortedFavorites: [FilteredFavorite] {
         FavoritesHelper.sortFavorites(
             favoritesManager.favorites,
-            by: locationManager.effectiveLocation != nil ? .distance : .alphabetical,
+            by: .distance,
             locationManager: locationManager
         )
     }
 
     var body: some View {
-        Group {
+        List {
             if favoritesManager.favorites.isEmpty {
-                emptyState
+                Section {
+                    VStack(spacing: 12) {
+                        Image(systemName: "star")
+                            .font(.system(size: 36))
+                            .foregroundColor(.gray)
+
+                        Text("Keine Favoriten")
+                            .font(.headline)
+
+                        Button {
+                            isShowingSearch = true
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "magnifyingglass")
+                                Text("Haltestelle suchen")
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 20)
+                }
+                .listRowBackground(Color.clear)
             } else {
-                favoritesList
+                ForEach(sortedFavorites) { favorite in
+                    NavigationLink(destination: WatchDepartureListView(
+                        locationId: favorite.location.id,
+                        locationName: favorite.location.disassembledName ?? favorite.location.name ?? "Station",
+                        destinationFilters: favorite.destinationFilters,
+                        platformFilters: favorite.platformFilters,
+                        transportTypeFilters: favorite.transportTypeFilters
+                    )) {
+                        WatchFavoriteRow(
+                            favorite: favorite,
+                            departures: favoriteDepartures[favorite.location.id] ?? [],
+                            isLoading: loadingFavorites.contains(favorite.location.id),
+                            locationManager: locationManager
+                        )
+                    }
+                }
             }
         }
         .navigationTitle("Favoriten")
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    isShowingSearch = true
+                } label: {
+                    Image(systemName: "magnifyingglass")
+                }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    locationManager.requestSingleLocation()
+                    Task {
+                        _ = await locationManager.awaitEffectiveLocation(timeout: 1.5)
+                        await loadAllDepartures()
+                    }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                }
+                .disabled(!loadingFavorites.isEmpty)
+            }
+        }
         .onAppear {
             locationManager.requestSingleLocation()
             if !hasInitialLoad {
@@ -38,67 +97,35 @@ struct WatchFavoritesView: View {
             }
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active {
-                let isStale = lastRefreshAt?.isOlder(thanMinutes: 2) ?? true
-                if isStale && !favoritesManager.favorites.isEmpty {
-                    Task {
-                        await loadAllDepartures()
-                    }
+            if phase == .active && !favoritesManager.favorites.isEmpty {
+                Task {
+                    await loadAllDepartures()
                 }
             }
         }
-    }
-
-    private var emptyState: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "star")
-                .font(.system(size: 36))
-                .foregroundColor(.gray)
-
-            Text("Keine Favoriten")
-                .font(.headline)
-
-            Text("Favoriten auf dem iPhone hinzufügen")
-                .font(.caption2)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .padding()
-    }
-
-    private var favoritesList: some View {
-        List {
-            ForEach(sortedFavorites) { favorite in
-                NavigationLink(destination: WatchDepartureListView(
-                    locationId: favorite.location.id,
-                    locationName: favorite.location.disassembledName ?? favorite.location.name ?? "Station",
-                    destinationFilters: favorite.destinationFilters,
-                    platformFilters: favorite.platformFilters,
-                    transportTypeFilters: favorite.transportTypeFilters
-                )) {
-                    WatchFavoriteRow(
-                        favorite: favorite,
-                        departures: favoriteDepartures[favorite.location.id] ?? [],
-                        isLoading: loadingFavorites.contains(favorite.location.id),
-                        locationManager: locationManager
-                    )
-                }
+        .onChange(of: favoritesManager.favorites.count) { _, _ in
+            Task {
+                await loadAllDepartures()
             }
         }
-        .refreshable {
-            await loadAllDepartures()
+        .sheet(isPresented: $isShowingSearch) {
+            NavigationStack {
+                WatchStationsView()
+            }
         }
     }
 
     @MainActor
     private func loadAllDepartures() async {
         lastRefreshAt = Date()
-        for favorite in sortedFavorites {
-            let locationId = favorite.location.id
-            guard !loadingFavorites.contains(locationId) else { continue }
-            loadingFavorites.insert(locationId)
-            Task {
-                await loadDeparturesForFavorite(favorite)
+        await withTaskGroup(of: Void.self) { group in
+            for favorite in sortedFavorites {
+                let locationId = favorite.location.id
+                guard !loadingFavorites.contains(locationId) else { continue }
+                loadingFavorites.insert(locationId)
+                group.addTask {
+                    await loadDeparturesForFavorite(favorite)
+                }
             }
         }
     }
@@ -111,6 +138,12 @@ struct WatchFavoritesView: View {
 
         while service.isDeparturesLoading {
             try? await Task.sleep(nanoseconds: 100_000_000)
+        }
+
+        // Update coordinates for favorites that were saved without coord data
+        if let departureLocation = service.departureLocations.first(where: { $0.id == locationId }),
+           let coord = departureLocation.coord {
+            favoritesManager.updateCoordinatesIfNeeded(locationId: locationId, coord: coord)
         }
 
         let filtered = FilteringHelper.getFilteredDepartures(
