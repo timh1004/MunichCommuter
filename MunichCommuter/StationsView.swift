@@ -323,7 +323,7 @@ struct StationsView: View {
                     .textCase(nil)
             }
         }
-        .listStyle(PlainListStyle())
+        .listStyle(.plain)
     }
     
     // MARK: - Search Functions
@@ -441,7 +441,7 @@ struct LocationRowView: View {
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         StationsView()
     }
 } 

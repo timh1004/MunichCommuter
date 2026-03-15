@@ -33,7 +33,7 @@ struct PlansOverviewView: View {
                 }
             }
         }
-        .listStyle(InsetGroupedListStyle())
+        .listStyle(.insetGrouped)
         .navigationTitle("Pläne")
         .navigationBarTitleDisplayMode(.large)
     }
@@ -237,7 +237,7 @@ struct StationPlansSheet: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 if !aushangEntries.isEmpty {
                     Section(header: Text("Umgebungsplan & Übersicht")) {
@@ -314,7 +314,7 @@ struct StationPlansSheet: View {
                     }
                 }
             }
-            .listStyle(InsetGroupedListStyle())
+            .listStyle(.insetGrouped)
             .navigationTitle("Pläne")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -400,13 +400,13 @@ struct StationPlanRow: View {
 // MARK: - Previews
 
 #Preview("Plans Overview") {
-    NavigationView {
+    NavigationStack {
         PlansOverviewView()
     }
 }
 
 #Preview("Compact Section") {
-    NavigationView {
+    NavigationStack {
         VStack {
             PlansCompactSection()
             Spacer()

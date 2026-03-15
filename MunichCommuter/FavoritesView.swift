@@ -55,11 +55,11 @@ struct FavoritesView: View {
                         .padding(.horizontal, 40)
                     
                     VStack(spacing: 8) {
-                        Text("🔍 Suchen Sie im 'Stationen' Tab nach Haltestellen")
+                        Label("Suchen Sie im 'Stationen' Tab nach Haltestellen", systemImage: "magnifyingglass")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        
-                        Text("⭐ Tippen Sie auf das Stern-Symbol um sie zu speichern")
+
+                        Label("Tippen Sie auf das Stern-Symbol um sie zu speichern", systemImage: "star")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -96,7 +96,7 @@ struct FavoritesView: View {
                     }
                     .onDelete(perform: deleteFavorites)
                 }
-                .listStyle(PlainListStyle())
+                .listStyle(.plain)
                 .refreshable {
                     await refreshFavorites()
                 }
@@ -128,6 +128,7 @@ struct FavoritesView: View {
                         Image(systemName: "arrow.up.arrow.down")
                             .foregroundColor(.blue)
                     }
+                    .accessibilityLabel("Sortierung ändern")
                 }
             }
         }
@@ -522,7 +523,7 @@ struct CompactDepartureRowView: View {
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         FavoritesView()
     }
 } 

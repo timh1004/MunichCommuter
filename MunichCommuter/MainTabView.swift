@@ -8,16 +8,16 @@ struct MainTabView: View {
     var body: some View {
         TabView {
             // Favoriten Tab
-            NavigationView {
+            NavigationStack {
                 FavoritesView()
             }
             .tabItem {
                 Image(systemName: "star.fill")
                 Text("Favoriten")
             }
-            
+
             // Stationen Tab
-            NavigationView {
+            NavigationStack {
                 StationsView()
             }
             .tabItem {
@@ -25,7 +25,7 @@ struct MainTabView: View {
                 Text("Stationen")
             }
         }
-        .accentColor(.blue)
+        .tint(.blue)
         .onAppear {
             // Start with a single shot to get initial location quickly
             locationManager.requestSingleLocation()

@@ -357,7 +357,7 @@ struct DepartureDetailView: View {
                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 16))
                     .listRowSeparator(.hidden)
                 }
-                .listStyle(PlainListStyle())
+                .listStyle(.plain)
                 .refreshable {
                     mvvService.loadDepartures(locationId: locationId)
                 }
@@ -947,7 +947,7 @@ struct DepartureRowView: View {
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         DepartureDetailView(
             locationId: "de:09162:10",
             locationName: "Pasing",
@@ -957,7 +957,7 @@ struct DepartureRowView: View {
 }
 
 #Preview("With Filter") {
-    NavigationView {
+    NavigationStack {
         DepartureDetailView(
             locationId: "de:09162:10",
             locationName: "Pasing",

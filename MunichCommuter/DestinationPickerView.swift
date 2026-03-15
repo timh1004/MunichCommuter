@@ -9,7 +9,7 @@ struct DestinationPickerView: View {
     @State private var searchText = ""
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack {
                 if destinations.isEmpty {
                     Spacer()
@@ -115,7 +115,7 @@ struct DestinationPickerView: View {
                         }
                         .buttonStyle(PlainButtonStyle())
                     }
-                    .listStyle(PlainListStyle())
+                    .listStyle(.plain)
                 }
             }
             .navigationTitle("Ziele auswählen")

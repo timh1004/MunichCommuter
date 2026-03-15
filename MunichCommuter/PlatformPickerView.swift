@@ -9,7 +9,7 @@ struct PlatformPickerView: View {
     @State private var searchText = ""
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack {
                 if platforms.isEmpty {
                     Spacer()
@@ -115,7 +115,7 @@ struct PlatformPickerView: View {
                         }
                         .buttonStyle(PlainButtonStyle())
                     }
-                    .listStyle(PlainListStyle())
+                    .listStyle(.plain)
                 }
             }
             .navigationTitle("Gleise auswählen")
