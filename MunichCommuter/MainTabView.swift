@@ -1,31 +1,44 @@
 import SwiftUI
 import MunichCommuterKit
 
+enum AppTab: Hashable {
+    case favoriten
+    case stationen
+}
+
 struct MainTabView: View {
-    @StateObject private var locationManager = LocationManager.shared
+    @ObservedObject private var locationManager = LocationManager.shared
     @Environment(\.scenePhase) private var scenePhase
-    
-    var body: some View {
-        TabView {
-            // Favoriten Tab
-            NavigationStack {
-                FavoritesView()
+    @State private var selectedTab = AppTab.favoriten
+    @State private var stationsSearchIsActive = false
+
+    private var tabSelection: Binding<AppTab> {
+        Binding(
+            get: { selectedTab },
+            set: { newValue in
+                if newValue == .stationen && selectedTab == .stationen {
+                    // Re-tap on Stationen tab → activate search
+                    stationsSearchIsActive = true
+                }
+                selectedTab = newValue
             }
-            .tabItem {
-                Image(systemName: "star.fill")
-                Text("Favoriten")
+        )
+    }
+
+    var body: some View {
+        TabView(selection: tabSelection) {
+            Tab("Favoriten", systemImage: "star.fill", value: .favoriten) {
+                NavigationStack {
+                    FavoritesView()
+                }
             }
 
-            // Stationen Tab
-            NavigationStack {
-                StationsView()
-            }
-            .tabItem {
-                Image(systemName: "magnifyingglass")
-                Text("Stationen")
+            Tab("Stationen", systemImage: "magnifyingglass", value: .stationen) {
+                NavigationStack {
+                    StationsView(activateSearch: $stationsSearchIsActive)
+                }
             }
         }
-        .tint(.blue)
         .onAppear {
             // Start with a single shot to get initial location quickly
             locationManager.requestSingleLocation()
@@ -34,7 +47,6 @@ struct MainTabView: View {
             switch phase {
             case .active:
                 // App is active - views will decide what tracking they need
-                // Default to single shot for general app use
                 if locationManager.currentTrackingMode == .background {
                     locationManager.requestSingleLocation()
                 }
@@ -52,4 +64,4 @@ struct MainTabView: View {
 
 #Preview {
     MainTabView()
-} 
+}

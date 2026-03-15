@@ -3,8 +3,8 @@ import Foundation
 import MunichCommuterKit
 
 struct FavoritesView: View {
-    @StateObject private var favoritesManager = FavoritesManager.shared
-    @StateObject private var locationManager = LocationManager.shared
+    @ObservedObject private var favoritesManager = FavoritesManager.shared
+    @ObservedObject private var locationManager = LocationManager.shared
     @StateObject private var mvvService = MVVService()
     @Environment(\.scenePhase) private var scenePhase
     @State private var sortOption: FavoritesSortOption = .alphabetical
@@ -41,7 +41,7 @@ struct FavoritesView: View {
                 VStack(spacing: 20) {
                     Image(systemName: "star")
                         .font(.system(size: 60))
-                        .foregroundColor(.gray.opacity(0.5))
+                        .foregroundStyle(.gray.opacity(0.5))
                     
                     Text("Keine Favoriten")
                         .font(.title2)
@@ -258,12 +258,7 @@ struct FavoritesView: View {
         
         // Create a separate MVVService instance for this request to avoid conflicts
         let tempMVVService = MVVService()
-        tempMVVService.loadDepartures(locationId: locationId)
-        
-        // Wait for departures to load
-        while tempMVVService.isDeparturesLoading {
-            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
-        }
+        await tempMVVService.loadDeparturesAsync(locationId: locationId)
         
         // Apply filters and take first 3
         let filteredDepartures = FilteringHelper.getFilteredDepartures(
@@ -361,38 +356,40 @@ struct FilteredFavoriteRowView: View {
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(favorite.location.disassembledName ?? favorite.location.name ?? "Unbekannte Haltestelle")
-                    .font(.system(size: 16, weight: .medium))
+                    .font(.body)
+                    .fontWeight(.medium)
                     .foregroundColor(.primary)
-                
+
                 HStack {
                     if let parent = favorite.location.parent?.name,
                        parent != (favorite.location.disassembledName ?? favorite.location.name) {
                         Text(parent)
-                            .font(.system(size: 14))
+                            .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
-                    
+
                     if let filterText = favorite.filterDisplayText {
                         if let parent = favorite.location.parent?.name,
                            parent != (favorite.location.disassembledName ?? favorite.location.name) {
                             Text("•")
-                                .font(.system(size: 12))
+                                .font(.caption)
                                 .foregroundColor(.secondary)
                         }
                         Text(filterText)
-                            .font(.system(size: 14))
+                            .font(.subheadline)
                             .foregroundColor(.blue)
                     }
                 }
             }
-            
+
             Spacer()
-            
+
             // Distance Display (always when we have location permission and effective location)
             if locationManager.hasLocationPermission && locationManager.effectiveLocation != nil,
                let distance = locationManager.distanceFrom(favorite.location.coord ?? []) {
                 Text(locationManager.formattedDistance(distance))
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.subheadline)
+                    .fontWeight(.medium)
                     .foregroundColor(.secondary)
             }
         }
@@ -407,7 +404,7 @@ struct FavoriteWithDeparturesView: View {
     @ObservedObject var locationManager: LocationManager
     let departures: [StopEvent]
     let isLoading: Bool
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Standard favorite info (same as FilteredFavoriteRowView)
@@ -416,41 +413,43 @@ struct FavoriteWithDeparturesView: View {
                 Image(systemName: favorite.hasFilters ? "star.circle.fill" : "star.fill")
                     .frame(width: 24, height: 24)
                     .foregroundColor(.orange)
-                
+
                 VStack(alignment: .leading, spacing: 2) {
                     Text(favorite.location.disassembledName ?? favorite.location.name ?? "Unbekannte Haltestelle")
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.body)
+                        .fontWeight(.medium)
                         .foregroundColor(.primary)
-                    
+
                     HStack {
                         if let parent = favorite.location.parent?.name,
                            parent != (favorite.location.disassembledName ?? favorite.location.name) {
                             Text(parent)
-                                .font(.system(size: 14))
+                                .font(.subheadline)
                                 .foregroundColor(.secondary)
                         }
-                        
+
                         if let filterText = favorite.filterDisplayText {
                             if let parent = favorite.location.parent?.name,
                                parent != (favorite.location.disassembledName ?? favorite.location.name) {
                                 Text("•")
-                                    .font(.system(size: 12))
+                                    .font(.caption)
                                     .foregroundColor(.secondary)
                             }
                             Text(filterText)
-                                .font(.system(size: 14))
+                                .font(.subheadline)
                                 .foregroundColor(.blue)
                         }
                     }
                 }
-                
+
                 Spacer()
-                
+
                 // Distance Display (always when we have location permission and effective location)
                 if locationManager.hasLocationPermission && locationManager.effectiveLocation != nil,
                    let distance = locationManager.distanceFrom(favorite.location.coord ?? []) {
                     Text(locationManager.formattedDistance(distance))
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.subheadline)
+                        .fontWeight(.medium)
                         .foregroundColor(.secondary)
                 }
             }
@@ -505,13 +504,16 @@ struct CompactDepartureRowView: View {
             
             // Destination (truncated)
             Text(departure.transportation?.destination?.name ?? "Unbekanntes Ziel")
-                .font(.system(size: 12, weight: .medium))
+                .font(.caption)
+                .fontWeight(.medium)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            
+
             // Departure time
             Text(DepartureRowStyling.formattedDepartureTime(for: departure, mode: timeDisplayMode, referenceDate: now))
-                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                .font(.caption)
+                .fontWeight(.semibold)
+                .monospacedDigit()
                 .foregroundColor(DepartureRowStyling.shouldShowOrange(for: departure) ? .orange : .secondary)
         }
         .onReceive(Timer.publish(every: 30, on: .main, in: .common).autoconnect()) { current in

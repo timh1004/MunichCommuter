@@ -3,7 +3,7 @@ import MunichCommuterKit
 
 struct WatchStationsView: View {
     @StateObject private var mvvService = MVVService()
-    @StateObject private var locationManager = LocationManager.shared
+    @ObservedObject private var locationManager = LocationManager.shared
     @Environment(\.scenePhase) private var scenePhase
     @State private var searchText = ""
     @State private var isShowingNearby = false

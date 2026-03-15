@@ -5,7 +5,8 @@ struct PlatformPickerView: View {
     let platforms: [String]
     @Binding var selectedPlatforms: [String]
     @Binding var isPresented: Bool
-    
+    @Environment(\.dismiss) private var dismiss
+
     @State private var searchText = ""
     
     var body: some View {
@@ -90,7 +91,8 @@ struct PlatformPickerView: View {
                             HStack {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("Gleis \(platform)")
-                                        .font(.system(size: 16, weight: .medium))
+                                        .font(.body)
+                                        .fontWeight(.medium)
                                         .foregroundColor(.primary)
                                         .multilineTextAlignment(.leading)
                                     
@@ -123,7 +125,7 @@ struct PlatformPickerView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Abbrechen") {
-                        isPresented = false
+                        dismiss()
                     }
                 }
                 
@@ -137,7 +139,7 @@ struct PlatformPickerView: View {
                         }
                         
                         Button("Fertig") {
-                            isPresented = false
+                            dismiss()
                         }
                         .fontWeight(.semibold)
                     }

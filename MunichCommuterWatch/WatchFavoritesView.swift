@@ -2,8 +2,8 @@ import SwiftUI
 import MunichCommuterKit
 
 struct WatchFavoritesView: View {
-    @StateObject private var favoritesManager = FavoritesManager.shared
-    @StateObject private var locationManager = LocationManager.shared
+    @ObservedObject private var favoritesManager = FavoritesManager.shared
+    @ObservedObject private var locationManager = LocationManager.shared
     @Environment(\.scenePhase) private var scenePhase
     @State private var favoriteDepartures: [String: [StopEvent]] = [:]
     @State private var loadingFavorites: Set<String> = []
@@ -134,11 +134,7 @@ struct WatchFavoritesView: View {
     private func loadDeparturesForFavorite(_ favorite: FilteredFavorite) async {
         let locationId = favorite.location.id
         let service = MVVService()
-        service.loadDepartures(locationId: locationId)
-
-        while service.isDeparturesLoading {
-            try? await Task.sleep(nanoseconds: 100_000_000)
-        }
+        await service.loadDeparturesAsync(locationId: locationId)
 
         // Update coordinates for favorites that were saved without coord data
         if let departureLocation = service.departureLocations.first(where: { $0.id == locationId }),

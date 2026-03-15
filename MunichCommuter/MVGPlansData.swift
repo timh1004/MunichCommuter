@@ -43,7 +43,7 @@ struct MVGPlansData {
     static let networkPlans: [MVGNetworkPlan] = [
         MVGNetworkPlan(
             name: "Netz- & Tarifplan Zone M",
-            subtitle: "MVV-Netz Innenstadt – der wichtigste Plan",
+            subtitle: "MVV-Netz Innenstadt",
             url: URL(string: "https://www.mvg.de/dam/jcr:e9fbaf6f-4ec1-40de-8488-a75787ddbf50/2026_layout_SURTX_M.pdf")!,
             icon: "map.fill",
             category: .netzplaene

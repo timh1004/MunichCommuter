@@ -224,39 +224,43 @@ struct TripHeaderView: View {
                     .frame(width: 48, height: 32)
                 
                 Text(departure.transportation?.number ?? "?")
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.subheadline)
+                    .fontWeight(.bold)
                     .foregroundColor(.white)
             }
-            
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(departure.transportation?.description ?? "Unbekannte Route")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
                     .foregroundColor(.primary)
                     .lineLimit(1)
-                
+
                 if let operatorName = departure.transportation?.transportOperator?.name {
                     Text(operatorName)
-                        .font(.system(size: 11))
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                         .lineLimit(1)
                 }
             }
-            
+
             Spacer()
-            
+
             HStack(spacing: 6) {
                 Text(formattedDepartureTime)
-                    .font(.system(size: 18, weight: .semibold, design: .monospaced))
+                    .font(.headline)
+                    .monospacedDigit()
                     .foregroundColor(DepartureRowStyling.shouldShowOrange(for: departure) ? .orange : .primary)
                     .onTapGesture {
                         timeDisplayModeRaw = (timeDisplayMode == .relative ? TimeDisplayMode.absolute.rawValue : TimeDisplayMode.relative.rawValue)
                     }
-                
+
                 VStack(spacing: 2) {
                     RealtimeBadge(isRealtime: departure.isRealtimeControlled == true)
                     if let delayText = delayDisplay {
                         Text(delayText)
-                            .font(.system(size: 10, weight: .medium))
+                            .font(.caption2)
+                            .fontWeight(.medium)
                             .foregroundColor(.orange)
                     }
                 }
@@ -268,53 +272,7 @@ struct TripHeaderView: View {
     }
     
     private var lineColor: Color {
-        guard let productClass = departure.transportation?.product?.productClass else {
-            return Color(red: 0.6, green: 0.6, blue: 0.6)
-        }
-        
-        switch productClass {
-        case 1: return sBahnLineColor                              // S-Bahn: Spezifische Linienfarben
-        case 2: return uBahnLineColor                              // U-Bahn: Spezifische Linienfarben
-        case 4: return Color(red: 0.8, green: 0.0, blue: 0.0)     // Tram
-        case 5: return Color(red: 0.6, green: 0.0, blue: 0.8)     // Bus
-        default: return Color(red: 0.6, green: 0.6, blue: 0.6)
-        }
-    }
-    
-    private var sBahnLineColor: Color {
-        guard let lineNumber = departure.transportation?.number else {
-            return Color(red: 22/255, green: 192/255, blue: 233/255) // Standard S-Bahn (S1)
-        }
-        
-        switch lineNumber {
-        case "S1": return Color(red: 22/255, green: 192/255, blue: 233/255)     // Hellblau
-        case "S2": return Color(red: 113/255, green: 191/255, blue: 68/255)     // Grün
-        case "S3": return Color(red: 123/255, green: 16/255, blue: 125/255)     // Lila
-        case "S4": return Color(red: 238/255, green: 28/255, blue: 37/255)      // Rot
-        case "S6": return Color(red: 0/255, green: 138/255, blue: 81/255)       // Dunkelgrün
-        case "S7": return Color(red: 150/255, green: 56/255, blue: 51/255)      // Dunkelrot
-        case "S8": return Color(red: 255/255, green: 203/255, blue: 6/255)      // Gelb
-        case "S20": return Color(red: 240/255, green: 90/255, blue: 115/255)    // Pink
-        default: return Color(red: 22/255, green: 192/255, blue: 233/255)       // Standard S-Bahn (S1)
-        }
-    }
-    
-    private var uBahnLineColor: Color {
-        guard let lineNumber = departure.transportation?.number else {
-            return Color(red: 0.0, green: 0.4, blue: 0.8)
-        }
-        
-        switch lineNumber {
-        case "U1", "1": return Color(red: 0.0, green: 0.7, blue: 0.0)
-        case "U2", "2": return Color(red: 0.9, green: 0.0, blue: 0.0)
-        case "U3", "3": return Color(red: 1.0, green: 0.6, blue: 0.0)
-        case "U4", "4": return Color(red: 0.0, green: 0.8, blue: 0.8)
-        case "U5", "5": return Color(red: 0.6, green: 0.4, blue: 0.2)
-        case "U6", "6": return Color(red: 0.0, green: 0.4, blue: 0.8)
-        case "U7", "7": return Color(red: 0.0, green: 0.7, blue: 0.0)
-        case "U8", "8": return Color(red: 0.9, green: 0.0, blue: 0.0)
-        default: return Color(red: 0.0, green: 0.4, blue: 0.8)
-        }
+        DepartureRowStyling.lineColor(for: departure)
     }
     
     private var isDelayed: Bool {
@@ -388,7 +346,8 @@ struct RouteStopView: View {
             // Stop Information
             VStack(alignment: .leading, spacing: 4) {
                 Text(stop.name ?? "Unbekannte Haltestelle")
-                    .font(.system(size: 16, weight: isCurrentStop ? .semibold : .medium))
+                    .font(.body)
+                    .fontWeight(isCurrentStop ? .semibold : .medium)
                     .foregroundColor(isCurrentStop ? .primary : (isPast ? .secondary : .primary))
                 
                 // Platform/Track Information

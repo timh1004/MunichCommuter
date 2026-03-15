@@ -5,7 +5,8 @@ struct DestinationPickerView: View {
     let destinations: [String]
     @Binding var selectedDestinations: [String]
     @Binding var isPresented: Bool
-    
+    @Environment(\.dismiss) private var dismiss
+
     @State private var searchText = ""
     
     var body: some View {
@@ -90,7 +91,8 @@ struct DestinationPickerView: View {
                             HStack {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(destination)
-                                        .font(.system(size: 16, weight: .medium))
+                                        .font(.body)
+                                        .fontWeight(.medium)
                                         .foregroundColor(.primary)
                                         .multilineTextAlignment(.leading)
                                     
@@ -123,10 +125,10 @@ struct DestinationPickerView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Abbrechen") {
-                        isPresented = false
+                        dismiss()
                     }
                 }
-                
+
                 ToolbarItem(placement: .navigationBarTrailing) {
                     HStack {
                         if !selectedDestinations.isEmpty {
@@ -135,9 +137,9 @@ struct DestinationPickerView: View {
                             }
                             .foregroundColor(.red)
                         }
-                        
+
                         Button("Fertig") {
-                            isPresented = false
+                            dismiss()
                         }
                         .fontWeight(.semibold)
                     }
