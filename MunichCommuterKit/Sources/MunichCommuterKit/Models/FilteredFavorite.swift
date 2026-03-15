@@ -102,9 +102,9 @@ public struct FilteredFavorite: Codable, Identifiable, Sendable {
     }
 
     public var hasFilters: Bool {
-        let hasDestinationFilters = destinationFilters?.isEmpty == false && destinationFilters?.count ?? 0 > 0
-        let hasPlatformFilters = platformFilters?.isEmpty == false && platformFilters?.count ?? 0 > 0
-        let hasTransportFilters = transportTypeFilters?.isEmpty == false && transportTypeFilters?.count ?? 0 > 0
+        let hasDestinationFilters = destinationFilters?.isEmpty == false
+        let hasPlatformFilters = platformFilters?.isEmpty == false
+        let hasTransportFilters = transportTypeFilters?.isEmpty == false
         return hasDestinationFilters || hasPlatformFilters || hasTransportFilters
     }
 

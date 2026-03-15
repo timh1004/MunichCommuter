@@ -501,9 +501,8 @@ struct CompactDepartureRowView: View {
 
             // Departure time
             Text(DepartureRowStyling.formattedDepartureTime(for: departure, mode: timeDisplayMode, referenceDate: now))
-                .font(.caption)
+                .font(.system(.caption, design: .monospaced))
                 .fontWeight(.semibold)
-                .monospacedDigit()
                 .foregroundColor(DepartureRowStyling.shouldShowOrange(for: departure) ? .orange : .secondary)
         }
         .onReceive(Timer.publish(every: 30, on: .main, in: .common).autoconnect()) { current in

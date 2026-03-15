@@ -487,8 +487,15 @@ struct DepartureDetailView: View {
                         if favoritesManager.isFavorite(resolvedLocation ?? bestAvailableLocation) {
                             Divider()
                             ForEach(favoritesManager.getFavorites(for: resolvedLocation ?? bestAvailableLocation)) { favorite in
-                                Button("Entfernen: \(favorite.displayName)") {
+                                Button(role: .destructive) {
                                     favoritesManager.removeFavorite(favorite)
+                                } label: {
+                                    let baseName = favorite.location.disassembledName ?? favorite.location.name ?? "Station"
+                                    if let filterText = favorite.filterDisplayText {
+                                        Label("Entfernen: \(baseName) (\(filterText))", systemImage: "star.slash")
+                                    } else {
+                                        Label("Entfernen: \(baseName)", systemImage: "star.slash")
+                                    }
                                 }
                             }
                         }
@@ -900,8 +907,7 @@ struct DepartureRowView: View {
             // Departure Time (Rechtsbündig)
             VStack(alignment: .trailing, spacing: 3) {
                 Text(DepartureRowStyling.formattedDepartureTime(for: departure, mode: timeDisplayMode, referenceDate: now))
-                    .font(.headline)
-                    .monospacedDigit()
+                    .font(.system(.headline, design: .monospaced))
                     .foregroundColor(DepartureRowStyling.shouldShowOrange(for: departure) ? .orange : .primary)
                     .onTapGesture {
                         timeDisplayModeRaw = (timeDisplayMode == .relative ? TimeDisplayMode.absolute.rawValue : TimeDisplayMode.relative.rawValue)

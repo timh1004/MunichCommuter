@@ -34,6 +34,8 @@ public class FavoritesManager: ObservableObject {
     // MARK: - Multiple Destination Filters
 
     public func addFavorite(_ location: Location, destinationFilters: [String]? = nil, platformFilters: [String]? = nil, transportTypeFilters: [String]? = nil) {
+        // Prevent duplicates
+        guard !isFavorite(location, destinationFilters: destinationFilters, platformFilters: platformFilters, transportTypeFilters: transportTypeFilters) else { return }
         let newFavorite = FilteredFavorite(location: location, destinationFilters: destinationFilters, platformFilters: platformFilters, transportTypeFilters: transportTypeFilters)
         favorites.append(newFavorite)
         saveFavorites()
