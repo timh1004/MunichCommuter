@@ -76,7 +76,9 @@ struct FavoritesView: View {
                             locationName: favorite.location.disassembledName ?? favorite.location.name,
                             initialDestinationFilters: favorite.destinationFilters,
                             initialPlatformFilters: favorite.platformFilters,
-                            initialTransportTypes: favorite.transportTypeFilters
+                            initialTransportTypes: favorite.transportTypeFilters,
+                            initialDestinationPlatformFilters: favorite.destinationPlatformFilters,
+                            initialSortByArrivalTime: favorite.sortByArrivalTime
                         )) {
                             if index < 3 {
                                 // First 3 favorites get enhanced view with departures
@@ -260,16 +262,23 @@ struct FavoritesView: View {
         let tempMVVService = MVVService()
         await tempMVVService.loadDeparturesAsync(locationId: locationId)
         
-        // Apply filters and take first 3
         let filteredDepartures = FilteringHelper.getFilteredDepartures(
             departures: tempMVVService.departures,
             destinationFilters: favorite.destinationFilters,
             platformFilters: favorite.platformFilters,
-            transportTypeFilters: favorite.transportTypeFilters
+            transportTypeFilters: favorite.transportTypeFilters,
+            destinationPlatformFilters: favorite.destinationPlatformFilters
         )
         
-        // Sortiere Abfahrten nach der geschätzten Abfahrtszeit (mit Verspätung)
-        let sortedDepartures = DepartureTimeFormatter.sortDeparturesByEstimatedTime(filteredDepartures)
+        let sortedDepartures: [StopEvent]
+        if favorite.sortByArrivalTime == true {
+            sortedDepartures = DepartureTimeFormatter.sortDeparturesByArrivalTime(
+                filteredDepartures,
+                destinations: favorite.destinationFilters
+            )
+        } else {
+            sortedDepartures = DepartureTimeFormatter.sortDeparturesByEstimatedTime(filteredDepartures)
+        }
         
         favoriteDepartures[locationId] = Array(sortedDepartures.prefix(3))
         loadingFavorites.remove(locationId)

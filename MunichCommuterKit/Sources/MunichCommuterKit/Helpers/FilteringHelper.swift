@@ -69,11 +69,101 @@ public class FilteringHelper {
         }
     }
 
+    // MARK: - Destination Platform Filtering
+
+    public static func hasDestinationPlatformMatch(departure: StopEvent, destinationPlatforms: [String], destinations: [String]?) -> Bool {
+        guard let onwardLocations = departure.onwardLocations else { return false }
+
+        let matchingLocations: [Platform]
+        if let destinations = destinations, !destinations.isEmpty {
+            matchingLocations = onwardLocations.filter { location in
+                guard let name = location.name?.lowercased() else { return false }
+                return destinations.contains { name.contains($0.lowercased()) }
+            }
+        } else {
+            if let last = onwardLocations.last {
+                matchingLocations = [last]
+            } else {
+                return false
+            }
+        }
+
+        for location in matchingLocations {
+            if let platform = PlatformHelper.effectivePlatform(from: location.properties) {
+                if destinationPlatforms.contains(platform) {
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
+    // MARK: - Destination Platform Extraction
+
+    public static func availableDestinationPlatforms(departures: [StopEvent], destinations: [String]?) -> [String] {
+        var platforms = Set<String>()
+
+        for departure in departures {
+            guard let onwardLocations = departure.onwardLocations else { continue }
+
+            let matchingLocations: [Platform]
+            if let destinations = destinations, !destinations.isEmpty {
+                matchingLocations = onwardLocations.filter { location in
+                    guard let name = location.name?.lowercased() else { return false }
+                    return destinations.contains { name.contains($0.lowercased()) }
+                }
+            } else {
+                if let last = onwardLocations.last {
+                    matchingLocations = [last]
+                } else {
+                    continue
+                }
+            }
+
+            for location in matchingLocations {
+                if let platform = PlatformHelper.effectivePlatform(from: location.properties) {
+                    platforms.insert(platform)
+                }
+            }
+        }
+
+        return PlatformHelper.sortPlatforms(Array(platforms))
+    }
+
+    // MARK: - Arrival Time at Destination
+
+    public static func arrivalTimeAtDestination(departure: StopEvent, destinations: [String]?) -> Date? {
+        guard let onwardLocations = departure.onwardLocations else { return nil }
+
+        if let destinations = destinations, !destinations.isEmpty {
+            for location in onwardLocations {
+                guard let name = location.name?.lowercased() else { continue }
+                let matches = destinations.contains { name.contains($0.lowercased()) }
+                if matches {
+                    let timeString = location.arrivalTimeEstimated ?? location.arrivalTimePlanned
+                    if let timeString = timeString {
+                        return Date.parseISO8601(timeString)
+                    }
+                }
+            }
+        }
+
+        if let lastLocation = onwardLocations.last {
+            let timeString = lastLocation.arrivalTimeEstimated ?? lastLocation.arrivalTimePlanned
+            if let timeString = timeString {
+                return Date.parseISO8601(timeString)
+            }
+        }
+
+        return nil
+    }
+
     // MARK: - Complete Filtering Pipeline
     public static func getFilteredDepartures(departures: [StopEvent],
                                              destinationFilters: [String]?,
                                              platformFilters: [String]?,
-                                             transportTypeFilters: [String]?) -> [StopEvent] {
+                                             transportTypeFilters: [String]?,
+                                             destinationPlatformFilters: [String]? = nil) -> [StopEvent] {
         var filtered = departures
 
         if let destinationFilters = destinationFilters, !destinationFilters.isEmpty {
@@ -95,6 +185,12 @@ public class FilteringHelper {
                 return selectedTypes.contains { transportType in
                     matchesTransportType(product: product, transportType: transportType)
                 }
+            }
+        }
+
+        if let destinationPlatformFilters = destinationPlatformFilters, !destinationPlatformFilters.isEmpty {
+            filtered = filtered.filter { departure in
+                hasDestinationPlatformMatch(departure: departure, destinationPlatforms: destinationPlatformFilters, destinations: destinationFilters)
             }
         }
 
