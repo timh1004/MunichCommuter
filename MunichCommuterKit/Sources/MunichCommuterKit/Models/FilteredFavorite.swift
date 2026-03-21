@@ -6,6 +6,8 @@ public struct FilteredFavorite: Codable, Identifiable, Sendable {
     public let destinationFilters: [String]?
     public let platformFilters: [String]?
     public let transportTypeFilters: [String]?
+    public let destinationPlatformFilters: [String]?
+    public let sortByArrivalTime: Bool?
     public let dateCreated: Date
 
     public var displayName: String {
@@ -33,6 +35,18 @@ public struct FilteredFavorite: Codable, Identifiable, Sendable {
             if !transportNames.isEmpty {
                 filters.append("🚇 \(transportNames.joined(separator: ", "))")
             }
+        }
+
+        if let destPlatforms = destinationPlatformFilters, !destPlatforms.isEmpty {
+            if destPlatforms.count == 1 {
+                filters.append("🎯 Gl.\(destPlatforms[0])")
+            } else {
+                filters.append("🎯 \(destPlatforms.count) Zielgleise")
+            }
+        }
+
+        if sortByArrivalTime == true {
+            filters.append("⏱ Ankunft")
         }
 
         if !filters.isEmpty {
@@ -68,6 +82,18 @@ public struct FilteredFavorite: Codable, Identifiable, Sendable {
             }
         }
 
+        if let destPlatforms = destinationPlatformFilters, !destPlatforms.isEmpty {
+            if destPlatforms.count == 1 {
+                filters.append("🎯 \(destPlatforms[0])")
+            } else {
+                filters.append("🎯 \(destPlatforms.count)")
+            }
+        }
+
+        if sortByArrivalTime == true {
+            filters.append("⏱")
+        }
+
         if !filters.isEmpty {
             return "\(baseName) \(filters.joined(separator: " "))"
         }
@@ -98,6 +124,18 @@ public struct FilteredFavorite: Codable, Identifiable, Sendable {
             filters.append("Nur \(transportNames.joined(separator: ", "))")
         }
 
+        if let destPlatforms = destinationPlatformFilters, !destPlatforms.isEmpty {
+            if destPlatforms.count == 1 {
+                filters.append("Zielgleis \(destPlatforms[0])")
+            } else {
+                filters.append("Zielgleise \(destPlatforms.joined(separator: ", "))")
+            }
+        }
+
+        if sortByArrivalTime == true {
+            filters.append("Sortiert nach Ankunft")
+        }
+
         return filters.isEmpty ? nil : filters.joined(separator: " • ")
     }
 
@@ -105,24 +143,30 @@ public struct FilteredFavorite: Codable, Identifiable, Sendable {
         let hasDestinationFilters = destinationFilters?.isEmpty == false
         let hasPlatformFilters = platformFilters?.isEmpty == false
         let hasTransportFilters = transportTypeFilters?.isEmpty == false
-        return hasDestinationFilters || hasPlatformFilters || hasTransportFilters
+        let hasDestPlatformFilters = destinationPlatformFilters?.isEmpty == false
+        let hasSortByArrival = sortByArrivalTime == true
+        return hasDestinationFilters || hasPlatformFilters || hasTransportFilters || hasDestPlatformFilters || hasSortByArrival
     }
 
-    public init(location: Location, destinationFilters: [String]? = nil, platformFilters: [String]? = nil, transportTypeFilters: [String]? = nil) {
+    public init(location: Location, destinationFilters: [String]? = nil, platformFilters: [String]? = nil, transportTypeFilters: [String]? = nil, destinationPlatformFilters: [String]? = nil, sortByArrivalTime: Bool? = nil) {
         self.id = UUID()
         self.location = location
         self.destinationFilters = destinationFilters?.isEmpty == true ? nil : destinationFilters
         self.platformFilters = platformFilters?.isEmpty == true ? nil : platformFilters
         self.transportTypeFilters = transportTypeFilters?.isEmpty == true ? nil : transportTypeFilters
+        self.destinationPlatformFilters = destinationPlatformFilters?.isEmpty == true ? nil : destinationPlatformFilters
+        self.sortByArrivalTime = (sortByArrivalTime == true) ? true : nil
         self.dateCreated = Date()
     }
 
-    public init(id: UUID, location: Location, destinationFilters: [String]?, platformFilters: [String]?, transportTypeFilters: [String]?, dateCreated: Date) {
+    public init(id: UUID, location: Location, destinationFilters: [String]?, platformFilters: [String]?, transportTypeFilters: [String]?, destinationPlatformFilters: [String]? = nil, sortByArrivalTime: Bool? = nil, dateCreated: Date) {
         self.id = id
         self.location = location
         self.destinationFilters = destinationFilters
         self.platformFilters = platformFilters
         self.transportTypeFilters = transportTypeFilters
+        self.destinationPlatformFilters = destinationPlatformFilters
+        self.sortByArrivalTime = sortByArrivalTime
         self.dateCreated = dateCreated
     }
 
@@ -132,6 +176,8 @@ public struct FilteredFavorite: Codable, Identifiable, Sendable {
         self.destinationFilters = destinationFilter.map { [$0] }
         self.platformFilters = nil
         self.transportTypeFilters = transportTypeFilters?.isEmpty == true ? nil : transportTypeFilters
+        self.destinationPlatformFilters = nil
+        self.sortByArrivalTime = nil
         self.dateCreated = Date()
     }
 }

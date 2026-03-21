@@ -97,6 +97,18 @@ public struct DepartureTimeFormatter {
         }
     }
 
+    public static func sortDeparturesByArrivalTime(_ departures: [StopEvent], destinations: [String]?) -> [StopEvent] {
+        return departures.sorted { departure1, departure2 in
+            let arrival1 = FilteringHelper.arrivalTimeAtDestination(departure: departure1, destinations: destinations)
+            let arrival2 = FilteringHelper.arrivalTimeAtDestination(departure: departure2, destinations: destinations)
+
+            guard let date1 = arrival1 else { return false }
+            guard let date2 = arrival2 else { return true }
+
+            return date1 < date2
+        }
+    }
+
     // MARK: - Delay Helper
     public static func delayMinutes(planned: String?, estimated: String?) -> Int? {
         guard let plannedString = planned,

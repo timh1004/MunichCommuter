@@ -13,6 +13,8 @@ struct StationDeepLink: Hashable {
     let destinationFilters: [String]?
     let platformFilters: [String]?
     let transportTypeFilters: [String]?
+    let destinationPlatformFilters: [String]?
+    let sortByArrivalTime: Bool?
 }
 
 struct MainTabView: View {
@@ -48,7 +50,9 @@ struct MainTabView: View {
                                 locationName: link.locationName,
                                 initialDestinationFilters: link.destinationFilters,
                                 initialPlatformFilters: link.platformFilters,
-                                initialTransportTypes: link.transportTypeFilters
+                                initialTransportTypes: link.transportTypeFilters,
+                                initialDestinationPlatformFilters: link.destinationPlatformFilters,
+                                initialSortByArrivalTime: link.sortByArrivalTime
                             )
                         }
                 }
@@ -104,7 +108,9 @@ struct MainTabView: View {
                 locationName: matchingFavorite?.displayName,
                 destinationFilters: matchingFavorite?.destinationFilters,
                 platformFilters: matchingFavorite?.platformFilters,
-                transportTypeFilters: matchingFavorite?.transportTypeFilters
+                transportTypeFilters: matchingFavorite?.transportTypeFilters,
+                destinationPlatformFilters: matchingFavorite?.destinationPlatformFilters,
+                sortByArrivalTime: matchingFavorite?.sortByArrivalTime
             )
 
             // Delay the push so SwiftUI can process the pop-to-root first

@@ -146,7 +146,8 @@ struct WatchFavoritesView: View {
             departures: service.departures,
             destinationFilters: favorite.destinationFilters,
             platformFilters: favorite.platformFilters,
-            transportTypeFilters: favorite.transportTypeFilters
+            transportTypeFilters: favorite.transportTypeFilters,
+            destinationPlatformFilters: favorite.destinationPlatformFilters
         )
         let sorted = DepartureTimeFormatter.sortDeparturesByEstimatedTime(filtered)
         favoriteDepartures[locationId] = Array(sorted.prefix(3))

@@ -15,6 +15,8 @@ struct DepartureDetailView: View {
     let initialFilters: [String]?
     let initialPlatformFilters: [String]?
     let initialTransportTypes: [String]?
+    let initialDestinationPlatformFilters: [String]?
+    let initialSortByArrivalTime: Bool?
     
     @StateObject private var mvvService = MVVService()
     @ObservedObject private var favoritesManager = FavoritesManager.shared
@@ -22,28 +24,35 @@ struct DepartureDetailView: View {
     
     @State private var destinationFilters: [String] = []
     @State private var platformFilters: [String] = []
+    @State private var destinationPlatformFilters: [String] = []
+    @State private var sortByArrivalTime: Bool = false
     @State private var showFilterBar = false
     @State private var showDestinationPicker = false
     @State private var showPlatformPicker = false
+    @State private var showDestinationPlatformPicker = false
     @State private var resolvedLocation: Location?
     @State private var selectedTransportTypes: Set<TransportType> = Set(TransportType.allCases)
     @State private var hasInitialized = false
     @State private var showPlansSheet = false
     
-    init(locationId: String, locationName: String? = nil, initialDestinationFilters: [String]? = nil, initialPlatformFilters: [String]? = nil, initialTransportTypes: [String]? = nil) {
+    init(locationId: String, locationName: String? = nil, initialDestinationFilters: [String]? = nil, initialPlatformFilters: [String]? = nil, initialTransportTypes: [String]? = nil, initialDestinationPlatformFilters: [String]? = nil, initialSortByArrivalTime: Bool? = nil) {
         self.locationId = locationId
         self.locationName = locationName
         self.initialFilters = initialDestinationFilters
         self.initialPlatformFilters = initialPlatformFilters
         self.initialTransportTypes = initialTransportTypes
+        self.initialDestinationPlatformFilters = initialDestinationPlatformFilters
+        self.initialSortByArrivalTime = initialSortByArrivalTime
     }
 
-    init(location: Location, initialDestinationFilters: [String]? = nil, initialPlatformFilters: [String]? = nil, initialTransportTypes: [String]? = nil) {
+    init(location: Location, initialDestinationFilters: [String]? = nil, initialPlatformFilters: [String]? = nil, initialTransportTypes: [String]? = nil, initialDestinationPlatformFilters: [String]? = nil, initialSortByArrivalTime: Bool? = nil) {
         self.locationId = location.id
         self.locationName = location.disassembledName ?? location.name
         self.initialFilters = initialDestinationFilters
         self.initialPlatformFilters = initialPlatformFilters
         self.initialTransportTypes = initialTransportTypes
+        self.initialDestinationPlatformFilters = initialDestinationPlatformFilters
+        self.initialSortByArrivalTime = initialSortByArrivalTime
     }
     
     // Create a fallback location for immediate favorite functionality
@@ -238,6 +247,144 @@ struct DepartureDetailView: View {
                         }
                     }
                     
+                    // Destination Platform Filter
+                    VStack(spacing: 8) {
+                        HStack {
+                            Image(systemName: "mappin.circle")
+                                .foregroundColor(.green)
+                            
+                            Text("Zielgleise (\(destinationPlatformFilters.count))")
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                showDestinationPlatformPicker = true
+                            }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "plus.circle.fill")
+                                        .foregroundColor(.green)
+                                    Text("Hinzufügen")
+                                        .font(.caption)
+                                        .foregroundColor(.green)
+                                }
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            if !destinationPlatformFilters.isEmpty {
+                                Button(action: {
+                                    destinationPlatformFilters.removeAll()
+                                }) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "trash.fill")
+                                            .foregroundColor(.red)
+                                        Text("Alle löschen")
+                                            .font(.caption)
+                                            .foregroundColor(.red)
+                                    }
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        
+                        if !destinationPlatformFilters.isEmpty {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    ForEach(destinationPlatformFilters, id: \.self) { platform in
+                                        HStack(spacing: 4) {
+                                            Text("Gl. \(platform)")
+                                                .font(.caption)
+                                                .lineLimit(1)
+                                            Button(action: {
+                                                destinationPlatformFilters.removeAll { $0 == platform }
+                                            }) {
+                                                Image(systemName: "xmark")
+                                                    .font(.caption2)
+                                                    .foregroundColor(.white)
+                                            }
+                                        }
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Color.green)
+                                        .foregroundColor(.white)
+                                        .cornerRadius(12)
+                                    }
+                                }
+                                .padding(.horizontal, 16)
+                            }
+                        }
+                    }
+                    
+                    // Sort by Arrival Time Toggle
+                    VStack(spacing: 8) {
+                        HStack {
+                            Image(systemName: "clock.arrow.circlepath")
+                                .foregroundColor(.purple)
+                            
+                            Text("Sortierung")
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                            
+                            Spacer()
+                        }
+                        .padding(.horizontal, 16)
+                        
+                        HStack(spacing: 12) {
+                            Button(action: {
+                                sortByArrivalTime = false
+                            }) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "arrow.up.right")
+                                        .font(.caption)
+                                    Text("Abfahrtszeit")
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .fill(!sortByArrivalTime ? Color.purple : Color(.systemGray5))
+                                )
+                                .foregroundColor(!sortByArrivalTime ? .white : .primary)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(!sortByArrivalTime ? Color.purple : Color(.systemGray4), lineWidth: 1)
+                                )
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            Button(action: {
+                                sortByArrivalTime = true
+                            }) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "arrow.down.left")
+                                        .font(.caption)
+                                    Text("Ankunftszeit am Ziel")
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .fill(sortByArrivalTime ? Color.purple : Color(.systemGray5))
+                                )
+                                .foregroundColor(sortByArrivalTime ? .white : .primary)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(sortByArrivalTime ? Color.purple : Color(.systemGray4), lineWidth: 1)
+                                )
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            Spacer()
+                        }
+                        .padding(.horizontal, 16)
+                    }
+                    
                     // Close Button
                     HStack {
                         Spacer()
@@ -245,6 +392,8 @@ struct DepartureDetailView: View {
                             showFilterBar = false
                             destinationFilters.removeAll()
                             platformFilters.removeAll()
+                            destinationPlatformFilters.removeAll()
+                            sortByArrivalTime = false
                         }
                         .font(.caption)
                         .foregroundColor(.blue)
@@ -355,6 +504,14 @@ struct DepartureDetailView: View {
             if let platforms = initialPlatformFilters, !platforms.isEmpty {
                 platformFilters = platforms
             }
+
+            if let destPlatforms = initialDestinationPlatformFilters, !destPlatforms.isEmpty {
+                destinationPlatformFilters = destPlatforms
+            }
+
+            if initialSortByArrivalTime == true {
+                sortByArrivalTime = true
+            }
         }
         .onDisappear {
             // Clean up when view disappears to prevent state pollution
@@ -404,6 +561,17 @@ struct DepartureDetailView: View {
                 isPresented: $showPlatformPicker
             )
         }
+        .sheet(isPresented: $showDestinationPlatformPicker) {
+            PlatformPickerView(
+                platforms: availableDestinationPlatforms,
+                selectedPlatforms: $destinationPlatformFilters,
+                isPresented: $showDestinationPlatformPicker,
+                title: "Zielgleise auswählen",
+                emptyText: "Keine Zielgleise verfügbar",
+                emptySubtext: "Laden Sie zuerst Abfahrtsdaten oder wählen Sie Zielhaltestellen",
+                accentColor: .green
+            )
+        }
         .sheet(isPresented: $showPlansSheet) {
             StationPlansSheet(
                 stationName: cleanLocationName,
@@ -424,7 +592,6 @@ struct DepartureDetailView: View {
                         
                         if hasActiveFilters {
                             Button("Als gefilterten Favorit speichern") {
-                                // Only save transport filters if not all types are selected
                                 let transportFilters: [String]?
                                 if selectedTransportTypes.count < TransportType.allCases.count {
                                     transportFilters = Array(selectedTransportTypes).map { $0.rawValue }
@@ -432,17 +599,19 @@ struct DepartureDetailView: View {
                                     transportFilters = nil
                                 }
                                 
-                                // Only save filters if not empty
                                 let destinationFiltersToSave = destinationFilters.isEmpty ? nil : destinationFilters
                                 let platformFiltersToSave = platformFilters.isEmpty ? nil : platformFilters
+                                let destPlatformFiltersToSave = destinationPlatformFilters.isEmpty ? nil : destinationPlatformFilters
+                                let sortByArrivalToSave = sortByArrivalTime ? true : nil
                                 
-                                // Only use resolvedLocation with coordinates, fallback to bestAvailableLocation
                                 let locationToSave = (resolvedLocation?.coord != nil) ? resolvedLocation! : bestAvailableLocation
                                 favoritesManager.addFavorite(
                                     locationToSave, 
                                     destinationFilters: destinationFiltersToSave,
                                     platformFilters: platformFiltersToSave,
-                                    transportTypeFilters: transportFilters
+                                    transportTypeFilters: transportFilters,
+                                    destinationPlatformFilters: destPlatformFiltersToSave,
+                                    sortByArrivalTime: sortByArrivalToSave
                                 )
                             }
                         }
@@ -470,13 +639,12 @@ struct DepartureDetailView: View {
                     Button {
                         showFilterBar.toggle()
                         if !showFilterBar {
-                            // Only reset filters if no initial filters were provided
-                            // This preserves filters from favorites
                             if initialFilters == nil || initialFilters?.isEmpty == true {
                                 destinationFilters.removeAll()
                                 platformFilters.removeAll()
+                                destinationPlatformFilters.removeAll()
+                                sortByArrivalTime = false
                             }
-                            // Don't reset transport types as they might come from a favorite
                         }
                     } label: {
                         ZStack {
@@ -542,18 +710,36 @@ struct DepartureDetailView: View {
                 hasPlatformMatch(departure: departure, platforms: platformFilters)
             }
         }
+
+        // Filter by destination platform
+        if !destinationPlatformFilters.isEmpty {
+            filtered = filtered.filter { departure in
+                FilteringHelper.hasDestinationPlatformMatch(
+                    departure: departure,
+                    destinationPlatforms: destinationPlatformFilters,
+                    destinations: destinationFilters.isEmpty ? nil : destinationFilters
+                )
+            }
+        }
         
         return filtered
     }
     
     private var displayedDepartures: [StopEvent] {
-        // Show filtered departures if there are active filters (regardless of filter bar state)
-        // This ensures filters from favorites work even when filter bar is closed
+        var departures: [StopEvent]
         if hasActiveFilters {
-            return filteredDepartures
+            departures = filteredDepartures
         } else {
-            return mvvService.departures
+            departures = mvvService.departures
         }
+
+        if sortByArrivalTime {
+            return DepartureTimeFormatter.sortDeparturesByArrivalTime(
+                departures,
+                destinations: destinationFilters.isEmpty ? nil : destinationFilters
+            )
+        }
+        return departures
     }
     
     private func matchesTransportType(product: String, transportType: TransportType) -> Bool {
@@ -574,6 +760,10 @@ struct DepartureDetailView: View {
         if selectedTransportTypes.count < TransportType.allCases.count {
             let selectedTypes = selectedTransportTypes.map { $0.shortName }.joined(separator: ", ")
             messages.append("Keine \(selectedTypes) verfügbar")
+        }
+        
+        if !destinationPlatformFilters.isEmpty {
+            messages.append("Keine Verbindungen zu den ausgewählten Zielgleisen")
         }
         
         if messages.isEmpty {
@@ -617,28 +807,31 @@ struct DepartureDetailView: View {
         let hasDestinationFilter = !destinationFilters.isEmpty
         let hasPlatformFilter = !platformFilters.isEmpty
         let hasTransportFilter = selectedTransportTypes.count < TransportType.allCases.count
-        return hasDestinationFilter || hasPlatformFilter || hasTransportFilter
+        let hasDestPlatformFilter = !destinationPlatformFilters.isEmpty
+        let hasSortByArrival = sortByArrivalTime
+        return hasDestinationFilter || hasPlatformFilter || hasTransportFilter || hasDestPlatformFilter || hasSortByArrival
     }
     
     private var isCurrentFavorite: Bool {
-        // Use resolvedLocation if available, otherwise bestAvailableLocation
         let locationToCheck = resolvedLocation ?? bestAvailableLocation
         
         if hasActiveFilters {
-            // Check if current filter combination is favorited
             let destinationFiltersToCheck = destinationFilters.isEmpty ? nil : destinationFilters
             let platformFiltersToCheck = platformFilters.isEmpty ? nil : platformFilters
             let transportFiltersToCheck = selectedTransportTypes.count < TransportType.allCases.count ? 
                 Array(selectedTransportTypes).map { $0.rawValue } : nil
+            let destPlatformFiltersToCheck = destinationPlatformFilters.isEmpty ? nil : destinationPlatformFilters
+            let sortByArrivalToCheck = sortByArrivalTime ? true : nil
             
             return favoritesManager.isFavorite(
                 locationToCheck,
                 destinationFilters: destinationFiltersToCheck,
                 platformFilters: platformFiltersToCheck,
-                transportTypeFilters: transportFiltersToCheck
+                transportTypeFilters: transportFiltersToCheck,
+                destinationPlatformFilters: destPlatformFiltersToCheck,
+                sortByArrivalTime: sortByArrivalToCheck
             )
         } else {
-            // Check if location is favorited without filters
             return favoritesManager.isFavorite(locationToCheck)
         }
     }
@@ -653,12 +846,14 @@ struct DepartureDetailView: View {
     
     // MARK: - State Management
     private func resetState() {
-        // Reset state variables but preserve filter settings
         destinationFilters.removeAll()
         platformFilters.removeAll()
+        destinationPlatformFilters.removeAll()
+        sortByArrivalTime = false
         showFilterBar = false
         showDestinationPicker = false
         showPlatformPicker = false
+        showDestinationPlatformPicker = false
         // Don't reset resolvedLocation - we use bestAvailableLocation for immediate functionality
         // Don't reset selectedTransportTypes - they are set by the initializer
         
@@ -694,13 +889,14 @@ struct DepartureDetailView: View {
                     properties: resolved.properties
                 )
                 
-                // Remove old and add updated
                 favoritesManager.removeFavorite(favorite)
                 favoritesManager.addFavorite(
                     updatedLocation,
                     destinationFilters: favorite.destinationFilters,
                     platformFilters: favorite.platformFilters,
-                    transportTypeFilters: favorite.transportTypeFilters
+                    transportTypeFilters: favorite.transportTypeFilters,
+                    destinationPlatformFilters: favorite.destinationPlatformFilters,
+                    sortByArrivalTime: favorite.sortByArrivalTime
                 )
             }
         }
@@ -739,6 +935,14 @@ struct DepartureDetailView: View {
         }
         
         return PlatformHelper.sortPlatforms(Array(platforms))
+    }
+    
+    private var availableDestinationPlatforms: [String] {
+        let departuresToCheck = hasActiveFilters ? filteredDepartures : mvvService.departures
+        return FilteringHelper.availableDestinationPlatforms(
+            departures: departuresToCheck,
+            destinations: destinationFilters.isEmpty ? nil : destinationFilters
+        )
     }
 }
 

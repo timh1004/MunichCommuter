@@ -33,45 +33,52 @@ public class FavoritesManager: ObservableObject {
 
     // MARK: - Multiple Destination Filters
 
-    public func addFavorite(_ location: Location, destinationFilters: [String]? = nil, platformFilters: [String]? = nil, transportTypeFilters: [String]? = nil) {
-        // Prevent duplicates
-        guard !isFavorite(location, destinationFilters: destinationFilters, platformFilters: platformFilters, transportTypeFilters: transportTypeFilters) else { return }
-        let newFavorite = FilteredFavorite(location: location, destinationFilters: destinationFilters, platformFilters: platformFilters, transportTypeFilters: transportTypeFilters)
+    public func addFavorite(_ location: Location, destinationFilters: [String]? = nil, platformFilters: [String]? = nil, transportTypeFilters: [String]? = nil, destinationPlatformFilters: [String]? = nil, sortByArrivalTime: Bool? = nil) {
+        guard !isFavorite(location, destinationFilters: destinationFilters, platformFilters: platformFilters, transportTypeFilters: transportTypeFilters, destinationPlatformFilters: destinationPlatformFilters, sortByArrivalTime: sortByArrivalTime) else { return }
+        let newFavorite = FilteredFavorite(location: location, destinationFilters: destinationFilters, platformFilters: platformFilters, transportTypeFilters: transportTypeFilters, destinationPlatformFilters: destinationPlatformFilters, sortByArrivalTime: sortByArrivalTime)
         favorites.append(newFavorite)
         saveFavorites()
     }
 
-    public func isFavorite(_ location: Location, destinationFilters: [String]? = nil, platformFilters: [String]? = nil, transportTypeFilters: [String]? = nil) -> Bool {
+    public func isFavorite(_ location: Location, destinationFilters: [String]? = nil, platformFilters: [String]? = nil, transportTypeFilters: [String]? = nil, destinationPlatformFilters: [String]? = nil, sortByArrivalTime: Bool? = nil) -> Bool {
         let normalizedLocationId = location.id.normalizedStationId
         let normalizedDestinationFilters = destinationFilters?.isEmpty == true ? nil : destinationFilters?.sorted()
         let normalizedPlatformFilters = platformFilters?.isEmpty == true ? nil : platformFilters?.sorted()
         let normalizedTransportFilters = transportTypeFilters?.isEmpty == true ? nil : transportTypeFilters?.sorted()
+        let normalizedDestPlatformFilters = destinationPlatformFilters?.isEmpty == true ? nil : destinationPlatformFilters?.sorted()
+        let normalizedSortByArrival = (sortByArrivalTime == true) ? true : nil
 
         return favorites.contains {
             $0.location.id.normalizedStationId == normalizedLocationId &&
             $0.destinationFilters?.sorted() == normalizedDestinationFilters &&
             $0.platformFilters?.sorted() == normalizedPlatformFilters &&
-            $0.transportTypeFilters?.sorted() == normalizedTransportFilters
+            $0.transportTypeFilters?.sorted() == normalizedTransportFilters &&
+            ($0.destinationPlatformFilters?.sorted() ?? nil) == normalizedDestPlatformFilters &&
+            ($0.sortByArrivalTime == true ? true : nil) == normalizedSortByArrival
         }
     }
 
-    public func toggleFavorite(_ location: Location, destinationFilters: [String]? = nil, platformFilters: [String]? = nil, transportTypeFilters: [String]? = nil) {
+    public func toggleFavorite(_ location: Location, destinationFilters: [String]? = nil, platformFilters: [String]? = nil, transportTypeFilters: [String]? = nil, destinationPlatformFilters: [String]? = nil, sortByArrivalTime: Bool? = nil) {
         let normalizedLocationId = location.id.normalizedStationId
         let normalizedDestinationFilters = destinationFilters?.isEmpty == true ? nil : destinationFilters?.sorted()
         let normalizedPlatformFilters = platformFilters?.isEmpty == true ? nil : platformFilters?.sorted()
         let normalizedTransportFilters = transportTypeFilters?.isEmpty == true ? nil : transportTypeFilters?.sorted()
+        let normalizedDestPlatformFilters = destinationPlatformFilters?.isEmpty == true ? nil : destinationPlatformFilters?.sorted()
+        let normalizedSortByArrival = (sortByArrivalTime == true) ? true : nil
 
         let existingFavorite = favorites.first {
             $0.location.id.normalizedStationId == normalizedLocationId &&
             $0.destinationFilters?.sorted() == normalizedDestinationFilters &&
             $0.platformFilters?.sorted() == normalizedPlatformFilters &&
-            $0.transportTypeFilters?.sorted() == normalizedTransportFilters
+            $0.transportTypeFilters?.sorted() == normalizedTransportFilters &&
+            ($0.destinationPlatformFilters?.sorted() ?? nil) == normalizedDestPlatformFilters &&
+            ($0.sortByArrivalTime == true ? true : nil) == normalizedSortByArrival
         }
 
         if let existing = existingFavorite {
             removeFavorite(existing)
         } else {
-            addFavorite(location, destinationFilters: destinationFilters, platformFilters: platformFilters, transportTypeFilters: transportTypeFilters)
+            addFavorite(location, destinationFilters: destinationFilters, platformFilters: platformFilters, transportTypeFilters: transportTypeFilters, destinationPlatformFilters: destinationPlatformFilters, sortByArrivalTime: sortByArrivalTime)
         }
     }
 
@@ -135,6 +142,8 @@ public class FavoritesManager: ObservableObject {
                     destinationFilters: favorites[i].destinationFilters,
                     platformFilters: favorites[i].platformFilters,
                     transportTypeFilters: favorites[i].transportTypeFilters,
+                    destinationPlatformFilters: favorites[i].destinationPlatformFilters,
+                    sortByArrivalTime: favorites[i].sortByArrivalTime,
                     dateCreated: favorites[i].dateCreated
                 )
                 didUpdate = true

@@ -76,7 +76,8 @@ struct DepartureTimelineProvider: AppIntentTimelineProvider {
                 departures: allDepartures,
                 destinationFilters: favorite.destinationFilters ?? [],
                 platformFilters: favorite.platformFilters ?? [],
-                transportTypeFilters: favorite.transportTypeFilters ?? []
+                transportTypeFilters: favorite.transportTypeFilters ?? [],
+                destinationPlatformFilters: favorite.destinationPlatformFilters
             )
 
             // Map once so UUIDs are stable across all timeline entries

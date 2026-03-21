@@ -5,6 +5,10 @@ struct PlatformPickerView: View {
     let platforms: [String]
     @Binding var selectedPlatforms: [String]
     @Binding var isPresented: Bool
+    var title: String = "Gleise auswählen"
+    var emptyText: String = "Keine Gleise verfügbar"
+    var emptySubtext: String = "Laden Sie zuerst Abfahrtsdaten"
+    var accentColor: Color = .orange
     @Environment(\.dismiss) private var dismiss
 
     @State private var searchText = ""
@@ -18,9 +22,9 @@ struct PlatformPickerView: View {
                         Image(systemName: "train.side.front.car")
                             .font(.largeTitle)
                             .foregroundColor(.gray)
-                        Text("Keine Gleise verfügbar")
+                        Text(emptyText)
                             .font(.headline)
-                        Text("Laden Sie zuerst Abfahrtsdaten")
+                        Text(emptySubtext)
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -69,7 +73,7 @@ struct PlatformPickerView: View {
                                             }
                                             .padding(.horizontal, 8)
                                             .padding(.vertical, 4)
-                                            .background(Color.orange)
+                                            .background(accentColor)
                                             .foregroundColor(.white)
                                             .cornerRadius(12)
                                         }
@@ -99,7 +103,7 @@ struct PlatformPickerView: View {
                                     if selectedPlatforms.contains(platform) {
                                         Text("Ausgewählt")
                                             .font(.caption)
-                                            .foregroundColor(.orange)
+                                            .foregroundColor(accentColor)
                                     }
                                 }
                                 
@@ -107,7 +111,7 @@ struct PlatformPickerView: View {
                                 
                                 if selectedPlatforms.contains(platform) {
                                     Image(systemName: "checkmark.circle.fill")
-                                        .foregroundColor(.orange)
+                                        .foregroundColor(accentColor)
                                 } else {
                                     Image(systemName: "circle")
                                         .foregroundColor(.gray)
@@ -120,7 +124,7 @@ struct PlatformPickerView: View {
                     .listStyle(.plain)
                 }
             }
-            .navigationTitle("Gleise auswählen")
+            .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
