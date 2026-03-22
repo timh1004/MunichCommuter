@@ -7,16 +7,16 @@ struct WatchCompactDepartureRow: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            RoundedRectangle(cornerRadius: 3)
-                .fill(DepartureRowStyling.lineColor(for: departure))
-                .frame(width: 26, height: 16)
-                .overlay(
-                    Text(departure.transportation?.number ?? "?")
-                        .font(.system(size: 8, weight: .bold))
-                        .foregroundColor(.white)
-                        .minimumScaleFactor(0.5)
-                        .lineLimit(1)
-                )
+            let appearance = DepartureRowStyling.lineBadgeAppearance(for: departure)
+            ZStack {
+                LineBadgeBackground(appearance: appearance, cornerRadius: 3)
+                    .frame(width: 26, height: 16)
+                Text(departure.transportation?.number ?? "?")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(appearance.foreground)
+                    .minimumScaleFactor(0.5)
+                    .lineLimit(1)
+            }
 
             Text(departure.transportation?.destination?.name ?? "—")
                 .font(.system(size: 11))

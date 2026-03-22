@@ -4,6 +4,8 @@ import MunichCommuterKit
 struct DisruptionDetailView: View {
     let message: DisruptionMessage
 
+    private var displayLines: [DisruptionLine] { message.displayLines }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
@@ -35,7 +37,7 @@ struct DisruptionDetailView: View {
                     .fontWeight(.bold)
 
                 // Affected lines
-                if let lines = message.lines, !lines.isEmpty {
+                if !displayLines.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Betroffene Linien")
                             .font(.caption)
@@ -43,7 +45,7 @@ struct DisruptionDetailView: View {
                             .textCase(.uppercase)
 
                         FlowLayoutDetail(spacing: 6) {
-                            ForEach(lines, id: \.self) { line in
+                            ForEach(displayLines, id: \.self) { line in
                                 HStack(spacing: 4) {
                                     DisruptionLineBadge(line: line)
                                     if line.sev == true {
@@ -69,7 +71,12 @@ struct DisruptionDetailView: View {
                     HStack(spacing: 12) {
                         Label(formatDate(message.validFromDate), systemImage: "clock")
                         Text("–")
-                        Text(formatDate(message.validToDate))
+                        if let endMs = message.validToIfProvided {
+                            Text(formatDate(Date(timeIntervalSince1970: Double(endMs) / 1000)))
+                        } else {
+                            Text("Bis auf Weiteres")
+                                .foregroundColor(.secondary)
+                        }
                     }
                     .font(.subheadline)
                 }
@@ -92,15 +99,7 @@ struct DisruptionDetailView: View {
                             .textCase(.uppercase)
 
                         ForEach(links) { link in
-                            if let urlString = link.url, let url = URL(string: urlString) {
-                                Link(destination: url) {
-                                    HStack {
-                                        Image(systemName: "link")
-                                        Text(link.text ?? "Mehr Info")
-                                    }
-                                    .font(.subheadline)
-                                }
-                            }
+                            DisruptionLinkBlock(link: link)
                         }
                     }
                 }

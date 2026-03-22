@@ -1,6 +1,7 @@
 import AppIntents
 import SwiftUI
 import WidgetKit
+import MunichCommuterKit
 
 struct DepartureWidgetEntryView: View {
     @Environment(\.widgetFamily) var family
@@ -61,13 +62,12 @@ private struct SmallWidgetView: View {
                 HStack(spacing: 6) {
                     Text(departure.lineNumber)
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(departure.lineBadgeAppearance.foreground)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
                         .padding(.horizontal, 7)
                         .padding(.vertical, 4)
-                        .background(departure.lineColor)
-                        .clipShape(RoundedRectangle(cornerRadius: 7))
+                        .background(LineBadgeBackground(appearance: departure.lineBadgeAppearance, cornerRadius: 7))
 
                     Text(departure.destination)
                         .font(.subheadline)

@@ -72,15 +72,15 @@ struct MainTabView: View {
             }
         }
         .onAppear {
-            // Start with a single shot to get initial location quickly
-            locationManager.requestSingleLocation()
+            if locationManager.hasLocationPermission {
+                locationManager.startPreciseUpdates()
+            }
         }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active:
-                // App is active - views will decide what tracking they need
                 if locationManager.currentTrackingMode == .background {
-                    locationManager.requestSingleLocation()
+                    locationManager.startPreciseUpdates()
                 }
             case .background, .inactive:
                 // App going to background - switch to low-power significant changes

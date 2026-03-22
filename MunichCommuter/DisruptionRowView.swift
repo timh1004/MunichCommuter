@@ -4,14 +4,10 @@ import MunichCommuterKit
 struct DisruptionRowView: View {
     let message: DisruptionMessage
 
+    private var displayLines: [DisruptionLine] { message.displayLines }
+
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
-            // Type indicator
-            Circle()
-                .fill(message.isIncident ? Color.red : Color.orange)
-                .frame(width: 10, height: 10)
-                .padding(.top, 5)
-
             VStack(alignment: .leading, spacing: 6) {
                 // Title
                 Text(message.title)
@@ -21,13 +17,13 @@ struct DisruptionRowView: View {
                     .foregroundColor(.primary)
 
                 // Affected lines
-                if let lines = message.lines, !lines.isEmpty {
+                if !displayLines.isEmpty {
                     FlowLayout(spacing: 4) {
-                        ForEach(Array(lines.prefix(8)), id: \.self) { line in
+                        ForEach(Array(displayLines.prefix(8)), id: \.self) { line in
                             DisruptionLineBadge(line: line)
                         }
-                        if lines.count > 8 {
-                            Text("+\(lines.count - 8)")
+                        if displayLines.count > 8 {
+                            Text("+\(displayLines.count - 8)")
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundColor(.secondary)
                                 .padding(.horizontal, 4)
@@ -38,7 +34,7 @@ struct DisruptionRowView: View {
                 // Validity period
                 HStack(spacing: 4) {
                     if message.isActive {
-                        Image(systemName: "clock.fill")
+                        Image(systemName: "checkmark.circle.fill")
                             .font(.caption2)
                             .foregroundColor(.green)
                     }
@@ -58,24 +54,29 @@ struct DisruptionRowView: View {
 
         let now = Date()
         let from = message.validFromDate
-        let to = message.validToDate
+        formatter.dateFormat = "dd.MM., HH:mm"
+        let fromStr = formatter.string(from: from)
 
-        // If the disruption spans more than a day, show date + time
+        guard let endMs = message.validToIfProvided else {
+            if message.validFromDate > now {
+                return "Ab \(fromStr)"
+            }
+            return "Ab \(fromStr) · Bis auf Weiteres"
+        }
+
+        let to = Date(timeIntervalSince1970: Double(endMs) / 1000)
         let calendar = Calendar.current
         let sameDay = calendar.isDate(from, inSameDayAs: to)
 
         if sameDay {
             formatter.dateFormat = "dd.MM., HH:mm"
             return "\(formatter.string(from: from)) – \(DateFormatter.shortTime.string(from: to))"
-        } else {
-            formatter.dateFormat = "dd.MM., HH:mm"
-            let fromStr = formatter.string(from: from)
-            let toStr = formatter.string(from: to)
-            if to > now {
-                return "Bis \(toStr)"
-            }
-            return "\(fromStr) – \(toStr)"
         }
+        let toStr = formatter.string(from: to)
+        if to > now {
+            return "Bis \(toStr)"
+        }
+        return "\(fromStr) – \(toStr)"
     }
 }
 

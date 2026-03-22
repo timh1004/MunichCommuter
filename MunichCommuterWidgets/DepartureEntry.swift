@@ -7,7 +7,7 @@ import MunichCommuterKit
 struct WidgetDeparture: Identifiable, Sendable {
     let id: UUID
     let lineNumber: String
-    let lineColor: Color
+    let lineBadgeAppearance: LineBadgeAppearance
     let destination: String
     let plannedDate: Date?
     let estimatedDate: Date?
@@ -31,7 +31,7 @@ struct WidgetDeparture: Identifiable, Sendable {
         return WidgetDeparture(
             id: UUID(),
             lineNumber: stopEvent.transportation?.number ?? stopEvent.transportation?.name ?? "?",
-            lineColor: DepartureRowStyling.lineColor(for: stopEvent),
+            lineBadgeAppearance: DepartureRowStyling.lineBadgeAppearance(for: stopEvent),
             destination: stopEvent.transportation?.destination?.name ?? "Unbekannt",
             plannedDate: plannedDate,
             estimatedDate: estimatedDate,
@@ -63,7 +63,7 @@ struct DepartureEntry: TimelineEntry {
             WidgetDeparture(
                 id: UUID(),
                 lineNumber: "S1",
-                lineColor: Color(red: 22/255, green: 192/255, blue: 233/255),
+                lineBadgeAppearance: DepartureRowStyling.lineBadgeAppearance(lineNumber: "S1", apiProduct: "SBAHN"),
                 destination: "Ostbahnhof",
                 plannedDate: now.addingTimeInterval(3 * 60),
                 estimatedDate: now.addingTimeInterval(3 * 60),
@@ -73,7 +73,7 @@ struct DepartureEntry: TimelineEntry {
             WidgetDeparture(
                 id: UUID(),
                 lineNumber: "U3",
-                lineColor: Color(red: 1.0, green: 0.6, blue: 0.0),
+                lineBadgeAppearance: DepartureRowStyling.lineBadgeAppearance(lineNumber: "U3", apiProduct: "UBAHN"),
                 destination: "Moosach",
                 plannedDate: now.addingTimeInterval(7 * 60),
                 estimatedDate: now.addingTimeInterval(8 * 60),
@@ -83,7 +83,7 @@ struct DepartureEntry: TimelineEntry {
             WidgetDeparture(
                 id: UUID(),
                 lineNumber: "18",
-                lineColor: Color(red: 0.8, green: 0.0, blue: 0.0),
+                lineBadgeAppearance: DepartureRowStyling.lineBadgeAppearance(lineNumber: "18", apiProduct: "BUS"),
                 destination: "Gondrellplatz",
                 plannedDate: now.addingTimeInterval(12 * 60),
                 estimatedDate: now.addingTimeInterval(12 * 60),
@@ -93,7 +93,7 @@ struct DepartureEntry: TimelineEntry {
             WidgetDeparture(
                 id: UUID(),
                 lineNumber: "S8",
-                lineColor: Color(red: 255/255, green: 203/255, blue: 6/255),
+                lineBadgeAppearance: DepartureRowStyling.lineBadgeAppearance(lineNumber: "S8", apiProduct: "SBAHN"),
                 destination: "Flughafen München",
                 plannedDate: now.addingTimeInterval(18 * 60),
                 estimatedDate: now.addingTimeInterval(20 * 60),

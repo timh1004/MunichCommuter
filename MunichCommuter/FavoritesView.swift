@@ -80,7 +80,7 @@ struct FavoritesView: View {
                                 locationManager: locationManager,
                                 departures: favoriteDepartures[favorite.location.id] ?? [],
                                 isLoading: loadingFavorites.contains(favorite.location.id),
-                                disruptedLineNumbers: disruptionService.affectedLineNumbers
+                                incidentAffectedLineNumbers: disruptionService.incidentAffectedLineNumbers
                             )
                         }
                         .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 16))
@@ -133,6 +133,7 @@ struct FavoritesView: View {
                 if !initializedDeparturesAfterLocation {
                     initializedDeparturesAfterLocation = true
                     await loadAllFavoritesDepartures()
+                    disruptionService.loadMessagesIfStale()
                 }
             }
         }
@@ -140,12 +141,6 @@ struct FavoritesView: View {
             Task { @MainActor in
                 pruneDeparturesForRemovedFavorites()
                 await loadAllFavoritesDepartures(onlyIfMissing: true)
-            }
-        }
-        .onDisappear {
-            // Stop precise updates when leaving favorites view
-            if locationManager.currentTrackingMode == .precise {
-                locationManager.requestSingleLocation()
             }
         }
         .onChange(of: locationManager.authorizationStatus) { _, newStatus in
@@ -211,12 +206,10 @@ struct FavoritesView: View {
     }
     
     private func updateLocationTrackingMode() {
-        // Use precise updates when distance sorting is active and we have permission
+        // Nur bei Entfernungssortierung explizit präzises Tracking — bei A–Z nicht auf Einzelmessung
+        // herunterfahren, damit der Stationen-Tab weiter Live-Entfernungen bekommt.
         if sortOption == .distance && locationManager.hasLocationPermission {
             locationManager.startPreciseUpdates()
-        } else {
-            // Use single shot for alphabetical sorting or when no permission
-            locationManager.requestSingleLocation()
         }
     }
     
@@ -376,7 +369,8 @@ struct FavoriteWithDeparturesView: View {
     @ObservedObject var locationManager: LocationManager
     let departures: [StopEvent]
     let isLoading: Bool
-    var disruptedLineNumbers: Set<String> = []
+    /// Nur Linien mit aktiver **Störung** (INCIDENT), nicht Fahrplanänderungen.
+    var incidentAffectedLineNumbers: Set<String> = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -447,7 +441,7 @@ struct FavoriteWithDeparturesView: View {
                     // Disruption warning if any displayed line is affected
                     if departures.prefix(3).contains(where: { dep in
                         if let num = dep.transportation?.number {
-                            return disruptedLineNumbers.contains(num)
+                            return incidentAffectedLineNumbers.contains(num)
                         }
                         return false
                     }) {

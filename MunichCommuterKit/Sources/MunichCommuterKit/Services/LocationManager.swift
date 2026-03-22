@@ -38,8 +38,9 @@ public class LocationManager: NSObject, ObservableObject {
         locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
         locationManager.distanceFilter = 25
         #if !os(watchOS)
-        locationManager.activityType = .fitness
-        locationManager.pausesLocationUpdatesAutomatically = true
+        // Nahverkehr: zuverlässigere Updates beim Gehen (Fitness + Pause führten oft zu „eingefrorenem“ Standort).
+        locationManager.activityType = .otherNavigation
+        locationManager.pausesLocationUpdatesAutomatically = false
         #endif
 
         if let cached = locationManager.location {
@@ -101,8 +102,8 @@ public class LocationManager: NSObject, ObservableObject {
             locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
             locationManager.distanceFilter = 25
             #if !os(watchOS)
-            locationManager.activityType = .fitness
-            locationManager.pausesLocationUpdatesAutomatically = true
+            locationManager.activityType = .otherNavigation
+            locationManager.pausesLocationUpdatesAutomatically = false
             #endif
             locationManager.startUpdatingLocation()
         case .background:
@@ -169,7 +170,12 @@ public class LocationManager: NSObject, ObservableObject {
         }
     }
 
+    /// Entfernung zur Haltestelle: mit bekanntem Gerätestandort immer **live** aus GPS+Koordinate,
+    /// damit sich Werte beim Gehen aktualisieren (API-`distance` stammt vom Suchzeitpunkt).
     public func distanceFor(location: Location) -> CLLocationDistance? {
+        if effectiveLocation != nil, let coord = location.coord, coord.count >= 2 {
+            return distanceFrom(coord)
+        }
         if let apiDist = location.distance {
             return CLLocationDistance(apiDist)
         }
@@ -252,7 +258,7 @@ extension LocationManager: CLLocationManagerDelegate {
 
             if authorized {
                 self.locationError = nil
-                self.setTrackingMode(.singleShot)
+                self.startPreciseUpdates()
                 self.updateEffectiveLocation()
             } else if status == .denied || status == .restricted {
                 self.locationError = "Standortzugriff wurde verweigert"
