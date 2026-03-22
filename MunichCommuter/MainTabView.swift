@@ -64,6 +64,12 @@ struct MainTabView: View {
                     StationsView(activateSearch: stationsSearchBinding)
                 }
             }
+
+            Tab("Störungen", systemImage: "exclamationmark.triangle.fill", value: .stoerungen) {
+                NavigationStack {
+                    DisruptionsView()
+                }
+            }
         }
         .onAppear {
             // Start with a single shot to get initial location quickly
