@@ -10,8 +10,8 @@ public struct DepartureRowStyling {
         }
 
         switch productClass {
-        case 1: return sBahnLineColor(for: departure)
-        case 2: return uBahnLineColor(for: departure)
+        case 1: return sBahnLineColor(forLineNumber: departure.transportation?.number)
+        case 2: return uBahnLineColor(forLineNumber: departure.transportation?.number)
         case 4: return Color(red: 0.8, green: 0.0, blue: 0.0)
         case 5: return Color(red: 0.6, green: 0.0, blue: 0.8)
         default: return Color(red: 0.6, green: 0.6, blue: 0.6)
@@ -20,7 +20,11 @@ public struct DepartureRowStyling {
 
     // MARK: - S-Bahn Specific Colors
     public static func sBahnLineColor(for departure: StopEvent) -> Color {
-        guard let lineNumber = departure.transportation?.number else {
+        sBahnLineColor(forLineNumber: departure.transportation?.number)
+    }
+
+    public static func sBahnLineColor(forLineNumber lineNumber: String?) -> Color {
+        guard let lineNumber = lineNumber else {
             return Color(red: 22/255, green: 192/255, blue: 233/255)
         }
 
@@ -39,7 +43,11 @@ public struct DepartureRowStyling {
 
     // MARK: - U-Bahn Specific Colors
     public static func uBahnLineColor(for departure: StopEvent) -> Color {
-        guard let lineNumber = departure.transportation?.number else {
+        uBahnLineColor(forLineNumber: departure.transportation?.number)
+    }
+
+    public static func uBahnLineColor(forLineNumber lineNumber: String?) -> Color {
+        guard let lineNumber = lineNumber else {
             return Color(red: 0.0, green: 0.4, blue: 0.8)
         }
 
@@ -53,6 +61,24 @@ public struct DepartureRowStyling {
         case "U7", "7": return Color(red: 0.0, green: 0.7, blue: 0.0)
         case "U8", "8": return Color(red: 0.9, green: 0.0, blue: 0.0)
         default: return Color(red: 0.0, green: 0.4, blue: 0.8)
+        }
+    }
+
+    /// Linienfarben für MVG-Betriebsmeldungen (`transportType` aus der bgw-pt-API).
+    public static func lineColorForMVGDisruptionLine(label: String, transportType: String?) -> Color {
+        switch transportType?.uppercased() {
+        case "SBAHN":
+            return sBahnLineColor(forLineNumber: label)
+        case "UBAHN":
+            return uBahnLineColor(forLineNumber: label)
+        case "TRAM":
+            return Color(red: 0.8, green: 0.0, blue: 0.0)
+        case "BUS", "REGIONAL_BUS":
+            return Color(red: 0/255, green: 87/255, blue: 106/255)
+        case "BAHN":
+            return Color(red: 50/255, green: 54/255, blue: 127/255)
+        default:
+            return Color(red: 0.6, green: 0.6, blue: 0.6)
         }
     }
 
