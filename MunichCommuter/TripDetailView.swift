@@ -218,15 +218,15 @@ struct TripHeaderView: View {
     
     var body: some View {
         HStack(spacing: 12) {
+            let badgeAppearance = DepartureRowStyling.lineBadgeAppearance(for: departure)
             ZStack {
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(lineColor)
+                LineBadgeBackground(appearance: badgeAppearance, cornerRadius: 6)
                     .frame(width: 48, height: 32)
-                
+
                 Text(departure.transportation?.number ?? "?")
                     .font(.subheadline)
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundColor(badgeAppearance.foreground)
             }
 
             VStack(alignment: .leading, spacing: 2) {
@@ -269,10 +269,6 @@ struct TripHeaderView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .background(Color(.systemBackground))
-    }
-    
-    private var lineColor: Color {
-        DepartureRowStyling.lineColor(for: departure)
     }
     
     private var isDelayed: Bool {
