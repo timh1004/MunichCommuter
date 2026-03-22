@@ -98,6 +98,53 @@ public struct DepartureRowStyling {
     public static func isRealtime(for departure: StopEvent) -> Bool {
         return departure.isRealtimeControlled == true
     }
+
+    // MARK: - Line Color by String (for Disruptions)
+
+    /// Returns the MVG line color for a given line number and product type string.
+    /// Used by DisruptionLineBadge where we don't have a StopEvent.
+    public static func lineColorForNumber(_ lineNumber: String, product: String) -> Color {
+        switch product {
+        case "SBAHN":
+            return sBahnColorForNumber(lineNumber)
+        case "UBAHN":
+            return uBahnColorForNumber(lineNumber)
+        case "TRAM":
+            return Color(red: 0.8, green: 0.0, blue: 0.0)
+        case "BUS":
+            return Color(red: 0/255, green: 87/255, blue: 106/255)
+        default:
+            return Color(red: 0.6, green: 0.6, blue: 0.6)
+        }
+    }
+
+    private static func sBahnColorForNumber(_ lineNumber: String) -> Color {
+        switch lineNumber {
+        case "S1": return Color(red: 22/255, green: 192/255, blue: 233/255)
+        case "S2": return Color(red: 113/255, green: 191/255, blue: 68/255)
+        case "S3": return Color(red: 123/255, green: 16/255, blue: 125/255)
+        case "S4": return Color(red: 238/255, green: 28/255, blue: 37/255)
+        case "S6": return Color(red: 0/255, green: 138/255, blue: 81/255)
+        case "S7": return Color(red: 150/255, green: 56/255, blue: 51/255)
+        case "S8": return Color(red: 255/255, green: 203/255, blue: 6/255)
+        case "S20": return Color(red: 240/255, green: 90/255, blue: 115/255)
+        default: return Color(red: 22/255, green: 192/255, blue: 233/255)
+        }
+    }
+
+    private static func uBahnColorForNumber(_ lineNumber: String) -> Color {
+        switch lineNumber {
+        case "U1": return Color(red: 0.0, green: 0.7, blue: 0.0)
+        case "U2": return Color(red: 0.9, green: 0.0, blue: 0.0)
+        case "U3": return Color(red: 1.0, green: 0.6, blue: 0.0)
+        case "U4": return Color(red: 0.0, green: 0.8, blue: 0.8)
+        case "U5": return Color(red: 0.6, green: 0.4, blue: 0.2)
+        case "U6": return Color(red: 0.0, green: 0.4, blue: 0.8)
+        case "U7": return Color(red: 0.0, green: 0.7, blue: 0.0)
+        case "U8": return Color(red: 0.9, green: 0.0, blue: 0.0)
+        default: return Color(red: 0.0, green: 0.4, blue: 0.8)
+        }
+    }
 }
 
 // MARK: - Shared Transport Badge Component
@@ -174,5 +221,27 @@ public struct RealtimeBadge: View {
                 .accessibilityLabel("Echtzeitdaten verfügbar")
             }
         }
+    }
+}
+
+// MARK: - Disruption Line Badge Component
+public struct DisruptionLineBadge: View {
+    public let line: DisruptionLine
+
+    public init(line: DisruptionLine) {
+        self.line = line
+    }
+
+    public var body: some View {
+        Text(line.lineNumber)
+            .font(.system(size: 11, weight: .bold))
+            .foregroundColor(.white)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(DepartureRowStyling.lineColorForNumber(line.lineNumber, product: line.product))
+            )
+            .accessibilityLabel("\(line.product) \(line.lineNumber)")
     }
 }

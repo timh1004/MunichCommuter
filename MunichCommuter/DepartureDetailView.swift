@@ -20,6 +20,7 @@ struct DepartureDetailView: View {
     
     @StateObject private var mvvService = MVVService()
     @ObservedObject private var favoritesManager = FavoritesManager.shared
+    @EnvironmentObject private var disruptionService: DisruptionService
     @Environment(\.scenePhase) private var scenePhase
     
     @State private var destinationFilters: [String] = []
@@ -34,6 +35,7 @@ struct DepartureDetailView: View {
     @State private var selectedTransportTypes: Set<TransportType> = Set(TransportType.allCases)
     @State private var hasInitialized = false
     @State private var showPlansSheet = false
+    @State private var showDisruptionSheet = false
     
     init(locationId: String, locationName: String? = nil, initialDestinationFilters: [String]? = nil, initialPlatformFilters: [String]? = nil, initialTransportTypes: [String]? = nil, initialDestinationPlatformFilters: [String]? = nil, initialSortByArrivalTime: Bool? = nil) {
         self.locationId = locationId
@@ -80,6 +82,27 @@ struct DepartureDetailView: View {
                resolvedLocation?.name ?? 
                locationName ?? 
                "Abfahrten"
+    }
+
+    /// Lines currently displayed in departures that have active disruptions.
+    private var relevantDisruptions: [DisruptionMessage] {
+        let displayedLineNumbers = Set(mvvService.departures.compactMap { $0.transportation?.number })
+        let affected = disruptionService.affectedLineNumbers
+        let overlap = displayedLineNumbers.intersection(affected)
+        guard !overlap.isEmpty else { return [] }
+        return disruptionService.messages.filter { message in
+            message.isActive && (message.lines ?? []).contains(where: { overlap.contains($0.lineNumber) })
+        }
+    }
+
+    private var relevantDisruptionLineNames: String {
+        let lineNumbers = Set(relevantDisruptions.flatMap { $0.lines?.map(\.lineNumber) ?? [] })
+        let displayed = Set(mvvService.departures.compactMap { $0.transportation?.number })
+        let relevant = lineNumbers.intersection(displayed).sorted()
+        if relevant.count <= 3 {
+            return relevant.joined(separator: ", ")
+        }
+        return relevant.prefix(3).joined(separator: ", ") + " +\(relevant.count - 3)"
     }
 
     private func toggleDepartureFilterBar() {
@@ -435,6 +458,47 @@ struct DepartureDetailView: View {
                 )
             }
             
+            // Disruption Banner
+            if !relevantDisruptions.isEmpty {
+                Button(action: { showDisruptionSheet = true }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.orange)
+                            .font(.caption)
+                        Text("Störungen auf \(relevantDisruptionLineNames)")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.orange.opacity(0.1))
+                }
+                .buttonStyle(.plain)
+                .sheet(isPresented: $showDisruptionSheet) {
+                    NavigationStack {
+                        List(relevantDisruptions) { message in
+                            NavigationLink(destination: DisruptionDetailView(message: message)) {
+                                DisruptionRowView(message: message)
+                            }
+                        }
+                        .listStyle(.plain)
+                        .navigationTitle("Störungen")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button("Schließen") { showDisruptionSheet = false }
+                            }
+                        }
+                    }
+                }
+            }
+
             // Main Content
             if mvvService.isDeparturesLoading {
                 Spacer()
@@ -1126,6 +1190,7 @@ struct DepartureRowView: View {
             locationId: "de:09162:10",
             locationName: "Pasing"
         )
+        .environmentObject(DisruptionService())
     }
 }
 
@@ -1136,6 +1201,7 @@ struct DepartureRowView: View {
             locationName: "Pasing",
             initialDestinationFilters: ["Marienplatz"]
         )
+        .environmentObject(DisruptionService())
     }
 }
 

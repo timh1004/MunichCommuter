@@ -9,6 +9,7 @@ struct FavoritesView: View {
     
     @ObservedObject private var favoritesManager = FavoritesManager.shared
     @ObservedObject private var locationManager = LocationManager.shared
+    @EnvironmentObject private var disruptionService: DisruptionService
     @Environment(\.scenePhase) private var scenePhase
     @State private var sortOption: FavoritesSortOption = .alphabetical
     @State private var favoriteDepartures: [String: [StopEvent]] = [:] // locationId -> departures
@@ -78,7 +79,8 @@ struct FavoritesView: View {
                                 sortOption: sortOption,
                                 locationManager: locationManager,
                                 departures: favoriteDepartures[favorite.location.id] ?? [],
-                                isLoading: loadingFavorites.contains(favorite.location.id)
+                                isLoading: loadingFavorites.contains(favorite.location.id),
+                                disruptedLineNumbers: disruptionService.affectedLineNumbers
                             )
                         }
                         .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 16))
@@ -374,6 +376,7 @@ struct FavoriteWithDeparturesView: View {
     @ObservedObject var locationManager: LocationManager
     let departures: [StopEvent]
     let isLoading: Bool
+    var disruptedLineNumbers: Set<String> = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -441,6 +444,24 @@ struct FavoriteWithDeparturesView: View {
                 .padding(.leading, 0)
             } else {
                 VStack(alignment: .leading, spacing: 4) {
+                    // Disruption warning if any displayed line is affected
+                    if departures.prefix(3).contains(where: { dep in
+                        if let num = dep.transportation?.number {
+                            return disruptedLineNumbers.contains(num)
+                        }
+                        return false
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 9))
+                                .foregroundColor(.orange)
+                            Text("Störung")
+                                .font(.system(size: 10))
+                                .foregroundColor(.orange)
+                                .fontWeight(.medium)
+                        }
+                    }
+
                     ForEach(departures.prefix(3)) { departure in
                         CompactDepartureRowView(departure: departure)
                     }
@@ -491,5 +512,6 @@ struct CompactDepartureRowView: View {
 #Preview {
     NavigationStack {
         FavoritesView()
+            .environmentObject(DisruptionService())
     }
 } 

@@ -12,11 +12,13 @@ import MunichCommuterKit
 struct MunichCommuterApp: App {
     @State private var widgetDeepLink: WidgetDeepLink?
     @StateObject private var navigationModel = AppNavigationModel()
+    @StateObject private var disruptionService = DisruptionService()
 
     var body: some Scene {
         WindowGroup {
             MainTabView(widgetDeepLink: $widgetDeepLink)
                 .environmentObject(navigationModel)
+                .environmentObject(disruptionService)
                 .onOpenURL { url in
                     // munichcommuter://station/{locationId}?favoriteId={uuid}
                     guard url.scheme == "munichcommuter",

@@ -18,6 +18,11 @@ struct MunichCommuterCommands: Commands {
             }
             .keyboardShortcut("2", modifiers: .command)
 
+            Button("Störungen") {
+                navigation.selectedTab = .stoerungen
+            }
+            .keyboardShortcut("3", modifiers: .command)
+
             Button("Haltestelle suchen") {
                 navigation.focusStationsSearch()
             }
