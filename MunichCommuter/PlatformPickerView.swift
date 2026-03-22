@@ -93,20 +93,12 @@ struct PlatformPickerView: View {
                             togglePlatformSelection(platform)
                         }) {
                             HStack {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Gleis \(platform)")
-                                        .font(.body)
-                                        .fontWeight(.medium)
-                                        .foregroundColor(.primary)
-                                        .multilineTextAlignment(.leading)
-                                    
-                                    if selectedPlatforms.contains(platform) {
-                                        Text("Ausgewählt")
-                                            .font(.caption)
-                                            .foregroundColor(accentColor)
-                                    }
-                                }
-                                
+                                Text("Gleis \(platform)")
+                                    .font(.body)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(.primary)
+                                    .multilineTextAlignment(.leading)
+
                                 Spacer()
                                 
                                 if selectedPlatforms.contains(platform) {

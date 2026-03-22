@@ -429,36 +429,50 @@ struct DepartureDetailView: View {
                 ProgressView("Lade Abfahrten...")
                 Spacer()
             } else if let errorMessage = mvvService.departureErrorMessage {
-                Spacer()
-                VStack {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.largeTitle)
-                        .foregroundColor(.orange)
-                    Text("Fehler")
-                        .font(.headline)
-                    Text(errorMessage)
-                        .multilineTextAlignment(.center)
-                        .padding()
-                    Button("Erneut versuchen") {
-                        mvvService.loadDepartures(locationId: locationId)
+                ScrollView {
+                    VStack(spacing: 16) {
+                        Spacer(minLength: 24)
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.largeTitle)
+                            .foregroundColor(.orange)
+                        Text("Fehler")
+                            .font(.headline)
+                        Text(errorMessage)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                        Button("Erneut versuchen") {
+                            mvvService.loadDepartures(locationId: locationId)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        Spacer(minLength: 24)
                     }
-                    .buttonStyle(.borderedProminent)
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: 320)
                 }
-                Spacer()
+                .refreshable {
+                    mvvService.loadDepartures(locationId: locationId)
+                }
             } else if displayedDepartures.isEmpty {
-                Spacer()
-                VStack {
-                    Image(systemName: hasActiveFilters ? "line.horizontal.3.decrease.circle" : "tram")
-                        .font(.largeTitle)
-                        .foregroundColor(.gray)
-                    Text(hasActiveFilters ? "Keine gefilterten Abfahrten" : "Keine Abfahrten")
-                        .font(.headline)
-                    Text(hasActiveFilters ? getFilterMessage() : "Aktuell sind keine Abfahrten verfügbar")
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 40)
+                ScrollView {
+                    VStack(spacing: 16) {
+                        Spacer(minLength: 24)
+                        Image(systemName: hasActiveFilters ? "line.horizontal.3.decrease.circle" : "tram")
+                            .font(.largeTitle)
+                            .foregroundColor(.gray)
+                        Text(hasActiveFilters ? "Keine gefilterten Abfahrten" : "Keine Abfahrten")
+                            .font(.headline)
+                        Text(hasActiveFilters ? getFilterMessage() : "Aktuell sind keine Abfahrten verfügbar")
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
+                        Spacer(minLength: 24)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: 320)
                 }
-                Spacer()
+                .refreshable {
+                    mvvService.loadDepartures(locationId: locationId)
+                }
             } else {
                 List(displayedDepartures) { departure in
                     NavigationLink(destination: TripDetailView(departure: departure, currentStopName: cleanLocationName)) {
@@ -669,14 +683,6 @@ struct DepartureDetailView: View {
                         Image(systemName: "map")
                     }
                     .accessibilityLabel("Pläne anzeigen")
-
-                    // Refresh Button
-                    Button {
-                        mvvService.loadDepartures(locationId: locationId)
-                    } label: {
-                        Image(systemName: "arrow.clockwise")
-                    }
-                    .accessibilityLabel("Abfahrten aktualisieren")
                 }
                 .tint(.accentColor)
             }
@@ -684,7 +690,8 @@ struct DepartureDetailView: View {
     }
     
     // MARK: - Filtering Logic
-    private var filteredDepartures: [StopEvent] {
+    /// If `excludingDestinationPlatforms` is true, omit the Zielgleis filter (used when listing selectable destination platforms).
+    private func applyDepartureFilters(excludingDestinationPlatforms: Bool = false) -> [StopEvent] {
         var filtered = mvvService.departures
         
         // Filter by transport type
@@ -712,7 +719,7 @@ struct DepartureDetailView: View {
         }
 
         // Filter by destination platform
-        if !destinationPlatformFilters.isEmpty {
+        if !excludingDestinationPlatforms, !destinationPlatformFilters.isEmpty {
             filtered = filtered.filter { departure in
                 FilteringHelper.hasDestinationPlatformMatch(
                     departure: departure,
@@ -723,6 +730,10 @@ struct DepartureDetailView: View {
         }
         
         return filtered
+    }
+
+    private var filteredDepartures: [StopEvent] {
+        applyDepartureFilters(excludingDestinationPlatforms: false)
     }
     
     private var displayedDepartures: [StopEvent] {
@@ -938,9 +949,8 @@ struct DepartureDetailView: View {
     }
     
     private var availableDestinationPlatforms: [String] {
-        let departuresToCheck = hasActiveFilters ? filteredDepartures : mvvService.departures
-        return FilteringHelper.availableDestinationPlatforms(
-            departures: departuresToCheck,
+        FilteringHelper.availableDestinationPlatforms(
+            departures: applyDepartureFilters(excludingDestinationPlatforms: true),
             destinations: destinationFilters.isEmpty ? nil : destinationFilters
         )
     }

@@ -89,20 +89,12 @@ struct DestinationPickerView: View {
                             toggleDestinationSelection(destination)
                         }) {
                             HStack {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(destination)
-                                        .font(.body)
-                                        .fontWeight(.medium)
-                                        .foregroundColor(.primary)
-                                        .multilineTextAlignment(.leading)
-                                    
-                                    if selectedDestinations.contains(destination) {
-                                        Text("Ausgewählt")
-                                            .font(.caption)
-                                            .foregroundColor(.blue)
-                                    }
-                                }
-                                
+                                Text(destination)
+                                    .font(.body)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(.primary)
+                                    .multilineTextAlignment(.leading)
+
                                 Spacer()
                                 
                                 if selectedDestinations.contains(destination) {

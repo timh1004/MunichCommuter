@@ -3,35 +3,28 @@ import Foundation
 import MunichCommuterKit
 
 struct FavoritesView: View {
+    /// Erste Wellengröße: diese Anzahl Favoriten (in aktueller Listenreihenfolge) lädt parallel und wird abgeschlossen, bevor die nächste Welle startet — die oberen Zeilen wirken so schneller „fertig“. `0` = alles in einer parallelen Welle (früheres Verhalten).
+    /// Sinnvoll als spätere Nutzereinstellung (z. B. 0 / 4 / 8 / „alle auf einmal“), aktuell fest verdrahtet.
+    private static let favoritesDeparturePriorityWaveSize = 8
+    
     @ObservedObject private var favoritesManager = FavoritesManager.shared
     @ObservedObject private var locationManager = LocationManager.shared
-    @StateObject private var mvvService = MVVService()
     @Environment(\.scenePhase) private var scenePhase
     @State private var sortOption: FavoritesSortOption = .alphabetical
     @State private var favoriteDepartures: [String: [StopEvent]] = [:] // locationId -> departures
     @State private var loadingFavorites: Set<String> = [] // locationIds being loaded
     @State private var hasInitializedSort = false
     @State private var initializedDeparturesAfterLocation = false
-    @State private var currentTop3LocationIds: [String] = [] // Track current top 3 for change detection
     @State private var lastFavoriteRefreshAt: [String: Date] = [:] // locationId -> last refresh timestamp
     
     private var sortedFavorites: [FilteredFavorite] {
-        // Don't show favorites until initial sort is determined to avoid jumping
         guard hasInitializedSort else { return [] }
-        let sorted = FavoritesHelper.sortFavorites(favoritesManager.favorites, by: sortOption, locationManager: locationManager)
-        
-        // Check if top 3 changed and trigger departure reload if needed
-        let newTop3LocationIds = Array(sorted.prefix(3).map { $0.location.id })
-        if newTop3LocationIds != currentTop3LocationIds {
-            DispatchQueue.main.async {
-                self.currentTop3LocationIds = newTop3LocationIds
-                Task { @MainActor in
-                    await self.reloadDeparturesForChangedTop3()
-                }
-            }
-        }
-        
-        return sorted
+        return FavoritesHelper.sortFavorites(favoritesManager.favorites, by: sortOption, locationManager: locationManager)
+    }
+    
+    /// Stable key when favorites are added, removed, or replaced (same count).
+    private var favoriteLocationIdsSignature: String {
+        favoritesManager.favorites.map(\.location.id).sorted().joined(separator: "|")
     }
     
     var body: some View {
@@ -70,7 +63,7 @@ struct FavoritesView: View {
             } else {
                 // Favorites List
                 List {
-                    ForEach(Array(sortedFavorites.enumerated()), id: \.1.id) { index, favorite in
+                    ForEach(sortedFavorites) { favorite in
                         NavigationLink(destination: DepartureDetailView(
                             locationId: favorite.location.id,
                             locationName: favorite.location.disassembledName ?? favorite.location.name,
@@ -80,19 +73,13 @@ struct FavoritesView: View {
                             initialDestinationPlatformFilters: favorite.destinationPlatformFilters,
                             initialSortByArrivalTime: favorite.sortByArrivalTime
                         )) {
-                            if index < 3 {
-                                // First 3 favorites get enhanced view with departures
-                                FavoriteWithDeparturesView(
-                                    favorite: favorite,
-                                    sortOption: sortOption,
-                                    locationManager: locationManager,
-                                    departures: favoriteDepartures[favorite.location.id] ?? [],
-                                    isLoading: loadingFavorites.contains(favorite.location.id)
-                                )
-                            } else {
-                                // Other favorites get normal view
-                                FilteredFavoriteRowView(favorite: favorite, sortOption: sortOption, locationManager: locationManager)
-                            }
+                            FavoriteWithDeparturesView(
+                                favorite: favorite,
+                                sortOption: sortOption,
+                                locationManager: locationManager,
+                                departures: favoriteDepartures[favorite.location.id] ?? [],
+                                isLoading: loadingFavorites.contains(favorite.location.id)
+                            )
                         }
                         .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 16))
                     }
@@ -143,8 +130,14 @@ struct FavoritesView: View {
                 _ = await locationManager.awaitEffectiveLocation(timeout: 1.0)
                 if !initializedDeparturesAfterLocation {
                     initializedDeparturesAfterLocation = true
-                    await loadFirst3FavoritesDepartures()
+                    await loadAllFavoritesDepartures()
                 }
+            }
+        }
+        .onChange(of: favoriteLocationIdsSignature) { _, _ in
+            Task { @MainActor in
+                pruneDeparturesForRemovedFavorites()
+                await loadAllFavoritesDepartures(onlyIfMissing: true)
             }
         }
         .onDisappear {
@@ -181,8 +174,7 @@ struct FavoritesView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 Task { @MainActor in
-                    let first3 = getFirst3FavoritesForDepartures()
-                    for favorite in first3 {
+                    let stale = sortedFavorites.filter { favorite in
                         let locationId = favorite.location.id
                         let isStale: Bool
                         if let last = lastFavoriteRefreshAt[locationId] {
@@ -190,13 +182,9 @@ struct FavoritesView: View {
                         } else {
                             isStale = favoriteDepartures[locationId] == nil
                         }
-                        if isStale && !loadingFavorites.contains(locationId) {
-                            loadingFavorites.insert(locationId)
-                            Task {
-                                await loadDeparturesForFavorite(favorite)
-                            }
-                        }
+                        return isStale && !loadingFavorites.contains(locationId)
                     }
+                    await loadDeparturesForFavoritesInWaves(stale)
                 }
             }
         }
@@ -231,36 +219,69 @@ struct FavoritesView: View {
     }
     
     @MainActor
-    private func loadFirst3FavoritesDepartures() async {
-        let first3Favorites = getFirst3FavoritesForDepartures()
-        
-        // Initialize the current top 3 tracking
-        currentTop3LocationIds = Array(first3Favorites.map { $0.location.id })
-        
-        for favorite in first3Favorites {
+    private func pruneDeparturesForRemovedFavorites() {
+        let validIds = Set(favoritesManager.favorites.map(\.location.id))
+        for id in favoriteDepartures.keys where !validIds.contains(id) {
+            favoriteDepartures.removeValue(forKey: id)
+            lastFavoriteRefreshAt.removeValue(forKey: id)
+        }
+        loadingFavorites = loadingFavorites.intersection(validIds)
+    }
+    
+    /// Favoriten, die noch Abfahrten brauchen, in **Listenreihenfolge** (Entfernung oder A–Z je nach Sortierung).
+    private func favoritesPendingDepartureLoad(onlyIfMissing: Bool) -> [FilteredFavorite] {
+        sortedFavorites.filter { favorite in
             let locationId = favorite.location.id
-            
-            // Skip if already loading or already loaded
-            if loadingFavorites.contains(locationId) || favoriteDepartures[locationId] != nil {
-                continue
+            if onlyIfMissing, favoriteDepartures[locationId] != nil || loadingFavorites.contains(locationId) {
+                return false
             }
-            
-            loadingFavorites.insert(locationId)
-            
-            // Load departures for this favorite
-            Task {
-                await loadDeparturesForFavorite(favorite)
+            return !loadingFavorites.contains(locationId)
+        }
+    }
+    
+    /// Lädt eine Liste von Favoriten parallel (`withTaskGroup`). Die **Reihenfolge der `addTask`-Aufrufe** folgt der Liste; fertig werden die Requests trotzdem unterschiedlich schnell (Netzwerk).
+    @MainActor
+    private func loadFavoritesInParallel(_ favorites: [FilteredFavorite]) async {
+        await withTaskGroup(of: Void.self) { group in
+            for favorite in favorites {
+                let locationId = favorite.location.id
+                guard !loadingFavorites.contains(locationId) else { continue }
+                loadingFavorites.insert(locationId)
+                group.addTask {
+                    await self.loadDeparturesForFavorite(favorite)
+                }
             }
         }
+    }
+    
+    /// Wie `WatchFavoritesView.loadAllDepartures`, aber optional in Wellen: erst die ersten N in der Liste, dann der Rest — weniger „alles auf einmal“, schnelleres Auffüllen oben.
+    @MainActor
+    private func loadDeparturesForFavoritesInWaves(_ favorites: [FilteredFavorite]) async {
+        let wave = Self.favoritesDeparturePriorityWaveSize
+        if wave <= 0 || favorites.count <= wave {
+            await loadFavoritesInParallel(favorites)
+            return
+        }
+        await loadFavoritesInParallel(Array(favorites.prefix(wave)))
+        await loadFavoritesInParallel(Array(favorites.dropFirst(wave)))
+    }
+    
+    @MainActor
+    private func loadAllFavoritesDepartures(onlyIfMissing: Bool = false) async {
+        await loadDeparturesForFavoritesInWaves(favoritesPendingDepartureLoad(onlyIfMissing: onlyIfMissing))
     }
     
     @MainActor
     private func loadDeparturesForFavorite(_ favorite: FilteredFavorite) async {
         let locationId = favorite.location.id
         
-        // Create a separate MVVService instance for this request to avoid conflicts
         let tempMVVService = MVVService()
         await tempMVVService.loadDeparturesAsync(locationId: locationId)
+        
+        if let departureLocation = tempMVVService.departureLocations.first(where: { $0.id == locationId }),
+           let coord = departureLocation.coord {
+            favoritesManager.updateCoordinatesIfNeeded(locationId: locationId, coord: coord)
+        }
         
         let filteredDepartures = FilteringHelper.getFilteredDepartures(
             departures: tempMVVService.departures,
@@ -285,67 +306,12 @@ struct FavoritesView: View {
         lastFavoriteRefreshAt[locationId] = Date()
     }
     
-    private func getFirst3FavoritesForDepartures() -> [FilteredFavorite] {
-        // Use the same sorting logic but ensure we have favorites
-        guard !favoritesManager.favorites.isEmpty else { return [] }
-        
-        let sorted = FavoritesHelper.sortFavorites(favoritesManager.favorites, by: sortOption, locationManager: locationManager)
-        return Array(sorted.prefix(3))
-    }
-    
     @MainActor
     private func refreshFavorites() async {
-        // Clear existing departures
         favoriteDepartures.removeAll()
         loadingFavorites.removeAll()
-        
-        // Get the current first 3 favorites (could have changed due to sorting/location)
-        let first3Favorites = getFirst3FavoritesForDepartures()
-        
-        // Update the current top 3 tracking
-        currentTop3LocationIds = Array(first3Favorites.map { $0.location.id })
-        
-        // Load fresh departures for each of the first 3 favorites
-        for favorite in first3Favorites {
-            let locationId = favorite.location.id
-            loadingFavorites.insert(locationId)
-            
-            // Load departures for this favorite
-            Task {
-                await loadDeparturesForFavorite(favorite)
-            }
-        }
-    }
-    
-    @MainActor
-    private func reloadDeparturesForChangedTop3() async {
-        let first3Favorites = getFirst3FavoritesForDepartures()
-        let currentTop3Ids = Set(first3Favorites.map { $0.location.id })
-        
-        // Remove departures that are no longer in top 3
-        for locationId in favoriteDepartures.keys {
-            if !currentTop3Ids.contains(locationId) {
-                favoriteDepartures.removeValue(forKey: locationId)
-                loadingFavorites.remove(locationId)
-            }
-        }
-        
-        // Load departures for new top 3 stations that don't have data yet
-        for favorite in first3Favorites {
-            let locationId = favorite.location.id
-            
-            // Skip if already loading or already loaded
-            if loadingFavorites.contains(locationId) || favoriteDepartures[locationId] != nil {
-                continue
-            }
-            
-            loadingFavorites.insert(locationId)
-            
-            // Load departures for this favorite
-            Task {
-                await loadDeparturesForFavorite(favorite)
-            }
-        }
+        lastFavoriteRefreshAt.removeAll()
+        await loadAllFavoritesDepartures()
     }
     
     // All filtering logic moved to FilteringHelper
