@@ -1,11 +1,6 @@
 import SwiftUI
 import MunichCommuterKit
 
-enum AppTab: Hashable {
-    case favoriten
-    case stationen
-}
-
 /// Navigation value for deep-linking into a station detail with optional favorite filters.
 struct StationDeepLink: Hashable {
     let locationId: String
@@ -19,23 +14,29 @@ struct StationDeepLink: Hashable {
 
 struct MainTabView: View {
     @Binding var widgetDeepLink: WidgetDeepLink?
+    @EnvironmentObject private var navigation: AppNavigationModel
     @ObservedObject private var locationManager = LocationManager.shared
     @ObservedObject private var favoritesManager = FavoritesManager.shared
     @Environment(\.scenePhase) private var scenePhase
-    @State private var selectedTab = AppTab.favoriten
-    @State private var stationsSearchIsActive = false
     @State private var favoritesPath = NavigationPath()
 
     private var tabSelection: Binding<AppTab> {
         Binding(
-            get: { selectedTab },
+            get: { navigation.selectedTab },
             set: { newValue in
-                if newValue == .stationen && selectedTab == .stationen {
+                if newValue == .stationen && navigation.selectedTab == .stationen {
                     // Re-tap on Stationen tab → activate search
-                    stationsSearchIsActive = true
+                    navigation.activateStationsSearch = true
                 }
-                selectedTab = newValue
+                navigation.selectedTab = newValue
             }
+        )
+    }
+
+    private var stationsSearchBinding: Binding<Bool> {
+        Binding(
+            get: { navigation.activateStationsSearch },
+            set: { navigation.activateStationsSearch = $0 }
         )
     }
 
@@ -60,7 +61,7 @@ struct MainTabView: View {
 
             Tab("Stationen", systemImage: "magnifyingglass", value: .stationen) {
                 NavigationStack {
-                    StationsView(activateSearch: $stationsSearchIsActive)
+                    StationsView(activateSearch: stationsSearchBinding)
                 }
             }
         }
@@ -87,7 +88,7 @@ struct MainTabView: View {
         .onChange(of: widgetDeepLink) { _, deepLink in
             guard let deepLink else { return }
             // Switch to Favoriten tab and pop to root first
-            selectedTab = .favoriten
+            navigation.selectedTab = .favoriten
             favoritesPath = NavigationPath()
             widgetDeepLink = nil
 
@@ -123,4 +124,5 @@ struct MainTabView: View {
 
 #Preview {
     MainTabView(widgetDeepLink: .constant(nil))
+        .environmentObject(AppNavigationModel())
 }

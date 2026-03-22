@@ -11,10 +11,12 @@ import MunichCommuterKit
 @main
 struct MunichCommuterApp: App {
     @State private var widgetDeepLink: WidgetDeepLink?
+    @StateObject private var navigationModel = AppNavigationModel()
 
     var body: some Scene {
         WindowGroup {
             MainTabView(widgetDeepLink: $widgetDeepLink)
+                .environmentObject(navigationModel)
                 .onOpenURL { url in
                     // munichcommuter://station/{locationId}?favoriteId={uuid}
                     guard url.scheme == "munichcommuter",
@@ -29,6 +31,9 @@ struct MunichCommuterApp: App {
 
                     widgetDeepLink = WidgetDeepLink(locationId: locationId, favoriteId: favoriteId)
                 }
+        }
+        .commands {
+            MunichCommuterCommands(navigation: navigationModel)
         }
     }
 }

@@ -81,6 +81,18 @@ struct DepartureDetailView: View {
                locationName ?? 
                "Abfahrten"
     }
+
+    private func toggleDepartureFilterBar() {
+        showFilterBar.toggle()
+        if !showFilterBar {
+            if initialFilters == nil || initialFilters?.isEmpty == true {
+                destinationFilters.removeAll()
+                platformFilters.removeAll()
+                destinationPlatformFilters.removeAll()
+                sortByArrivalTime = false
+            }
+        }
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -651,15 +663,7 @@ struct DepartureDetailView: View {
                     
                     // Filter Button with Active Indicator
                     Button {
-                        showFilterBar.toggle()
-                        if !showFilterBar {
-                            if initialFilters == nil || initialFilters?.isEmpty == true {
-                                destinationFilters.removeAll()
-                                platformFilters.removeAll()
-                                destinationPlatformFilters.removeAll()
-                                sortByArrivalTime = false
-                            }
-                        }
+                        toggleDepartureFilterBar()
                     } label: {
                         ZStack {
                             Image(systemName: showFilterBar ? "line.horizontal.3.decrease.circle.fill" : "line.horizontal.3.decrease.circle")
@@ -687,6 +691,9 @@ struct DepartureDetailView: View {
                 .tint(.accentColor)
             }
         }
+        .focusedSceneValue(\.refreshDepartures) { mvvService.loadDepartures(locationId: locationId) }
+        .focusedSceneValue(\.toggleDepartureFilters) { toggleDepartureFilterBar() }
+        .focusedSceneValue(\.openDeparturePlans) { showPlansSheet = true }
     }
     
     // MARK: - Filtering Logic

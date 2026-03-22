@@ -6,6 +6,8 @@
 
 ## Beschreibungstext (Deutsch)
 
+**Hinweis:** München Abfahrten ist ein unabhängiges, privates Hobbyprojekt ohne Monetarisierung (keine Werbung, keine In-App-Käufe). Es handelt sich nicht um eine offizielle App der Deutschen Bahn, der MVG oder des MVV, und es besteht keine geschäftliche Verbindung oder Partnerschaft mit diesen Unternehmen.
+
 Dein smarter Begleiter für den Münchner Nahverkehr – komplett neu entwickelt.
 
 München Abfahrten zeigt dir sekundengenau die nächsten Abfahrten an deiner Haltestelle: S-Bahn, U-Bahn, Tram, StadtBus, RegionalBus, Regionalbahn und Regional-Express – alles in einer App, in Echtzeit und mit Verspätungsanzeige.
@@ -28,6 +30,8 @@ Datenquelle: Die Echtzeitdaten werden über die offizielle MVV/DEFAS-Schnittstel
 ---
 
 ## App Description (English)
+
+**Note:** Munich Commuter is an independent, private hobby project with no monetization (no ads, no in-app purchases). It is not an official app of Deutsche Bahn, MVG, or MVV, and there is no business affiliation or partnership with those organizations.
 
 Your smart companion for Munich public transit – completely rebuilt from the ground up.
 
@@ -109,7 +113,7 @@ Munich, Commuter, S-Bahn, U-Bahn, Tram, Bus, Departure, Transit, MVV, MVG, Real-
 ## Disclaimer
 
 **Deutsch:**
-München Abfahrten ist keine offizielle App der Deutschen Bahn, der Münchner Verkehrsgesellschaft (MVG) oder des Münchner Verkehrs- und Tarifverbunds (MVV). Echtzeitdaten werden über die MVV/DEFAS-Schnittstelle bezogen. Alle Angaben ohne Gewähr.
+München Abfahrten ist ein privates Hobbyprojekt ohne Monetarisierung und keine offizielle App der Deutschen Bahn, der Münchner Verkehrsgesellschaft (MVG) oder des Münchner Verkehrs- und Tarifverbunds (MVV). Es besteht keine Partnerschaft, Förderung oder sonstige geschäftliche Verbindung mit DB, MVG oder MVV. Echtzeitdaten werden über die öffentliche MVV/DEFAS-Schnittstelle bezogen. Alle Angaben ohne Gewähr.
 
 **English:**
-Munich Commuter is not an official app of Deutsche Bahn, Münchner Verkehrsgesellschaft (MVG), or Münchner Verkehrs- und Tarifverbund (MVV). Real-time data is provided via the MVV/DEFAS interface. All information is provided without guarantee.
+Munich Commuter is a private hobby project with no monetization and is not an official app of Deutsche Bahn, Münchner Verkehrsgesellschaft (MVG), or Münchner Verkehrs- und Tarifverbund (MVV). There is no partnership, endorsement, or other business relationship with DB, MVG, or MVV. Real-time data is provided via the public MVV/DEFAS interface. All information is provided without guarantee.

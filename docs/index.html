@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="München Abfahrten / Munich Commuter – private iOS-App für Echtzeit-Abfahrten im MVV-Gebiet. Kein offizielles Angebot von MVG, MVV oder DB."
+    />
+    <meta name="theme-color" content="#005a9c" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#101214" media="(prefers-color-scheme: dark)" />
+    <meta property="og:title" content="München Abfahrten / Munich Commuter" />
+    <meta property="og:description" content="iOS-App für Echtzeit-Abfahrten im Münchner Nahverkehr – S-Bahn, U-Bahn, Tram, Bus und mehr." />
+    <meta property="og:image" content="assets/app-icon-1024.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="de_DE" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <title>München Abfahrten / Munich Commuter</title>
+    <link rel="stylesheet" href="site.css" />
+    <link rel="icon" href="assets/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="assets/favicon-16.png" type="image/png" sizes="16x16" />
+    <link rel="icon" href="assets/favicon-48.png" type="image/png" sizes="48x48" />
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" sizes="180x180" />
+  </head>
+  <body>
+    <header class="site-hero">
+      <div class="site-hero__media">
+        <img
+          class="site-hero__img"
+          src="assets/hero-marienplatz.png"
+          width="1920"
+          height="1080"
+          fetchpriority="high"
+          alt="Stilisierte Darstellung von Marienplatz und Münchner Nahverkehr: S-Bahn, U-Bahn, Tram und Bus bei Abendlicht."
+        />
+        <div class="site-hero__overlay" aria-hidden="true"></div>
+      </div>
+      <div class="site-hero__inner">
+        <div class="site-hero__brand">
+          <span class="app-icon-frame app-icon-frame--hero">
+            <img
+              class="app-icon"
+              src="assets/app-icon-1024.png"
+              width="96"
+              height="96"
+              decoding="async"
+              alt="München Abfahrten / Munich Commuter"
+            />
+          </span>
+          <div>
+            <h1>München Abfahrten <span aria-hidden="true">/</span> Munich Commuter</h1>
+            <p class="subtitle">iOS-App für Echtzeit-Abfahrten im Münchner Nahverkehr</p>
+          </div>
+        </div>
+        <nav class="lang-nav" aria-label="Sprachen und rechtliche Links">
+          <a href="#deutsch">Deutsch</a>
+          <a href="#english">English</a>
+          <a href="impressum.html">Impressum</a>
+          <a href="datenschutz.html">Datenschutz</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div class="content-surface">
+        <aside class="disclaimer" aria-label="Wichtiger Hinweis">
+          <strong>Hinweis zur App und dieser Website</strong>
+          <p>
+            Diese App und diese Website sind ein <strong>privates Hobbyprojekt</strong>. Es gibt <strong>keine
+            Monetarisierung</strong> (keine Werbung, keine In-App-Käufe, kein kommerzieller Betrieb). Es besteht
+            <strong>keine Verbindung, keine Partnerschaft und keine offizielle Zugehörigkeit</strong> zur Deutschen Bahn, zur
+            Münchner Verkehrsgesellschaft (MVG) oder zum Münchner Verkehrs- und Tarifverbund (MVV).
+          </p>
+          <p>
+            Echtzeitdaten in der App werden über die <strong>öffentliche MVV/DEFAS-Schnittstelle</strong> bezogen. Alle Angaben
+            in der App und auf dieser Seite erfolgen <strong>ohne Gewähr</strong>.
+          </p>
+        </aside>
+
+        <section id="deutsch" lang="de">
+          <h2>Deutsch</h2>
+          <p>
+            <strong>München Abfahrten</strong> ist ein unabhängiges, nicht kommerzielles Hobbyprojekt – keine offizielle App der
+            DB, MVG oder MVV.
+          </p>
+          <p>
+            Dein smarter Begleiter für den Münchner Nahverkehr – komplett neu entwickelt. Die App zeigt dir sekundengenau die
+            nächsten Abfahrten an deiner Haltestelle: S-Bahn, U-Bahn, Tram, StadtBus, RegionalBus, Regionalbahn und
+            Regional-Express – alles in einer App, in Echtzeit und mit Verspätungsanzeige.
+          </p>
+          <p>
+            Erstelle gefilterte Favoriten für deinen Pendelweg: Zielhaltestellen, Abfahrts- und Zielgleise, Verkehrsmittel –
+            sortiert nach Abfahrts- oder Ankunftszeit am Zielbahnhof.
+          </p>
+          <p>Die wichtigsten Features:</p>
+          <ul class="features">
+            <li>Echtzeit-Abfahrten für alle Verkehrsmittel im MVV, inklusive Verspätungen</li>
+            <li>Gefilterte Favoriten: Zielhaltestelle, Gleis, Zielgleis, Verkehrsmittel und Sortierung frei kombinierbar</li>
+            <li>Detaillierte Fahrtansicht mit interaktiver Karte und allen Zwischenhalten</li>
+            <li>Stationen in der Nähe automatisch per Standort finden</li>
+            <li>iOS-Widgets in vier Größen – auch mit automatischer Auswahl der nächstgelegenen Station</li>
+            <li>Apple Watch App mit Favoriten, Filtern und Haltestellensuche</li>
+            <li>MVV-Netzpläne und Stationspläne direkt in der App als PDF</li>
+            <li>iCloud-Sync: Favoriten auf iPhone und Apple Watch immer aktuell</li>
+            <li>Komplett werbefrei, keine In-App-Käufe</li>
+          </ul>
+          <p><strong>Datenquelle:</strong> Echtzeitdaten über die offizielle MVV/DEFAS-Schnittstelle.</p>
+        </section>
+
+        <section id="english" lang="en">
+          <h2>English</h2>
+          <p>
+            <strong>Munich Commuter</strong> is an independent, non-commercial hobby project – not an official app of Deutsche
+            Bahn, MVG, or MVV.
+          </p>
+          <p>
+            Your smart companion for Munich public transit – completely rebuilt from the ground up. The app shows the next
+            departures at your stop in real time: S-Bahn, U-Bahn, Tram, city bus, regional bus, regional rail, and
+            Regional-Express – all in one app, with live delay information.
+          </p>
+          <p>
+            Create filtered favorites for your commute: destination stops, departure and destination platforms, transport types
+            – sorted by departure or arrival time at your destination.
+          </p>
+          <p>Key features:</p>
+          <ul class="features">
+            <li>Real-time departures for all MVV transport types, including delays</li>
+            <li>Filtered favorites: freely combine destination stop, platform, destination track, transport type, and sort order</li>
+            <li>Detailed trip view with interactive map and all intermediate stops</li>
+            <li>Automatically find nearby stations using your location</li>
+            <li>iOS widgets in four sizes – including automatic nearest-station selection</li>
+            <li>Apple Watch app with favorites, filters, and station search</li>
+            <li>MVV network maps and station plans as in-app PDFs</li>
+            <li>iCloud sync: favorites stay up to date on iPhone and Apple Watch</li>
+            <li>Completely ad-free, no in-app purchases</li>
+          </ul>
+          <p><strong>Data source:</strong> Real-time data via the official MVV/DEFAS interface.</p>
+        </section>
+
+        <footer>
+          <p class="footer-links">
+            <a href="impressum.html">Impressum</a>
+            <a href="datenschutz.html">Datenschutzerklärung</a>
+          </p>
+          <p>Privates Hobbyprojekt · Keine Verbindung zu MVG, MVV oder DB</p>
+        </footer>
+      </div>
+    </main>
+  </body>
+</html>
