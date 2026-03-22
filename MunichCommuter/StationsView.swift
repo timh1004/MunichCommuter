@@ -71,8 +71,9 @@ struct StationsView: View {
         .navigationTitle("Stationen")
         .navigationBarTitleDisplayMode(.large)
         .onAppear {
-            // Request a single location update - don't need continuous updates here
-            locationManager.requestSingleLocation()
+            if locationManager.hasLocationPermission {
+                locationManager.startPreciseUpdates()
+            }
 
             // Auto-load nearby stations if we have permission and effective location
             if locationManager.hasLocationPermission && locationManager.effectiveLocation != nil && searchText.isEmpty && mvvService.locations.isEmpty {
@@ -333,9 +334,8 @@ struct StationsView: View {
             return
         }
 
-        // If we have permission but no effective location yet, try to get it
         if locationManager.effectiveLocation == nil {
-            locationManager.requestSingleLocation()
+            locationManager.startPreciseUpdates()
         }
 
         guard let coordString = locationManager.coordStringForAPI() else {

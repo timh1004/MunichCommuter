@@ -20,6 +20,7 @@ struct DepartureDetailView: View {
     
     @StateObject private var mvvService = MVVService()
     @ObservedObject private var favoritesManager = FavoritesManager.shared
+    @EnvironmentObject private var disruptionService: DisruptionService
     @Environment(\.scenePhase) private var scenePhase
     
     @State private var destinationFilters: [String] = []
@@ -34,6 +35,8 @@ struct DepartureDetailView: View {
     @State private var selectedTransportTypes: Set<TransportType> = Set(TransportType.allCases)
     @State private var hasInitialized = false
     @State private var showPlansSheet = false
+    @State private var showDisruptionSheet = false
+    @State private var showScheduleChangeSheet = false
     
     init(locationId: String, locationName: String? = nil, initialDestinationFilters: [String]? = nil, initialPlatformFilters: [String]? = nil, initialTransportTypes: [String]? = nil, initialDestinationPlatformFilters: [String]? = nil, initialSortByArrivalTime: Bool? = nil) {
         self.locationId = locationId
@@ -82,6 +85,36 @@ struct DepartureDetailView: View {
                "Abfahrten"
     }
 
+    /// Aktive **Störungen** (INCIDENT) auf den angezeigten Linien.
+    private var relevantIncidents: [DisruptionMessage] {
+        disruptionMessagesForDisplayedLines { $0.isIncident }
+    }
+
+    /// Aktive **Fahrplanänderungen** auf den angezeigten Linien.
+    private var relevantScheduleChanges: [DisruptionMessage] {
+        disruptionMessagesForDisplayedLines { $0.isScheduleChange }
+    }
+
+    private func disruptionMessagesForDisplayedLines(matching kind: (DisruptionMessage) -> Bool) -> [DisruptionMessage] {
+        let displayedLineNumbers = Set(mvvService.departures.compactMap { $0.transportation?.number })
+        guard !displayedLineNumbers.isEmpty else { return [] }
+        return disruptionService.messages.filter { message in
+            guard message.isActive, kind(message) else { return false }
+            guard let lines = message.lines, !lines.isEmpty else { return false }
+            return lines.contains { displayedLineNumbers.contains($0.lineNumber) }
+        }
+    }
+
+    private func lineNamesSubtitle(for messages: [DisruptionMessage]) -> String {
+        let lineNumbers = Set(messages.flatMap { $0.lines?.map(\.lineNumber) ?? [] })
+        let displayed = Set(mvvService.departures.compactMap { $0.transportation?.number })
+        let relevant = lineNumbers.intersection(displayed).sorted()
+        if relevant.count <= 3 {
+            return relevant.joined(separator: ", ")
+        }
+        return relevant.prefix(3).joined(separator: ", ") + " +\(relevant.count - 3)"
+    }
+
     private func toggleDepartureFilterBar() {
         showFilterBar.toggle()
         if !showFilterBar {
@@ -106,7 +139,6 @@ struct DepartureDetailView: View {
                                 TransportTypeFilterButton(
                                     transportType: transportType,
                                     isSelected: selectedTransportTypes.contains(transportType),
-                                    isAllSelected: selectedTransportTypes.count == TransportType.allCases.count,
                                     action: {
                                         handleTransportTypeSelection(transportType)
                                     }
@@ -435,6 +467,54 @@ struct DepartureDetailView: View {
                 )
             }
             
+            // Störungen (INCIDENT) — auffällig
+            if !relevantIncidents.isEmpty {
+                Button(action: { showDisruptionSheet = true }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.orange)
+                            .font(.caption)
+                        Text("Störungen auf \(lineNamesSubtitle(for: relevantIncidents))")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.orange.opacity(0.1))
+                }
+                .buttonStyle(.plain)
+            }
+
+            // Fahrplanänderungen — ohne Orange / ohne Warndreieck
+            if !relevantScheduleChanges.isEmpty {
+                Button(action: { showScheduleChangeSheet = true }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "calendar.badge.clock")
+                            .foregroundColor(.secondary)
+                            .font(.caption)
+                        Text("Fahrplanänderungen auf \(lineNamesSubtitle(for: relevantScheduleChanges))")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color(.secondarySystemGroupedBackground))
+                }
+                .buttonStyle(.plain)
+            }
+
             // Main Content
             if mvvService.isDeparturesLoading {
                 Spacer()
@@ -691,6 +771,40 @@ struct DepartureDetailView: View {
                 .tint(.accentColor)
             }
         }
+        .sheet(isPresented: $showDisruptionSheet) {
+            NavigationStack {
+                List(relevantIncidents) { message in
+                    NavigationLink(destination: DisruptionDetailView(message: message)) {
+                        DisruptionRowView(message: message)
+                    }
+                }
+                .listStyle(.plain)
+                .navigationTitle("Störungen")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Schließen") { showDisruptionSheet = false }
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showScheduleChangeSheet) {
+            NavigationStack {
+                List(relevantScheduleChanges) { message in
+                    NavigationLink(destination: DisruptionDetailView(message: message)) {
+                        DisruptionRowView(message: message)
+                    }
+                }
+                .listStyle(.plain)
+                .navigationTitle("Fahrplanänderungen")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Schließen") { showScheduleChangeSheet = false }
+                    }
+                }
+            }
+        }
         .focusedSceneValue(\.refreshDepartures) { mvvService.loadDepartures(locationId: locationId) }
         .focusedSceneValue(\.toggleDepartureFilters) { toggleDepartureFilterBar() }
         .focusedSceneValue(\.openDeparturePlans) { showPlansSheet = true }
@@ -799,12 +913,13 @@ struct DepartureDetailView: View {
             // Wenn alle ausgewählt sind und ich auf ein ausgewähltes tippe: Nur dieses aktivieren
             selectedTransportTypes = [transportType]
         } else if isCurrentlySelected {
-            // Wenn das Verkehrsmittel bereits ausgewählt ist: Deaktivieren
-            selectedTransportTypes.remove(transportType)
-            
-            // Verhindern, dass alle deaktiviert werden - mindestens eines muss ausgewählt bleiben
-            if selectedTransportTypes.isEmpty {
-                selectedTransportTypes = [transportType]
+            if selectedTransportTypes.count == 1 {
+                selectedTransportTypes = Set(TransportType.allCases)
+            } else {
+                selectedTransportTypes.remove(transportType)
+                if selectedTransportTypes.isEmpty {
+                    selectedTransportTypes = [transportType]
+                }
             }
         } else {
             // Wenn das Verkehrsmittel nicht ausgewählt ist: Aktivieren
@@ -963,69 +1078,36 @@ struct DepartureDetailView: View {
     }
 }
 
-// MARK: - Transport Type Filter Button
+// MARK: - Transport Type Filter Button (Chip-Stil wie Störungen)
 struct TransportTypeFilterButton: View {
     let transportType: TransportType
     let isSelected: Bool
-    let isAllSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 6) {
+            HStack(spacing: 4) {
                 Image(systemName: transportType.icon)
-                    .font(.caption)
-                    .fontWeight(.medium)
-
+                    .font(.caption2)
                 Text(transportType.shortName)
                     .font(.caption)
                     .fontWeight(.medium)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
             .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(buttonBackgroundColor)
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(isSelected ? transportType.color.opacity(0.15) : Color(.systemGray6))
             )
-            .foregroundColor(buttonTextColor)
-            .overlay(
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(buttonBorderColor, lineWidth: 1)
-            )
+            .overlay {
+                if isSelected {
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(transportType.color, lineWidth: 1)
+                }
+            }
+            .foregroundColor(isSelected ? transportType.color : .secondary)
         }
-        .buttonStyle(PlainButtonStyle())
-        .scaleEffect(isSelected ? 1.05 : 1.0)
-        .animation(.easeInOut(duration: 0.2), value: isSelected)
-    }
-    
-    private var buttonBackgroundColor: Color {
-        if isSelected {
-            return transportType.color
-        } else if isAllSelected {
-            return Color(.systemGray6) // Leicht hervorgehoben wenn alle ausgewählt
-        } else {
-            return Color(.systemGray5)
-        }
-    }
-    
-    private var buttonTextColor: Color {
-        if isSelected {
-            return .white
-        } else if isAllSelected {
-            return .primary // Normale Textfarbe wenn alle ausgewählt
-        } else {
-            return .primary
-        }
-    }
-    
-    private var buttonBorderColor: Color {
-        if isSelected {
-            return transportType.color
-        } else if isAllSelected {
-            return Color(.systemGray3) // Leicht hervorgehobener Rahmen
-        } else {
-            return Color(.systemGray4)
-        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -1126,6 +1208,7 @@ struct DepartureRowView: View {
             locationId: "de:09162:10",
             locationName: "Pasing"
         )
+        .environmentObject(DisruptionService())
     }
 }
 
@@ -1136,6 +1219,7 @@ struct DepartureRowView: View {
             locationName: "Pasing",
             initialDestinationFilters: ["Marienplatz"]
         )
+        .environmentObject(DisruptionService())
     }
 }
 

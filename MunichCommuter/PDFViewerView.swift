@@ -204,16 +204,17 @@ class PDFCacheManager: ObservableObject {
     }
 
     func loadPDF(from url: URL) {
-        logger.debug("Loading PDF: \(url.absoluteString)")
+        let fetchURL = DisruptionLink.normalizeURLString(url.absoluteString) ?? url
+        logger.debug("Loading PDF: \(fetchURL.absoluteString)")
         isLoading = true
         errorMessage = nil
         pdfDocument = nil
 
-        if let cachedFileURL = cacheFileURL(for: url),
+        if let cachedFileURL = cacheFileURL(for: fetchURL),
            fileManager.fileExists(atPath: cachedFileURL.path),
            isCacheValid(at: cachedFileURL),
            let document = PDFDocument(url: cachedFileURL) {
-            logger.debug("PDF loaded from cache: \(url.absoluteString)")
+            logger.debug("PDF loaded from cache: \(fetchURL.absoluteString)")
             DispatchQueue.main.async {
                 self.pdfDocument = document
                 self.isLoading = false
@@ -221,8 +222,8 @@ class PDFCacheManager: ObservableObject {
             return
         }
 
-        logger.debug("Downloading PDF: \(url.absoluteString)")
-        var request = URLRequest(url: url)
+        logger.debug("Downloading PDF: \(fetchURL.absoluteString)")
+        var request = URLRequest(url: fetchURL)
         request.cachePolicy = .returnCacheDataElseLoad
 
         URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
@@ -231,33 +232,33 @@ class PDFCacheManager: ObservableObject {
                 self.isLoading = false
 
                 if let error = error {
-                    logger.error("Download error for \(url.absoluteString): \(error.localizedDescription)")
+                    logger.error("Download error for \(fetchURL.absoluteString): \(error.localizedDescription)")
                     self.errorMessage = "Download fehlgeschlagen: \(error.localizedDescription)"
                     return
                 }
 
                 guard let data = data, !data.isEmpty else {
-                    logger.warning("No data received for \(url.absoluteString)")
+                    logger.warning("No data received for \(fetchURL.absoluteString)")
                     self.errorMessage = "Keine Daten empfangen"
                     return
                 }
 
                 if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
-                    logger.error("HTTP \(httpResponse.statusCode) for \(url.absoluteString)")
+                    logger.error("HTTP \(httpResponse.statusCode) for \(fetchURL.absoluteString)")
                     self.errorMessage = "Server-Fehler (HTTP \(httpResponse.statusCode))"
                     return
                 }
 
                 guard let document = PDFDocument(data: data) else {
-                    logger.error("Could not parse PDF data: \(url.absoluteString)")
+                    logger.error("Could not parse PDF data: \(fetchURL.absoluteString)")
                     self.errorMessage = "PDF konnte nicht gelesen werden"
                     return
                 }
 
-                logger.debug("PDF loaded successfully: \(url.absoluteString)")
+                logger.debug("PDF loaded successfully: \(fetchURL.absoluteString)")
                 self.pdfDocument = document
 
-                if let cachedFileURL = self.cacheFileURL(for: url) {
+                if let cachedFileURL = self.cacheFileURL(for: fetchURL) {
                     try? data.write(to: cachedFileURL, options: .atomic)
                 }
             }

@@ -3,6 +3,7 @@ import SwiftUI
 enum AppTab: Hashable {
     case favoriten
     case stationen
+    case stoerungen
 }
 
 @MainActor

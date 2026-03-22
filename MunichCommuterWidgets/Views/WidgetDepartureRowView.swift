@@ -1,4 +1,5 @@
 import SwiftUI
+import MunichCommuterKit
 
 struct WidgetDepartureRowView: View {
     let departure: WidgetDeparture
@@ -10,13 +11,12 @@ struct WidgetDepartureRowView: View {
             // Line badge
             Text(departure.lineNumber)
                 .font(compact ? .system(size: 11, weight: .bold) : .system(size: 13, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(departure.lineBadgeAppearance.foreground)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .padding(.horizontal, compact ? 5 : 6)
                 .padding(.vertical, compact ? 3 : 4)
-                .background(departure.lineColor)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .background(LineBadgeBackground(appearance: departure.lineBadgeAppearance, cornerRadius: 6))
                 .frame(minWidth: compact ? 28 : 32)
 
             // Destination

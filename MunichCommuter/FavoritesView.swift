@@ -9,6 +9,7 @@ struct FavoritesView: View {
     
     @ObservedObject private var favoritesManager = FavoritesManager.shared
     @ObservedObject private var locationManager = LocationManager.shared
+    @EnvironmentObject private var disruptionService: DisruptionService
     @Environment(\.scenePhase) private var scenePhase
     @State private var sortOption: FavoritesSortOption = .alphabetical
     @State private var favoriteDepartures: [String: [StopEvent]] = [:] // locationId -> departures
@@ -78,7 +79,8 @@ struct FavoritesView: View {
                                 sortOption: sortOption,
                                 locationManager: locationManager,
                                 departures: favoriteDepartures[favorite.location.id] ?? [],
-                                isLoading: loadingFavorites.contains(favorite.location.id)
+                                isLoading: loadingFavorites.contains(favorite.location.id),
+                                incidentAffectedLineNumbers: disruptionService.incidentAffectedLineNumbers
                             )
                         }
                         .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 16))
@@ -131,6 +133,7 @@ struct FavoritesView: View {
                 if !initializedDeparturesAfterLocation {
                     initializedDeparturesAfterLocation = true
                     await loadAllFavoritesDepartures()
+                    disruptionService.loadMessagesIfStale()
                 }
             }
         }
@@ -138,12 +141,6 @@ struct FavoritesView: View {
             Task { @MainActor in
                 pruneDeparturesForRemovedFavorites()
                 await loadAllFavoritesDepartures(onlyIfMissing: true)
-            }
-        }
-        .onDisappear {
-            // Stop precise updates when leaving favorites view
-            if locationManager.currentTrackingMode == .precise {
-                locationManager.requestSingleLocation()
             }
         }
         .onChange(of: locationManager.authorizationStatus) { _, newStatus in
@@ -209,12 +206,10 @@ struct FavoritesView: View {
     }
     
     private func updateLocationTrackingMode() {
-        // Use precise updates when distance sorting is active and we have permission
+        // Nur bei Entfernungssortierung explizit präzises Tracking — bei A–Z nicht auf Einzelmessung
+        // herunterfahren, damit der Stationen-Tab weiter Live-Entfernungen bekommt.
         if sortOption == .distance && locationManager.hasLocationPermission {
             locationManager.startPreciseUpdates()
-        } else {
-            // Use single shot for alphabetical sorting or when no permission
-            locationManager.requestSingleLocation()
         }
     }
     
@@ -374,6 +369,8 @@ struct FavoriteWithDeparturesView: View {
     @ObservedObject var locationManager: LocationManager
     let departures: [StopEvent]
     let isLoading: Bool
+    /// Nur Linien mit aktiver **Störung** (INCIDENT), nicht Fahrplanänderungen.
+    var incidentAffectedLineNumbers: Set<String> = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -441,6 +438,24 @@ struct FavoriteWithDeparturesView: View {
                 .padding(.leading, 0)
             } else {
                 VStack(alignment: .leading, spacing: 4) {
+                    // Disruption warning if any displayed line is affected
+                    if departures.prefix(3).contains(where: { dep in
+                        if let num = dep.transportation?.number {
+                            return incidentAffectedLineNumbers.contains(num)
+                        }
+                        return false
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 9))
+                                .foregroundColor(.orange)
+                            Text("Störung")
+                                .font(.system(size: 10))
+                                .foregroundColor(.orange)
+                                .fontWeight(.medium)
+                        }
+                    }
+
                     ForEach(departures.prefix(3)) { departure in
                         CompactDepartureRowView(departure: departure)
                     }
@@ -491,5 +506,6 @@ struct CompactDepartureRowView: View {
 #Preview {
     NavigationStack {
         FavoritesView()
+            .environmentObject(DisruptionService())
     }
 } 
